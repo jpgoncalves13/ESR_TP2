@@ -1,0 +1,59 @@
+{
+
+    
+    "nodes": [
+        {
+            "name": "O1",
+            "conections": ["O2"]
+        },
+        {
+            "name": "O2",
+            "conections": ["O1", "O3", "O7"]
+        },
+        {
+            "id": 3,
+            "name": "O3",
+            "conections": ["O4","O5","O2"]
+        },
+        {
+            "id": 4,
+            "name": "O4",
+            "conections": ["O3"]
+        },
+        {
+            "id": 5,
+            "name": "O5",
+            "conections": ["O3","O6","O7","O10","O11"]
+        },
+        {
+            "id": 6,
+            "name": "O6",
+            "conections": ["O5","O7","O9"]
+        },
+        {
+            "id": 7,
+            "name": "O7",
+            "conections": ["O2","O5","O6","O8"]
+        },
+        {
+            "id": 8,
+            "name": "O8",
+            "conections": ["O7"]
+        },
+        {
+            "id": 9,
+            "name": "O9",
+            "conections": ["O6"]
+        },
+        {
+            "id": 10,
+            "name": "O10",
+            "conections": ["O5"]
+        },
+        {
+            "id": 11,
+            "name": "O11",
+            "conections": ["O5"]
+        }
+    ]
+}
