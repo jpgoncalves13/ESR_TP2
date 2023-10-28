@@ -16,7 +16,8 @@ class PacketType(Enum):
 
 class Packet:
 
-    def __init__(self, destinations, message_type: int, last_hops, delay: int, loss: int, number_of_hops: int):
+    def __init__(self, origin, destinations, message_type: int, last_hops, delay: int, loss: int, number_of_hops: int):
+        self.origin = origin
         self.type = message_type
         self.destinations = destinations
         self.last_hops = last_hops
@@ -29,6 +30,10 @@ class Packet:
 
         # type
         byte_array += self.type.to_bytes(1, byteorder='big')
+
+        # origin
+        byte_array += len(self.origin).to_bytes(2, byteorder='big')
+        byte_array += self.origin.encode('ascii')
 
         # destinations
         byte_array += len(self.destinations).to_bytes(4, byteorder='big')
@@ -58,6 +63,12 @@ class Packet:
         # Read type (1 byte)
         message_type = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
         offset += 1
+
+        # origin
+        length_origin = int.from_bytes(byte_array[offset:offset + 2], byteorder='big')
+        offset += 2
+        origin = byte_array[offset:offset + length_origin].decode('ascii')
+        offset += length_origin
 
         # Deserialize destinations (list of strings)
         destinations_count = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
@@ -93,4 +104,4 @@ class Packet:
         number_of_hops = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
         offset += 4
 
-        return Packet(destinations, message_type, last_hops, delay, loss, number_of_hops)
+        return Packet(origin, destinations, message_type, last_hops, delay, loss, number_of_hops)

@@ -9,3 +9,9 @@ class Bootstrapper:
 
     def get_neighbors(self, node_id):
         return self.nodes[node_id]
+    
+    def handle_join_request(self, node_id):
+        print(f"DEBUG: Received a request to join the topology from node {node_id}")
+        neighbors = self.get_neighbors(node_id)
+        print(f"DEBUG: Sending neighbors {neighbors} to node {node_id}")
+        return neighbors

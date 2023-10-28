@@ -2,10 +2,10 @@ import sys
 from bootstraper import Bootstrapper
 from server import Server
 from client import Client
-
+from threading import Thread
 
 def main():
-    if len(sys.argv) < 2:
+    if len(sys.argv) == 2 and sys.argv[1] == '--help':
         info = """
             How to use: onode.py --debug? function* 
             
@@ -46,8 +46,13 @@ def main():
 
     if is_client:
         Client().run()
+        
 
-    port = 5001
+    if not is_client:
+        port = 5001
+    else:
+        port = 5000
+    
     server = Server('127.0.0.1', port)
     server.run((debug, bootstrapper, is_rendezvous_point))
 
