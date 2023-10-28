@@ -1,3 +1,4 @@
 # Ignore pycharm environment
 /Step2/venv
 /Step2/.idea
+/Step2/__pycache__
