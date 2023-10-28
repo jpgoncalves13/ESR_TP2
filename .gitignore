@@ -1,3 +1,5 @@
 # Ignore pycharm environment
 /Step2/venv
 /Step2/.idea
+
+.vscode
