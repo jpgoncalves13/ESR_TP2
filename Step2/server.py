@@ -17,7 +17,7 @@ class Server:
         debug, _, _ = args
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         server_socket.bind((self.ip, self.port))
-        print("DEBUG: Listening")
+        print("DEBUG: Listening on port " + str(self.port) + "...")
 
         while True:
             request = server_socket.recvfrom(self.buffer_size)
