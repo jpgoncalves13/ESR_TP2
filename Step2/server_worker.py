@@ -22,7 +22,7 @@ class ServerWorker:
                 print("DEBUG: Received a request to join the topology")
             if bootstrapper is not None:
                 request_neighbours = bootstrapper.handle_join_request(packet.origin)
-                packet = Packet(packet.origin, PacketType.RSETUP, 1, 1, request_neighbours)
+                packet = Packet(packet.origin, PacketType.RSETUP, 1, 1, 1, neighbours=request_neighbours)
                 socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 socket_s.sendto(packet.serialize(), (packet.origin, 5000))
             else:
