@@ -85,13 +85,13 @@ class Packet:
         # Deserialize neighbors (array of strings)
         neighbours_count = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
         offset += 4
-        neighbors = []
+        neighbours = []
         for _ in range(neighbours_count):
             str_length = int.from_bytes(byte_array[offset:offset + 2], byteorder='big')
             offset += 2
             neighbour = byte_array[offset:offset + str_length].decode('ascii')
             offset += str_length
-            neighbors.append(neighbour)
+            neighbours.append(neighbour)
 
         # Deserialize last hops (array of strings)
         last_hops_count = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
