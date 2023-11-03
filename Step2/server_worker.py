@@ -10,8 +10,8 @@ class ServerWorker:
     def run(self, request):
         Thread(target=lambda: self.handle_request(request)).start()
 
-    def handle_request(self, request: bytearray):
-        debug, bootstrapper, is_rendezvous_point, server_files = self.args
+    def handle_request(self, request: [bytes]):
+        bootstrapper, bootstrapper_address, neighbours, is_rendezvous_point, node, debug = self.args
         packet = Packet.deserialize(request)
         
         if debug:
@@ -21,8 +21,8 @@ class ServerWorker:
             if debug:
                 print("DEBUG: Received a request to join the topology")
             if bootstrapper is not None:
-                neighbours = bootstrapper.handle_join_request(packet.origin)
-                packet = Packet(packet.origin, neighbours, PacketType.RSETUP, [], 1, 1, 1)
+                request_neighbours = bootstrapper.handle_join_request(packet.origin)
+                packet = Packet(packet.origin, PacketType.RSETUP, 0, 1, 1, request_neighbours)
                 socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 socket_s.sendto(packet.serialize(), (packet.origin, 5000))
             else:
