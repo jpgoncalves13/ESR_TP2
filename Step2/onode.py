@@ -107,7 +107,8 @@ Options:
         if ni.AF_INET in addresses:
             for address in addresses[ni.AF_INET]:
                 ip = address['addr']
-                ips.append(ip)
+                if ip != '127.0.0.1':
+                    ips.append(ip)
                 if debug:
                     print(f"DEBUG: Interface -> {interface}, Endereço IP -> {ip}")
 
