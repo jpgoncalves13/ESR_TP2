@@ -13,27 +13,28 @@ class Server:
         self.buffer_size = buffer_size
 
     def run(self, args):
-        bootstrapper, neighbors, rendezvous, node = args
+        bootstrapper, bootstrapper_address, neighbors, is_rendezvous_point, node, debug = args
 
         # Send message to create the tree if I only have one neighbor
         if node:
+            if debug:
+                print("DEBUG: Sending the packet to create the tree")
             self.start_tree(neighbors)
 
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         server_socket.bind((self.ip, self.port))
-        print("DEBUG: Listening on port " + str(self.port) + "...")
+
+        if debug:
+            print("DEBUG: Listening on port " + str(self.port) + "...")
 
         while True:
             request = server_socket.recvfrom(self.buffer_size)
-            if self.debug:
+            if debug:
                 print("DEBUG: Request received")
             ServerWorker(args).run(request[0])
 
     def start_tree(self, neighbors):
         if len(neighbors) == 1:
-            if self.debug:
-                print("DEBUG: Sending the packet to create the tree")
-
             packet_serialized = Packet(self.ip, PacketType.SETUP, [], 0, 0, 0).serialize()
             udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
             udp_socket.sendto(packet_serialized, neighbors[0])

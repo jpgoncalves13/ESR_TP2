@@ -100,10 +100,19 @@ Options:
 
     # Get all the ips
     host_name = socket.gethostname()
-    if debug:
-        print(f"Debug: Hostname - {host_name}")
-    ip_list = ('', '', ['10.0.0.1'])
-    last_ip = ip_list[2].pop()
+    info = socket.getaddrinfo(host_name, 0)
+    ips = []
+
+    for item in info:
+        _, _, _, _, socket_address = item
+        ip_address = socket_address[0]
+
+        if ip_address not in ips:
+            if debug:
+                print(f"DEBUG: {ip_address}")
+            ips.append(ip_address)
+
+    last_ip = ips.pop()
 
     # The neighbors of this normal node
     neighbors = None
@@ -116,13 +125,11 @@ Options:
         neighbors = bootstrapper.get_neighbors(last_ip)
 
     if debug:
-        print(f"DEBUG: {print(neighbors)}")
+        print(f"DEBUG: Neighbors -> {neighbors}")
 
     # Start all threads with the different ips
     args = (bootstrapper, bootstrapper_address, neighbors, is_rendezvous_point, node, debug)
-    for ip in ip_list[2]:
-        if debug:
-            print(f"DEBUG: {ip}")
+    for ip in ips:
         server = Server(ip, port)
         Thread(target=lambda: server.run(args)).start()
 
