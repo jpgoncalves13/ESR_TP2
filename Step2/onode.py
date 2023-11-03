@@ -100,13 +100,10 @@ Options:
     bootstrapper, bootstrapper_address, is_rendezvous_point, node, debug = read_args()
 
     # The neighbors of this normal node
-    neighbors = None
+    neighbours = None
 
-    if node and bootstrapper is None:
-        # Request the neighbors if is a node and not the bootstrapper
-        neighbors = request_neighbors(bootstrapper_address)
-    elif node:
-        # Get the neighbors if is a node and bootstrapper
+    if node:
+        # Get the ip
         my_ip = None
         for interface in ni.interfaces():
             addresses = ni.ifaddresses(interface)
@@ -120,13 +117,18 @@ Options:
             if my_ip is not None:
                 break
 
-        neighbors = bootstrapper.get_neighbors(my_ip)
+        if node and bootstrapper is None:
+            # Request the neighbors if is a node and not the bootstrapper
+            neighbors = request_neighbors(my_ip, bootstrapper_address)
+        elif node:
+            # Get the neighbors if is a node and bootstrapper
+            neighbours = bootstrapper.get_neighbors(my_ip)
 
-    if debug:
-        print(f"DEBUG: Neighbors -> {neighbors}")
+        if debug:
+            print(f"DEBUG: Neighbors -> {neighbours}")
 
     # Start all threads with the different ips
-    args = (bootstrapper, bootstrapper_address, neighbors, is_rendezvous_point, node, debug)
+    args = (bootstrapper, bootstrapper_address, neighbours, is_rendezvous_point, node, debug)
     server = Server('', port)
     server.run(args)
 
