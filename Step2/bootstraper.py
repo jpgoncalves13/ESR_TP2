@@ -10,7 +10,7 @@ class Bootstrapper:
         self.debug = debug
 
     def get_neighbors(self, node_id):
-        return self.nodes[node_id]
+        return self.nodes["nodes"][self.nodes["names"][node_id]]
 
     def set_debug(self, debug):
         self.debug = debug
