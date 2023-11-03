@@ -4,6 +4,7 @@ from server import Server
 from threading import Thread
 import socket
 from stream_packet import PacketType, Packet
+import netifaces as ni
 
 
 def request_neighbors(node_ip, bootstrapper_address, timeout=5, max_retries=3):
@@ -98,19 +99,17 @@ Options:
     # Parse the arguments
     bootstrapper, bootstrapper_address, is_rendezvous_point, node, debug = read_args()
 
-    # Get all the ips
-    host_name = socket.gethostname()
-    info = socket.getaddrinfo(host_name, 0)
+    # Get all the interfaces and ips
     ips = []
-
-    for item in info:
-        _, _, _, _, socket_address = item
-        ip_address = socket_address[0]
-
-        if ip_address not in ips:
-            if debug:
-                print(f"DEBUG: {ip_address}")
-            ips.append(ip_address)
+    interfaces = ni.interfaces()
+    for interface in interfaces:
+        addresses = ni.ifaddresses(interface)
+        if ni.AF_INET in addresses:
+            for address in addresses[ni.AF_INET]:
+                ip = address['addr']
+                ips.append(ip)
+                if debug:
+                    print(f"DEBUG: Interface -> {interface}, Endereço IP -> {ip}")
 
     last_ip = ips.pop()
 
