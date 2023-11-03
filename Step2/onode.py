@@ -13,7 +13,7 @@ def request_neighbors(node_ip, bootstrapper_address, timeout=5, max_retries=3):
     udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
     response = None
 
-    while retries < max_retries:
+    while response is None and retries < max_retries:
         udp_socket.sendto(packet_serialized, bootstrapper_address)
         udp_socket.settimeout(timeout)
         try:
