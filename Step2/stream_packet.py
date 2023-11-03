@@ -16,7 +16,7 @@ class PacketType(Enum):
 class Packet:
 
     def __init__(self, origin: str, message_type: PacketType, delay: int, loss: int, number_of_hops: int,
-                 last_hops: [str] = None, neighbours: list = None, payload: [bytes] = None):
+                 last_hops: [str] = None, neighbours: [str] = None, payload: [bytes] = None):
         if neighbours is None:
             neighbours = []
         if payload is None:
@@ -40,6 +40,7 @@ class Packet:
         byte_array += self.type.value.to_bytes(1, byteorder='big')
 
         # origin
+        byte_array += len(self.origin).to_bytes(2, byteorder='big')
         byte_array += self.origin.encode('ascii')
 
         # delay
@@ -54,16 +55,19 @@ class Packet:
         # last hops
         byte_array += len(self.last_hops).to_bytes(4, byteorder='big')
         for hop in self.last_hops:
+            byte_array += len(hop).to_bytes(2, byteorder='big')
             byte_array += hop.encode('ascii')
 
         # neighbors
         byte_array += len(self.neighbors).to_bytes(4, byteorder='big')
-        for neighbor in self.neighbors:
-            byte_array += neighbor.encode('ascii')
+        for neighbour in self.neighbors:
+            byte_array += len(neighbour).to_bytes(2, byteorder='big')
+            byte_array += neighbour.encode('ascii')
 
         # payload
         byte_array += len(self.payload).to_bytes(4, byteorder='big')
-        byte_array += self.payload
+        if len(self.payload) > 0:
+            byte_array += self.payload
 
         return bytes(byte_array)
 
@@ -118,6 +122,14 @@ class Packet:
         # Payload
         payload_bytes_count = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
         offset += 4
-        payload_bytes = byte_array[offset:offset + payload_bytes_count]
+        if payload_bytes_count > 0:
+            payload_bytes = byte_array[offset:offset + payload_bytes_count]
+        else:
+            payload_bytes = []
 
         return Packet(origin, message_type, delay, loss, number_of_hops, last_hops, neighbours, payload_bytes)
+
+    def __str__(self):
+        return (self.origin + ";" + str(self.type.value) + ";" + str(self.delay) + ";" + str(self.loss) + ";" +
+                str(self.number_of_hops) + ";" + str(self.last_hops) + ";" + str(self.neighbors) + ";" +
+                str(self.payload))
