@@ -1,4 +1,3 @@
-
 from enum import Enum
 
 
@@ -16,34 +15,33 @@ class PacketType(Enum):
 
 class Packet:
 
-    def __init__(self, origin, destinations, message_type: int, last_hops, delay: int, loss: int, number_of_hops: int):
+    def __init__(self, origin: str, message_type: PacketType, delay: int, loss: int, number_of_hops: int,
+                 last_hops: [str] = None, neighbours: [str] = None, payload: [bytes] = None):
+        if neighbours is None:
+            neighbours = []
+        if payload is None:
+            payload = []
+        if last_hops is None:
+            last_hops = []
+
         self.origin = origin
         self.type = message_type
-        self.destinations = destinations
-        self.last_hops = last_hops
         self.delay = delay
         self.loss = loss
         self.number_of_hops = number_of_hops
+        self.last_hops = last_hops
+        self.neighbors = neighbours
+        self.payload = payload
 
     def serialize(self):
-        byte_array = bytearray()
+        byte_array = []
 
         # type
-        byte_array += self.type.to_bytes(1, byteorder='big')
+        byte_array += self.type.value.to_bytes(1, byteorder='big')
 
         # origin
         byte_array += len(self.origin).to_bytes(2, byteorder='big')
         byte_array += self.origin.encode('ascii')
-
-        # destinations
-        byte_array += len(self.destinations).to_bytes(4, byteorder='big')
-        for destination in self.destinations:
-            byte_array += str(destination).encode('ascii')
-
-        # last hops
-        byte_array += len(self.last_hops).to_bytes(4, byteorder='big')
-        for hop in self.last_hops:
-            byte_array += str(hop).encode('ascii')
 
         # delay
         byte_array += self.delay.to_bytes(4, byteorder='big')
@@ -54,14 +52,31 @@ class Packet:
         # number of hops
         byte_array += self.number_of_hops.to_bytes(4, byteorder='big')
 
+        # last hops
+        byte_array += len(self.last_hops).to_bytes(4, byteorder='big')
+        for hop in self.last_hops:
+            byte_array += len(hop).to_bytes(2, byteorder='big')
+            byte_array += hop.encode('ascii')
+
+        # neighbors
+        byte_array += len(self.neighbors).to_bytes(4, byteorder='big')
+        for neighbour in self.neighbors:
+            byte_array += len(neighbour).to_bytes(2, byteorder='big')
+            byte_array += neighbour.encode('ascii')
+
+        # payload
+        byte_array += len(self.payload).to_bytes(4, byteorder='big')
+        if len(self.payload) > 0:
+            byte_array += self.payload
+
         return bytes(byte_array)
 
     @staticmethod
-    def deserialize(byte_array: bytearray):
+    def deserialize(byte_array: [bytes]):
         offset = 0
 
         # Read type (1 byte)
-        message_type = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
+        message_type = PacketType(int.from_bytes(byte_array[offset:offset + 1], byteorder='big'))
         offset += 1
 
         # origin
@@ -69,28 +84,6 @@ class Packet:
         offset += 2
         origin = byte_array[offset:offset + length_origin].decode('ascii')
         offset += length_origin
-
-        # Deserialize destinations (list of strings)
-        destinations_count = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
-        offset += 4
-        destinations = []
-        for _ in range(destinations_count):
-            str_length = int.from_bytes(byte_array[offset:offset + 2], byteorder='big')
-            offset += 2
-            destination = byte_array[offset:offset + str_length].decode('ascii')
-            offset += str_length
-            destinations.append(destination)
-
-        # Deserialize last hops (list of strings)
-        last_hops_count = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
-        offset += 4
-        last_hops = []
-        for _ in range(last_hops_count):
-            str_length = int.from_bytes(byte_array[offset:offset + 2], byteorder='big')
-            offset += 2
-            hop = byte_array[offset:offset + str_length].decode('ascii')
-            offset += str_length
-            last_hops.append(hop)
 
         # Deserialize delay (4 bytes)
         delay = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
@@ -104,4 +97,39 @@ class Packet:
         number_of_hops = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
         offset += 4
 
-        return Packet(origin, destinations, message_type, last_hops, delay, loss, number_of_hops)
+        # Deserialize last hops (array of strings)
+        last_hops_count = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
+        offset += 4
+        last_hops = []
+        for _ in range(last_hops_count):
+            str_length = int.from_bytes(byte_array[offset:offset + 2], byteorder='big')
+            offset += 2
+            hop = byte_array[offset:offset + str_length].decode('ascii')
+            offset += str_length
+            last_hops.append(hop)
+
+        # Deserialize neighbors (array of strings)
+        neighbours_count = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
+        offset += 4
+        neighbours = []
+        for _ in range(neighbours_count):
+            str_length = int.from_bytes(byte_array[offset:offset + 2], byteorder='big')
+            offset += 2
+            neighbour = byte_array[offset:offset + str_length].decode('ascii')
+            offset += str_length
+            neighbours.append(neighbour)
+
+        # Payload
+        payload_bytes_count = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
+        offset += 4
+        if payload_bytes_count > 0:
+            payload_bytes = byte_array[offset:offset + payload_bytes_count]
+        else:
+            payload_bytes = []
+
+        return Packet(origin, message_type, delay, loss, number_of_hops, last_hops, neighbours, payload_bytes)
+
+    def __str__(self):
+        return (self.origin + ";" + str(self.type.value) + ";" + str(self.delay) + ";" + str(self.loss) + ";" +
+                str(self.number_of_hops) + ";" + str(self.last_hops) + ";" + str(self.neighbors) + ";" +
+                str(self.payload))
