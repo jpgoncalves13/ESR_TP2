@@ -1,9 +1,8 @@
 import sys
-from bootstraper import Bootstrapper
-from server import Server
-from threading import Thread
+from bootstrapper.bootstraper import Bootstrapper
+from venv.server import Server
 import socket
-from stream_packet import PacketType, Packet
+from server.stream_packet import PacketType, Packet
 import netifaces as ni
 
 
