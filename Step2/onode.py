@@ -7,9 +7,9 @@ from stream_packet import PacketType, Packet
 import netifaces as ni
 
 
-def request_neighbors(node_ip, bootstrapper_address, timeout=5, max_retries=3):
+def request_neighbors(bootstrapper_address, timeout=5, max_retries=3):
     retries = 0
-    packet_serialized = Packet(node_ip, PacketType.SETUP, [], 0, 0, 0).serialize()
+    packet_serialized = Packet('', PacketType.SETUP, [], 0, 0, 0).serialize()
     udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
     response = None
 
@@ -99,41 +99,35 @@ Options:
     # Parse the arguments
     bootstrapper, bootstrapper_address, is_rendezvous_point, node, debug = read_args()
 
-    # Get all the interfaces and ips
-    ips = []
-    interfaces = ni.interfaces()
-    for interface in interfaces:
-        addresses = ni.ifaddresses(interface)
-        if ni.AF_INET in addresses:
-            for address in addresses[ni.AF_INET]:
-                ip = address['addr']
-                if ip != '127.0.0.1':
-                    ips.append(ip)
-                    if debug:
-                        print(f"DEBUG: Interface -> {interface}, Endereço IP -> {ip}")
-
-    last_ip = ips.pop()
-
     # The neighbors of this normal node
     neighbors = None
 
     if node and bootstrapper is None:
         # Request the neighbors if is a node and not the bootstrapper
-        neighbors = request_neighbors(last_ip, bootstrapper_address)
+        neighbors = request_neighbors(bootstrapper_address)
     elif node:
         # Get the neighbors if is a node and bootstrapper
-        neighbors = bootstrapper.get_neighbors(last_ip)
+        my_ip = None
+        for interface in ni.interfaces():
+            addresses = ni.ifaddresses(interface)
+            if ni.AF_INET in addresses:
+                for address in addresses[ni.AF_INET]:
+                    ip = address['addr']
+                    if ip != '127.0.0.1':
+                        my_ip = ip
+                        break
+
+            if my_ip is not None:
+                break
+
+        neighbors = bootstrapper.get_neighbors(my_ip)
 
     if debug:
         print(f"DEBUG: Neighbors -> {neighbors}")
 
     # Start all threads with the different ips
     args = (bootstrapper, bootstrapper_address, neighbors, is_rendezvous_point, node, debug)
-    for ip in ips:
-        server = Server(ip, port)
-        Thread(target=lambda: server.run(args)).start()
-
-    server = Server(last_ip, port)
+    server = Server('', port)
     server.run(args)
 
 
