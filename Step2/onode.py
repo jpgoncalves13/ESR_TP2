@@ -109,8 +109,8 @@ Options:
                 ip = address['addr']
                 if ip != '127.0.0.1':
                     ips.append(ip)
-                if debug:
-                    print(f"DEBUG: Interface -> {interface}, Endereço IP -> {ip}")
+                    if debug:
+                        print(f"DEBUG: Interface -> {interface}, Endereço IP -> {ip}")
 
     last_ip = ips.pop()
 
