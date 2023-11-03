@@ -9,7 +9,7 @@ import netifaces as ni
 
 def request_neighbors(node_ip, bootstrapper_address, timeout=5, max_retries=3):
     retries = 0
-    packet_serialized = Packet(node_ip, PacketType.SETUP, [], 0, 0, 0).serialize()
+    packet_serialized = Packet(node_ip, PacketType.SETUP, 0, 0, 0).serialize()
     udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
     response = None
 
