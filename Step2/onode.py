@@ -102,7 +102,7 @@ Options:
     host_name = socket.gethostname()
     if debug:
         print(f"Debug: Hostname - {host_name}")
-    ip_list = ('', '', [socket.gethostbyname(host_name)])
+    ip_list = ('', '', ['10.0.0.1'])
     last_ip = ip_list[2].pop()
 
     # The neighbors of this normal node
