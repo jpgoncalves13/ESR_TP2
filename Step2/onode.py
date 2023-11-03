@@ -1,9 +1,9 @@
 import sys
-from bootstrapper.bootstraper import Bootstrapper
-from venv.server import Server
 import socket
-from server.stream_packet import PacketType, Packet
 import netifaces as ni
+from server import Server
+from stream_packet import Packet, PacketType
+from bootstrapper import Bootstrapper
 
 
 def request_neighbors(node_ip, bootstrapper_address, timeout=5, max_retries=3):
@@ -49,12 +49,12 @@ def read_args() -> (Bootstrapper, (str, str), bool, bool):
                 bootstrapper_address = (words[0], int(words[1]))
             except ValueError:
                 print("Error: The bootstrapper port was to be an integer")
-                return
+                exit(1)
             node = True
             i += 1
         else:
             print("Error: Wrong bootstrapper configuration\n Try --help for more information")
-            return
+            exit(1)
 
     # options
     while i < len(sys.argv):

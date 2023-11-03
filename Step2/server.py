@@ -1,4 +1,3 @@
-from threading import Thread
 import socket
 from server_worker import ServerWorker
 from stream_packet import Packet, PacketType
