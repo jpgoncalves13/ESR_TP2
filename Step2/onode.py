@@ -7,9 +7,9 @@ from stream_packet import PacketType, Packet
 import netifaces as ni
 
 
-def request_neighbors(bootstrapper_address, timeout=5, max_retries=3):
+def request_neighbors(node_ip, bootstrapper_address, timeout=5, max_retries=3):
     retries = 0
-    packet_serialized = Packet('', PacketType.SETUP, [], 0, 0, 0).serialize()
+    packet_serialized = Packet(node_ip, PacketType.SETUP, [], 0, 0, 0).serialize()
     udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
     response = None
 
@@ -119,7 +119,7 @@ Options:
 
         if node and bootstrapper is None:
             # Request the neighbors if is a node and not the bootstrapper
-            neighbors = request_neighbors(my_ip, bootstrapper_address)
+            neighbours = request_neighbors(my_ip, bootstrapper_address)
         elif node:
             # Get the neighbors if is a node and bootstrapper
             neighbours = bootstrapper.get_neighbors(my_ip)
