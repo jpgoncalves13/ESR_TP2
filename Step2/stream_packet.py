@@ -83,15 +83,15 @@ class Packet:
         offset += length_origin
 
         # Deserialize neighbors (array of strings)
-        neighbors_count = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
+        neighbours_count = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
         offset += 4
         neighbors = []
-        for _ in range(neighbors_count):
+        for _ in range(neighbours_count):
             str_length = int.from_bytes(byte_array[offset:offset + 2], byteorder='big')
             offset += 2
-            neighbor = byte_array[offset:offset + str_length].decode('ascii')
+            neighbour = byte_array[offset:offset + str_length].decode('ascii')
             offset += str_length
-            neighbors.append(neighbor)
+            neighbors.append(neighbour)
 
         # Deserialize last hops (array of strings)
         last_hops_count = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
@@ -121,4 +121,4 @@ class Packet:
         offset += 4
         payload_bytes = byte_array[offset:offset + payload_bytes_count]
 
-        return Packet(origin, message_type, last_hops, delay, loss, number_of_hops, neighbors, payload_bytes)
+        return Packet(origin, message_type, delay, loss, number_of_hops, last_hops, neighbours, payload_bytes)

@@ -31,7 +31,7 @@ class Server:
             request = server_socket.recvfrom(self.buffer_size)
             if debug:
                 print("DEBUG: Request received")
-            ServerWorker(args).run(request[0])
+            ServerWorker(args).run(request)
 
     def start_tree(self, neighbors):
         if len(neighbors) == 1:

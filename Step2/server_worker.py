@@ -10,9 +10,9 @@ class ServerWorker:
     def run(self, request):
         Thread(target=lambda: self.handle_request(request)).start()
 
-    def handle_request(self, request: [bytes]):
+    def handle_request(self, request):
         bootstrapper, bootstrapper_address, neighbours, is_rendezvous_point, node, debug = self.args
-        packet = Packet.deserialize(request)
+        packet = Packet.deserialize(request[0])
         
         if debug:
             print(f"DEBUG: Processing response to packet of type {packet.type}")
@@ -24,7 +24,7 @@ class ServerWorker:
                 request_neighbours = bootstrapper.handle_join_request(packet.origin)
                 packet = Packet(packet.origin, PacketType.RSETUP, 1, 1, 1, neighbours=request_neighbours)
                 socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                socket_s.sendto(packet.serialize(), (packet.origin, 5000))
+                socket_s.sendto(packet.serialize(), request[1])
             else:
                 if debug:
                     print("ERROR: Bootstrapper is not running")
