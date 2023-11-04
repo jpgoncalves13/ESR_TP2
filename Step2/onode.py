@@ -23,7 +23,7 @@ def request_neighbors(node_ip, bootstrapper_address, timeout=5, max_retries=3):
     udp_socket.close()
 
     if response is not None:
-        response = Packet.deserialize(response)
+        response = Packet.deserialize(bytearray(response))
         return response.neighbors
     return []
 
