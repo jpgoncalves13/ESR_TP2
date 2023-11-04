@@ -2,5 +2,9 @@
 /Step2/venv
 /Step2/.idea
 /Step3/__pycache__
-
 .vscode
+=======
+/Step2/__pycache__
+/Step2/bootstrapper/__pycache__
+/Step2/server/__pycache__
+/Step2/tests/__pycache__
