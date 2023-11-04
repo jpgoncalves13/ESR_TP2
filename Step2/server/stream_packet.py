@@ -16,11 +16,11 @@ class PacketType(Enum):
 class Packet:
 
     def __init__(self, origin: str, message_type: PacketType, delay: int, loss: int, number_of_hops: int,
-                 last_hops: [str] = None, neighbours: [str] = None, payload: [bytes] = None):
+                 last_hops: [str] = None, neighbours: [str] = None, payload: bytes = None):
         if neighbours is None:
             neighbours = []
         if payload is None:
-            payload = []
+            payload = bytes()
         if last_hops is None:
             last_hops = []
 
@@ -33,8 +33,8 @@ class Packet:
         self.neighbors = neighbours
         self.payload = payload
 
-    def serialize(self):
-        byte_array = []
+    def serialize(self) -> bytearray:
+        byte_array = bytearray()
 
         # type
         byte_array += self.type.value.to_bytes(1, byteorder='big')
@@ -69,10 +69,10 @@ class Packet:
         if len(self.payload) > 0:
             byte_array += self.payload
 
-        return bytes(byte_array)
+        return byte_array
 
     @staticmethod
-    def deserialize(byte_array: [bytes]):
+    def deserialize(byte_array: bytearray):
         offset = 0
 
         # Read type (1 byte)

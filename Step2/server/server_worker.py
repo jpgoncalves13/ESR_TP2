@@ -1,5 +1,5 @@
 from threading import Thread
-from stream_packet import Packet, PacketType
+from server.stream_packet import Packet, PacketType
 import socket
 
 

@@ -1,9 +1,9 @@
 import sys
 import socket
 import netifaces as ni
-from server import Server
-from stream_packet import Packet, PacketType
-from bootstrapper import Bootstrapper
+from server.server import Server
+from server.stream_packet import Packet, PacketType
+from bootstrapper.bootstrapper import Bootstrapper
 
 
 def request_neighbors(node_ip, bootstrapper_address, timeout=5, max_retries=3):
@@ -23,7 +23,7 @@ def request_neighbors(node_ip, bootstrapper_address, timeout=5, max_retries=3):
     udp_socket.close()
 
     if response is not None:
-        response = Packet.deserialize(response)
+        response = Packet.deserialize(bytearray(response))
         return response.neighbors
     return []
 

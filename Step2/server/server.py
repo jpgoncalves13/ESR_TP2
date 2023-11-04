@@ -1,6 +1,6 @@
 import socket
-from server_worker import ServerWorker
-from stream_packet import Packet, PacketType
+from server.server_worker import ServerWorker
+from server.stream_packet import Packet, PacketType
 
 
 class Server:
@@ -34,7 +34,7 @@ class Server:
 
     def start_tree(self, neighbors):
         if len(neighbors) == 1:
-            packet_serialized = Packet(self.ip, PacketType.SETUP, [], 0, 0, 0).serialize()
+            packet_serialized = Packet(self.ip, PacketType.SETUP, 0, 0, 0, []).serialize()
             udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
             udp_socket.sendto(packet_serialized, neighbors[0])
             
