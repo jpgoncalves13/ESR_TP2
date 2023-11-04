@@ -1,6 +1,6 @@
 import socket
-from server_worker import ServerWorker
-from stream_packet import Packet, PacketType
+from server.server_worker import ServerWorker
+from server.stream_packet import Packet, PacketType
 
 
 class Server:

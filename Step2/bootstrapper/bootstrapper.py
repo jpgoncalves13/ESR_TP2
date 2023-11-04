@@ -1,4 +1,4 @@
-import read_nodes as rd
+from bootstrapper import read_nodes as rd
 
 
 class Bootstrapper:

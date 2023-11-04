@@ -2,3 +2,5 @@
 /Step2/venv
 /Step2/.idea
 /Step2/__pycache__
+/Step2/bootstrapper/__pycache__
+/Step2/server/__pycache__
