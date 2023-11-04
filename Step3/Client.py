@@ -157,22 +157,25 @@ class Client:
         	)
 			
 			# Keep track of the sent request.
-			self.requestSent = request
+			self.requestSent = self.SETUP
 		
 		# Play request
 		elif requestCode == self.PLAY and self.state == self.READY:
+
+			print("Entrou no play")
+
 			# Update RTSP sequence number.
 			self.rtspSeq = 2
 			
 			# Write the RTSP request to be sent.
 			request = (
-            	f"SETUP {self.fileName}\n"
+            	f"PLAY {self.fileName}\n"
             	f"CSeq: {self.rtspSeq}\n"
-            	f"Port: {self.rtpPort}\n"
+            	#f"Port: {self.rtpPort}\n"
         	)
 			
 			# Keep track of the sent request.
-			self.requestSent = request
+			self.requestSent = self.PLAY
 		
 		# Pause request
 		elif requestCode == self.PAUSE and self.state == self.PLAYING:
@@ -181,13 +184,13 @@ class Client:
 			
 			# Write the RTSP request to be sent.
 			request = (
-            	f"SETUP {self.fileName}\n"
+            	f"PAUSE {self.fileName}\n"
             	f"CSeq: {self.rtspSeq}\n"
-            	f"Port: {self.rtpPort}\n"
+            	f"Port: {self.rtpPort}\n" #VER MELHOR
         	)
 			
 			# Keep track of the sent request.
-			self.requestSent = request
+			self.requestSent = self.PAUSE
 			
 		# Teardown request
 		elif requestCode == self.TEARDOWN and not self.state == self.INIT:
@@ -196,13 +199,13 @@ class Client:
 			
 			# Write the RTSP request to be sent.
 			request = (
-            	f"SETUP {self.fileName}\n"
+            	f"TEARDOWN {self.fileName}\n"
             	f"CSeq: {self.rtspSeq}\n"
-            	f"Port: {self.rtpPort}\n"
+            	f"Port: {self.rtpPort}\n" #VER MELHOR
         	)
 			
 			# Keep track of the sent request.
-			self.requestSent = request
+			self.requestSent = self.TEARDOWN
 		else:
 			return -1
 		
@@ -218,6 +221,7 @@ class Client:
 			
 			if reply: 
 				self.parseRtspReply(reply.decode("utf-8"))
+				print("Received reply:\n" + reply.decode("utf-8"))
 			
 			# Close the RTSP socket upon requesting Teardown
 			if self.requestSent == self.TEARDOWN:
@@ -241,7 +245,9 @@ class Client:
 			if self.sessionId == session:
 				if int(lines[0].split(' ')[1]) == 200: 
 					if self.requestSent == self.SETUP:
-						
+
+						print("Entrou aqui")
+
 						# Update RTSP state.
 						self.state = self.READY
 						
@@ -272,7 +278,7 @@ class Client:
 		
 		try:
 			# Bind the socket to the address using the RTP port given by the client user
-			self.rtpSocket.bind(('127.0.0.2', self.rtpPort))
+			self.rtpSocket.bind(('127.0.0.1', self.rtpPort))
 		except:
 			messagebox.showwarning('Unable to Bind', 'Unable to bind PORT=%d' %self.rtpPort)
 

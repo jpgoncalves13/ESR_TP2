@@ -38,6 +38,9 @@ class ServerWorker:
 	
 	def processRtspRequest(self, data):
 		"""Process RTSP request sent from the client."""
+
+		print(data)
+
 		# Get the request type
 		request = data.split('\n')
 		line1 = request[0].split(' ')
