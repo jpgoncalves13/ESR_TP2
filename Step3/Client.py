@@ -150,21 +150,32 @@ class Client:
 			self.rtspSeq = 1
 			
 			# Write the RTSP request to be sent.
-			request = "SETUP " + str(self.fileName) + " RTSP/1.0\nCSeq: " + str(self.rtspSeq) + "\nTransport: RTP/UDP; client_port= " + str(self.rtpPort) + "\nSession: " + self.sessionId + "\n"
+			request = (
+            	f"SETUP {self.fileName}\n"
+            	f"CSeq: {self.rtspSeq}\n"
+            	f"Port: {self.rtpPort}\n"
+        	)
 			
 			# Keep track of the sent request.
-			self.requestSent = request
+			self.requestSent = self.SETUP
 		
 		# Play request
 		elif requestCode == self.PLAY and self.state == self.READY:
+
+			print("Entrou no play")
+
 			# Update RTSP sequence number.
 			self.rtspSeq = 2
 			
 			# Write the RTSP request to be sent.
-			request = "PLAY" + str(self.fileName) + " RTSP/1.0\nCSeq: " + str(self.rtspSeq) + "\nSession: " + self.sessionId + "\n"
+			request = (
+            	f"PLAY {self.fileName}\n"
+            	f"CSeq: {self.rtspSeq}\n"
+            	#f"Port: {self.rtpPort}\n"
+        	)
 			
 			# Keep track of the sent request.
-			self.requestSent = request
+			self.requestSent = self.PLAY
 		
 		# Pause request
 		elif requestCode == self.PAUSE and self.state == self.PLAYING:
@@ -172,10 +183,14 @@ class Client:
 			self.rtspSeq = 3
 			
 			# Write the RTSP request to be sent.
-			request = "PAUSE" + str(self.fileName) + " RTSP/1.0\nCSeq: " + str(self.rtspSeq) + "\nSession: " + self.sessionId + "\n"
+			request = (
+            	f"PAUSE {self.fileName}\n"
+            	f"CSeq: {self.rtspSeq}\n"
+            	f"Port: {self.rtpPort}\n" #VER MELHOR
+        	)
 			
 			# Keep track of the sent request.
-			self.requestSent = request
+			self.requestSent = self.PAUSE
 			
 		# Teardown request
 		elif requestCode == self.TEARDOWN and not self.state == self.INIT:
@@ -183,12 +198,16 @@ class Client:
 			self.rtspSeq = 4
 			
 			# Write the RTSP request to be sent.
-			request = "TEARDOWN" + str(self.fileName) + " RTSP/1.0\nCSeq: " + str(self.rtspSeq) + "\nSession: " + self.sessionId + "\n"
+			request = (
+            	f"TEARDOWN {self.fileName}\n"
+            	f"CSeq: {self.rtspSeq}\n"
+            	f"Port: {self.rtpPort}\n" #VER MELHOR
+        	)
 			
 			# Keep track of the sent request.
-			self.requestSent = request
+			self.requestSent = self.TEARDOWN
 		else:
-			return
+			return -1
 		
 		# Send the RTSP request using rtspSocket.
 		self.rtspSocket.send(request.encode("utf-8"))
@@ -202,6 +221,7 @@ class Client:
 			
 			if reply: 
 				self.parseRtspReply(reply.decode("utf-8"))
+				print("Received reply:\n" + reply.decode("utf-8"))
 			
 			# Close the RTSP socket upon requesting Teardown
 			if self.requestSent == self.TEARDOWN:
@@ -225,27 +245,27 @@ class Client:
 			if self.sessionId == session:
 				if int(lines[0].split(' ')[1]) == 200: 
 					if self.requestSent == self.SETUP:
-						
+
+						print("Entrou aqui")
+
 						# Update RTSP state.
-						self.state = self.INIT
+						self.state = self.READY
 						
 						# Open RTP port.
 						self.openRtpPort() 
 
 					elif self.requestSent == self.PLAY:
-						self.state = self.READY
+						self.state = self.PLAYING
 
 					elif self.requestSent == self.PAUSE:
-						self.state = self.PLAYING 
+						self.state = self.READY
 						
 						# The play thread exits. A new thread is created on resume.
 						self.playEvent.set()
 						
 					elif self.requestSent == self.TEARDOWN:
-					 	self.state = self.INIT
-						
-                        # Flag the teardownAcked to close the socket.
-                        self.teardownAcked = 1 
+						self.state = self.INIT
+						self.teardownAcked = 1
 								 
 	def openRtpPort(self):
 		"""Open RTP socket binded to a specified port."""
@@ -258,7 +278,7 @@ class Client:
 		
 		try:
 			# Bind the socket to the address using the RTP port given by the client user
-			self.rtpSocket.bind(('', self.rtpPort))
+			self.rtpSocket.bind(('127.0.0.1', self.rtpPort))
 		except:
 			messagebox.showwarning('Unable to Bind', 'Unable to bind PORT=%d' %self.rtpPort)
 

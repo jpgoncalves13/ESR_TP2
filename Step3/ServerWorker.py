@@ -38,6 +38,9 @@ class ServerWorker:
 	
 	def processRtspRequest(self, data):
 		"""Process RTSP request sent from the client."""
+
+		print(data)
+
 		# Get the request type
 		request = data.split('\n')
 		line1 = request[0].split(' ')
@@ -63,12 +66,12 @@ class ServerWorker:
 				
 				# Generate a randomized RTSP session ID
 				self.clientInfo['session'] = randint(100000, 999999)
-				
+
 				# Send RTSP reply
 				self.replyRtsp(self.OK_200, seq[1])
 				
 				# Get the RTP/UDP port from the last line
-				self.clientInfo['rtpPort'] = request[2].split(' ')[3]
+				self.clientInfo['rtpPort'] = request[2].split(' ')[1]
 		
 		# Process PLAY request 		
 		elif requestType == self.PLAY:
