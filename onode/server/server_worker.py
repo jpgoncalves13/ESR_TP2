@@ -28,7 +28,7 @@ class ServerWorker:
             if packet.type == PacketType.SETUP:
                 if debug:
                     print("DEBUG: Received a request to join the topology")
-                request_neighbours = bootstrapper.handle_join_request(request[1])
+                request_neighbours = bootstrapper.handle_join_request(request[1][0])
                 packet = Packet('', PacketType.RSETUP, 1, 1, 1, neighbours=request_neighbours)
                 socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 socket_s.sendto(packet.serialize(), request[1])
