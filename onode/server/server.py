@@ -35,5 +35,5 @@ class Server:
         if len(neighbors) == 1:
             packet_serialized = Packet('', PacketType.SETUP, 0, 0, 0, []).serialize()
             udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-            udp_socket.sendto(packet_serialized, neighbors[0])
+            udp_socket.sendto(packet_serialized, (neighbors[0], 5000))  # use the port variable later with the shared state
             

@@ -52,7 +52,10 @@ def read_args() -> (Bootstrapper, (str, str), bool, bool):
             i += 1
     else:
         # <bootstrapper-ip:bootstrapper-port> [opt]
-        words = sys.argv[i].split(':')
+        if ':' in sys.argv[i]:
+            words = sys.argv[i].split(':')
+        else:
+            words = [sys.argv[i]]
         if len(words) == 2:
             try:
                 bootstrapper_address = (words[0], int(words[1]))
@@ -60,6 +63,8 @@ def read_args() -> (Bootstrapper, (str, str), bool, bool):
                 print("Error: The bootstrapper port was to be an integer")
                 exit(1)
             i += 1
+        elif len(words) == 1:
+            bootstrapper_address = (words[0], 5000)
         else:
             print("Error: Wrong bootstrapper configuration\n Try --help for more information")
             exit(1)
@@ -88,7 +93,7 @@ def main():
 
     # --help option
     if len(sys.argv) == 2 and sys.argv[1] == '--help':
-        info = """Usage: onode <bootstrapper-ip:bootstrapper-port> [node options]
+        info = """Usage: onode <bootstrapper-ip(:bootstrapper-port)?> [node options]
    or: onode --bootstrapper <file> [bootstrapper options]
 
 Node Options:
