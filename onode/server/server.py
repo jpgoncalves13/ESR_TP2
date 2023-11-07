@@ -10,26 +10,25 @@ class Server:
         self.port = port
         self.buffer_size = buffer_size
 
-    def run(self, args):
-        bootstrapper, bootstrapper_address, neighbors, is_rendezvous_point, debug = args
+    def run(self, ep):
 
         # Send message to create the tree if I only have one neighbor
-        if bootstrapper is None:
-            if debug:
+        if ep.bootstrapper is None:
+            if ep.debug:
                 print("DEBUG: Sending the packet to create the tree")
-            self.start_tree(neighbors)
+            self.start_tree(ep.neighbors)
 
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         server_socket.bind(('', self.port))
 
-        if debug:
+        if ep.debug:
             print("DEBUG: Listening on port " + str(self.port) + "...")
 
         while True:
             request = server_socket.recvfrom(self.buffer_size)
-            if debug:
+            if ep.debug:
                 print("DEBUG: Request received")
-            ServerWorker(args).run(request)
+            ServerWorker().run(ep, request)
 
     def start_tree(self, neighbors):
         if len(neighbors) == 1:

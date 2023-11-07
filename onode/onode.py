@@ -120,10 +120,11 @@ Bootstrapper Options:
         if debug:
             print(f"DEBUG: Neighbors -> {neighbours}")
 
+    ep = EP(debug, bootstrapper, is_rendezvous_point, neighbours)
+
     # Start the server
-    args = (bootstrapper, bootstrapper_address, neighbours, is_rendezvous_point, debug)
     server = Server(port)
-    server.run(args)
+    server.run(ep)
 
 
 if __name__ == '__main__':

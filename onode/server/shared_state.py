@@ -4,9 +4,11 @@ from table.forwarding_table import ForwardingTable
 
 class EP:
 
-    def __init__(self, debug: bool, bootstrapper: Bootstrapper, rendezvous: bool, node: bool, table: ForwardingTable):
+    def __init__(self, debug: bool, bootstrapper: Bootstrapper, rendezvous: bool, neighbours: [str]):
         self.debug = debug
         self.bootstrapper = bootstrapper
         self.rendezvous = rendezvous
-        self.node = node
-        self.table = table
+        self.table = ForwardingTable()
+        self.neighbours = neighbours
+        for neighbour in neighbours:
+            self.table.add_entry(neighbour, 0, 0, 0)
