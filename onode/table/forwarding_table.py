@@ -1,4 +1,4 @@
-from table_entry import TableEntry
+from table.table_entry import TableEntry
 
 
 class ForwardingTable:
