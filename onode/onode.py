@@ -126,11 +126,12 @@ Bootstrapper Options:
 
     ep = EP(debug, bootstrapper, is_rendezvous_point, neighbours, port)
 
-    # Default interval for the probe messages
-    interval = 5
-    # Start the proof messages, only for the nodes not in tree leaves
-    probe_thread = ProbeThread(ep, interval, port)
-    probe_thread.start()
+    if neighbours is not None and len(neighbours) > 1:
+        # Default interval for the probe messages
+        interval = 5
+        # Start the proof messages, only for the nodes not in tree leaves
+        probe_thread = ProbeThread(ep, interval, port)
+        probe_thread.start()
 
     # Start the server
     server = Server(port)
