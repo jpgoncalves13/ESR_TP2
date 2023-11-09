@@ -1,10 +1,10 @@
 import sys
 import socket
-import netifaces as ni
 from server.server import Server
 from server.stream_packet import Packet, PacketType
 from bootstrapper.bootstrapper import Bootstrapper
 from server.shared_state import EP
+from server.probe_thread import ProbeThread
 
 
 def request_neighbors(bootstrapper_address, timeout=5, max_retries=3):
@@ -26,7 +26,8 @@ def request_neighbors(bootstrapper_address, timeout=5, max_retries=3):
 
     if response is not None:
         response = Packet.deserialize(bytearray(response))
-        return response.neighbors
+        if response.type == PacketType.RSETUP:
+            return response.neighbors
     return []
 
 
@@ -56,19 +57,20 @@ def read_args() -> (Bootstrapper, (str, str), bool, bool):
             words = sys.argv[i].split(':')
         else:
             words = [sys.argv[i]]
+
         if len(words) == 2:
             try:
                 bootstrapper_address = (words[0], int(words[1]))
             except ValueError:
                 print("Error: The bootstrapper port was to be an integer")
                 exit(1)
-            i += 1
         elif len(words) == 1:
             bootstrapper_address = (words[0], 5000)
         else:
             print("Error: Wrong bootstrapper configuration\n Try --help for more information")
             exit(1)
 
+        i += 1
         while i < len(sys.argv):
             if sys.argv[i] == '--rendezvous':
                 # for the rendezvous point
@@ -116,11 +118,19 @@ Bootstrapper Options:
 
     if bootstrapper is None:
         # Request the neighbors if is a node and not the bootstrapper
+        if debug:
+            print(f"DEBUG: Requesting the Neighbors")
         neighbours = request_neighbors(bootstrapper_address)
         if debug:
             print(f"DEBUG: Neighbors -> {neighbours}")
 
-    ep = EP(debug, bootstrapper, is_rendezvous_point, neighbours)
+    ep = EP(debug, bootstrapper, is_rendezvous_point, neighbours, port)
+
+    # Default interval for the probe messages
+    interval = 5
+    # Start the proof messages, only for the nodes not in tree leaves
+    probe_thread = ProbeThread(ep, interval, port)
+    probe_thread.start()
 
     # Start the server
     server = Server(port)

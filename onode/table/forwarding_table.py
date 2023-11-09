@@ -11,8 +11,8 @@ class ForwardingTable:
         self.table = {}
         self.parents = []  # We may also store the parents of this node in the tree
 
-    def add_entry(self, destination, next_hops, delay, loss):
-        entry = TableEntry(next_hops, delay, loss)
+    def add_entry(self, destination):
+        entry = TableEntry()
         self.table[destination] = entry
 
     def remove_entry(self, destination):
@@ -20,7 +20,16 @@ class ForwardingTable:
 
     def consult_entry(self, destination):
         return self.table[destination]
-    
+
+    def update_packets_sent(self, destination):
+        self.table[destination].update_packets_sent()
+
+    def update_delay(self, destination, delay):
+        self.table[destination].update_delay(delay)
+
+    def update_packets_received(self, destination):
+        self.table[destination].update_packets_received()
+
     def __str__(self) -> str:
         return repr(self)
     

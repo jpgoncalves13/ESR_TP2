@@ -4,18 +4,18 @@ from enum import Enum
 class PacketType(Enum):
     SETUP = 1
     RSETUP = 2
-    HELLO = 3
     JOIN = 4
     TREEUPD = 5
     MEASURE = 6
-    ACK = 7
-    STREAMREQ = 8
-    STREAM = 9
+    RMEASURE = 7
+    ACK = 8
+    STREAMREQ = 9
+    STREAM = 10
 
 
 class Packet:
 
-    def __init__(self, origin: str, message_type: PacketType, delay: int, loss: int, number_of_hops: int,
+    def __init__(self, origin: str, message_type: PacketType, delay: float, loss: int, number_of_hops: int,
                  last_hops: [str] = None, neighbours: [str] = None, payload: bytes = None):
         if neighbours is None:
             neighbours = []

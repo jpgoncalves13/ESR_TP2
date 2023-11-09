@@ -16,7 +16,7 @@ class Server:
         if ep.bootstrapper is None:
             if ep.debug:
                 print("DEBUG: Sending the packet to create the tree")
-            self.start_tree(ep.neighbors)
+            self.start_tree(ep)
 
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         server_socket.bind(('', self.port))
@@ -28,11 +28,10 @@ class Server:
             request = server_socket.recvfrom(self.buffer_size)
             if ep.debug:
                 print("DEBUG: Request received")
-            ServerWorker().run(ep, request)
+            ServerWorker(ep).run(request)
 
-    def start_tree(self, neighbors):
-        if len(neighbors) == 1:
-            packet_serialized = Packet('', PacketType.SETUP, 0, 0, 0, []).serialize()
+    def start_tree(self, ep):
+        if len(ep.neighbors) == 1:
+            packet_serialized = Packet('', PacketType.JOIN, 0, 0, 0, []).serialize()
             udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-            udp_socket.sendto(packet_serialized, (neighbors[0], 5000))  # use the port variable later with the shared state
-            
+            udp_socket.sendto(packet_serialized, (ep.neighbors[0], self.port))
