@@ -124,7 +124,7 @@ Bootstrapper Options:
         if debug:
             print(f"DEBUG: Neighbors -> {neighbours}")
 
-    ep = EP(debug, bootstrapper, is_rendezvous_point, neighbours, port)
+    ep = EP(debug, bootstrapper, is_rendezvous_point, port, neighbours)
 
     if neighbours is not None and len(neighbours) > 1:
         # Default interval for the probe messages

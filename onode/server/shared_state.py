@@ -4,7 +4,7 @@ from table.forwarding_table import ForwardingTable
 
 class EP:
 
-    def __init__(self, debug: bool, bootstrapper: Bootstrapper, rendezvous: bool, port, neighbours: [str]= None):
+    def __init__(self, debug: bool, bootstrapper: Bootstrapper, rendezvous: bool, port, neighbours: [str]):
         self.debug = debug
         self.bootstrapper = bootstrapper
         self.rendezvous = rendezvous
