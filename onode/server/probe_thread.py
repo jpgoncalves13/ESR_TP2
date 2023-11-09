@@ -1,5 +1,5 @@
-import threading
 import time
+import calendar
 import socket
 from server.stream_packet import Packet, PacketType
 import threading
@@ -30,10 +30,8 @@ class ProbeThread(threading.Thread):
         self.running = False
 
     def send_probe_message(self, neighbour_ip, udp_socket):
-        packet_serialized = Packet(neighbour_ip, PacketType.MEASURE, time.time(), 0, 0).serialize()
+        packet_serialized = Packet(neighbour_ip, PacketType.MEASURE, calendar.timegm(time.gmtime()), 0, 0).serialize()
         udp_socket.sendto(packet_serialized, (neighbour_ip, self.port))
 
         # Table update
         self.ep.table.update_packets_sent()
-
-

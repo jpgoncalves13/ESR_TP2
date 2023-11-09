@@ -3,6 +3,7 @@ from server.stream_packet import Packet, PacketType
 from server.shared_state import EP
 import socket
 import time
+import calendar
 
 
 class ServerWorker:
@@ -26,7 +27,7 @@ class ServerWorker:
 
     def handle_setup(self, request):
         request_neighbours = self.ep.bootstrapper.handle_join_request(request[1][0])
-        packet = Packet('', PacketType.RSETUP, 1, 1, 1, neighbours=request_neighbours)
+        packet = Packet('', PacketType.RSETUP, calendar.timegm(time.gmtime()), 1, 1, neighbours=request_neighbours)
         socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         socket_s.sendto(packet.serialize(), request[1])
         socket_s.close()

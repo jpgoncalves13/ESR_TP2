@@ -15,7 +15,7 @@ class PacketType(Enum):
 
 class Packet:
 
-    def __init__(self, origin: str, message_type: PacketType, delay: float, loss: int, number_of_hops: int,
+    def __init__(self, origin: str, message_type: PacketType, delay: int, loss: int, number_of_hops: int,
                  last_hops: [str] = None, neighbours: [str] = None, payload: bytes = None):
         if neighbours is None:
             neighbours = []
