@@ -18,6 +18,9 @@ class TableEntry:
     def update_packets_received(self):
         self.packets_received += 1
 
+    def update_delay(self, delay):
+        self.delay = delay
+
     def __str__(self) -> str:
         return ("Next Hops: " + str(self.next_hops) + "\nDelay: " + str(self.delay) + "\nLoss: "
                 + str(self.packets_received/self.packets_sent)) if self.packets_sent > 0 else "N/A"
