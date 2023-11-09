@@ -34,4 +34,4 @@ class ProbeThread(threading.Thread):
         udp_socket.sendto(packet_serialized, (neighbour_ip, self.port))
 
         # Table update
-        self.ep.table.update_packets_sent()
+        self.ep.table.update_packets_sent(neighbour_ip)
