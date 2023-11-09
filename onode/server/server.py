@@ -31,7 +31,7 @@ class Server:
             ServerWorker(ep).run(request)
 
     def start_tree(self, ep):
-        if len(ep.neighbors) == 1:
+        if len(ep.neighbours) == 1:
             packet_serialized = Packet('', PacketType.JOIN, 0, 0, 0, []).serialize()
             udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
             udp_socket.sendto(packet_serialized, (ep.neighbors[0], self.port))

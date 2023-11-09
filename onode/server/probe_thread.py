@@ -18,6 +18,8 @@ class ProbeThread(threading.Thread):
         self.running = True
         udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
         while self.running:
+            if self.ep.debug:
+                print("DEBUG: Sending the probe message to neighbours")
             for neighbour in self.ep.get_neighbours():
                 self.send_probe_message(neighbour, udp_socket)
             time.sleep(self.interval)
