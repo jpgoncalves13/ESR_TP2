@@ -11,7 +11,7 @@ class PacketType(Enum):
     ACK = 8
     STREAMREQ = 9
     STREAM = 10
-
+    UNSUBSCRIBE = 11
 
 class Packet:
 

@@ -23,6 +23,8 @@ class StreamTable:
     def remove_client_from_stream(self, stream_id, client):
         with self.lock:
             self.table[stream_id].remove(client)
+            if self.table[stream_id] == []:
+                del self.table[stream_id]
 
     def remove_entry(self, stream_id):
         with self.lock:
