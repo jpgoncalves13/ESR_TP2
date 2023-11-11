@@ -144,9 +144,9 @@ class ServerWorker:
 	def replyRtsp(self, code, seq):
 		"""Send RTSP reply to the client."""
 		if code == self.OK_200:
-			#print("200 OK")
+			# 200 OK
 			reply = 'RTSP/1.0 200 OK\nCSeq: ' + seq + '\nSession: ' + str(self.clientInfo['session'])
-			connSocket = self.clientInfo['rtspSocket'][0]
+			connSocket = self.clientInfo['rtspSocket']
 			connSocket.send(reply.encode())
 		
 		# Error messages
