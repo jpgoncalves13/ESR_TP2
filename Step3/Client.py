@@ -134,7 +134,7 @@ class Client:
 
 	def connectToServer(self):
 		"""Connect to the Server. Start a new RTSP/TCP session."""
-		self.rtspSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.rtspSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		try:
 			self.rtspSocket.connect((self.serverAddr, self.serverPort))
 		except:
