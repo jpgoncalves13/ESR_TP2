@@ -29,7 +29,7 @@ class ServerWorker:
 	
 	def recvRtspRequest(self):
 		"""Receive RTSP request from the client."""
-		connSocket = self.clientInfo['rtspSocket'][0]
+		connSocket = self.clientInfo['rtspSocket'][1]
 		while True:            
 			data = connSocket.recvfrom(256)
 			if data:
