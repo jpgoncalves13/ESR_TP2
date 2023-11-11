@@ -69,6 +69,7 @@ class ServerWorker:
 		
 		# Process PLAY request 		
 		elif requestType == self.PLAY:
+			print("state: ", self.state)
 			if self.state == self.READY:
 				print("processing PLAY\n")
 				self.state = self.PLAYING
