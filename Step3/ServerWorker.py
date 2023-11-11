@@ -37,6 +37,9 @@ class ServerWorker:
 		request = data.split('\n')
 		line1 = request[0].split(' ')
 		requestType = line1[0]
+  
+		print(requestType)
+		print(self.state)
 		
 		# Get the media file name
 		filename = line1[1]
