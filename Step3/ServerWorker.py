@@ -21,19 +21,12 @@ class ServerWorker:
 	
 	clientInfo = {}
 	
-	def __init__(self, clientInfo):
+	def __init__(self, clientInfo, data):
 		self.clientInfo = clientInfo
+		self.data = data
 		
 	def run(self):
-		threading.Thread(target=self.recvRtspRequest).start()
-	
-	def recvRtspRequest(self):
-		connSocket = self.clientInfo['rtspSocket'][1]
-		while True:
-			data, addr = connSocket.recvfrom(256)
-			if data:
-				print("Data received:\n" + data.decode("utf-8"))
-				self.processRtspRequest(data.decode("utf-8"))
+		threading.Thread(target=self.processRtspRequest(self.data)).start()
 	
 	def processRtspRequest(self, data):
 		"""Process RTSP request sent from the client."""
