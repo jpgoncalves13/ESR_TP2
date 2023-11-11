@@ -42,6 +42,21 @@ class ServerWorker:
             socket_s.sendto(packet.serialize(), (client, self.ep.port))
             socket_s.close()
 
+    def handle_stream_request(self, packet, ip):
+        stream_id = packet.origin # Estou a considerar o campo origin como o indentificador da STREAM
+        if self.ep.stream_table.consult_stream(stream_id) == False:
+            # Caso a stream não esteja já a ser servida, reencaminha para cima na árvore
+            self.ep.stream_table.add_stream_entry(stream_id, [ip])
+            packet = Packet(stream_id, PacketType.STREAMREQ, 0, 0, 0)
+            parent = self.ep.forwarding_table.parents[0]
+            socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            socket_s.sendto(packet.serialize(), (parent, self.ep.port))
+            socket_s.close()
+        else: 
+            # Caso a stream já esteja a ser servida não reencaminha para cima na árvore
+            pass # Não faz nada -> espera que o RP envie a stream
+
+
     def handle_request(self, request):
         packet = Packet.deserialize(request[0])
 
@@ -64,6 +79,8 @@ class ServerWorker:
                 self.handle_setup(request)
             elif packet.type == PacketType.STREAM:
                 self.handle_stream(packet)
+            elif packet.type == PacketType.STREAMREQ:
+                self.handle_stream_request(packet, request[1][0]) # Enviamos também o ip do emissor
             else:
                 if self.ep.debug:
                     print(f"ERROR: I'm only the bootstrapper: {packet.type}")
