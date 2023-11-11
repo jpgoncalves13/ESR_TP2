@@ -1,5 +1,6 @@
-from table_entry import TableEntry
+from table.table_entry import TableEntry
 import threading
+
 
 class ForwardingTable:
     """
@@ -9,12 +10,12 @@ class ForwardingTable:
     """
     def __init__(self):
         self.table = {}
-        self.parents = [] # We may also store the parents of this node in the tree
+        self.parents = []  # We may also store the parents of this node in the tree
         self.lock = threading.Lock()
-    
-    def add_entry(self, destination, next_hops, delay, loss):
+
+    def add_entry(self, destination):
         with self.lock:
-            entry = TableEntry(next_hops, delay, loss)
+            entry = TableEntry()
             self.table[destination] = entry
 
     def remove_entry(self, destination):
@@ -23,14 +24,23 @@ class ForwardingTable:
 
     def consult_entry(self, destination):
         return self.table[destination]
-    
+
+    def update_packets_sent(self, destination):
+        self.table[destination].update_packets_sent()
+
+    def update_delay(self, destination, delay):
+        self.table[destination].update_delay(delay)
+
+    def update_packets_received(self, destination):
+        self.table[destination].update_packets_received()
+
     def __str__(self) -> str:
-        return self.__repr__()
+        return repr(self)
     
     def __repr__(self) -> str:
-        str = "------- Table: -------\n"
+        st = "------- Table: -------\n"
 
         for entry in self.table:
-            str += entry + "->>>>>>>>>>>>>\n" + self.table[entry].__str__() + "\n"
+            st += entry + "->>>>>>>>>>>>>\n" + str(self.table[entry]) + "\n"
 
-        return str
+        return st

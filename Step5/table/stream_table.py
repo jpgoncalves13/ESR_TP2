@@ -1,3 +1,5 @@
+import threading
+
 class StreamTable:
     """
     This class is used to store the stream information of each Node.
@@ -5,21 +7,26 @@ class StreamTable:
     """
     def __init__(self):
         self.table = {}
+        self.lock = threading.Lock()
 
     def add_stream_entry(self, stream_id, clients):
-        if clients is None:
-            self.table[stream_id] = []
-        else:
-            self.table[stream_id] = clients
+        with self.lock:
+            if clients is None:
+                self.table[stream_id] = []
+            else:
+                self.table[stream_id] = clients
 
     def add_client_to_stream(self, stream_id, client):
-        self.table[stream_id].append(client)
+        with self.lock:
+            self.table[stream_id].append(client)
 
     def remove_client_from_stream(self, stream_id, client):
-        self.table[stream_id].remove(client)
+        with self.lock:
+            self.table[stream_id].remove(client)
 
     def remove_entry(self, stream_id):
-        del self.table[stream_id]
+        with self.lock:
+            del self.table[stream_id]
 
     def consult_entry(self, stream_id):
         return self.table[stream_id]

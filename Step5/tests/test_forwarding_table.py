@@ -1,6 +1,6 @@
 import unittest
-from forwarding_table import ForwardingTable
-from table_entry import TableEntry
+from table import ForwardingTable
+from table import TableEntry
 
 
 class TestForwardingTable(unittest.TestCase):
