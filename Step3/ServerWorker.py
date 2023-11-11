@@ -28,10 +28,9 @@ class ServerWorker:
 		threading.Thread(target=self.recvRtspRequest).start()
 	
 	def recvRtspRequest(self):
-		"""Receive RTSP request from the client."""
 		connSocket = self.clientInfo['rtspSocket'][1]
-		while True:            
-			data = connSocket.recvfrom(256)
+		while True:
+			data, addr = connSocket.recvfrom(256)
 			if data:
 				print("Data received:\n" + data.decode("utf-8"))
 				self.processRtspRequest(data.decode("utf-8"))
