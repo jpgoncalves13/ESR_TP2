@@ -279,7 +279,7 @@ class Client:
 		try:
 			# Bind the socket to the address using the RTP port given by the client user
 			print(self.rtpPort)
-			self.rtpSocket.bind((self.serverAddr, self.rtpPort))
+			self.rtpSocket.bind(('', self.rtpPort))
 		except:
 			messagebox.showwarning('Unable to Bind', 'Unable to bind PORT=%d' %self.rtpPort)
 
