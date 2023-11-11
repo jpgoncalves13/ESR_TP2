@@ -1,4 +1,5 @@
 from table_entry import TableEntry
+import threading
 
 class ForwardingTable:
     """
@@ -9,13 +10,16 @@ class ForwardingTable:
     def __init__(self):
         self.table = {}
         self.parents = [] # We may also store the parents of this node in the tree
-
+        self.lock = threading.Lock()
+    
     def add_entry(self, destination, next_hops, delay, loss):
-        entry = TableEntry(next_hops, delay, loss)
-        self.table[destination] = entry
+        with self.lock:
+            entry = TableEntry(next_hops, delay, loss)
+            self.table[destination] = entry
 
     def remove_entry(self, destination):
-        del self.table[destination]
+        with self.lock:
+            del self.table[destination]
 
     def consult_entry(self, destination):
         return self.table[destination]
