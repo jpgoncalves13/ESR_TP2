@@ -37,9 +37,6 @@ class ServerWorker:
 		request = data.split('\n')
 		line1 = request[0].split(' ')
 		requestType = line1[0]
-  
-		print(requestType)
-		print(self.state)
 		
 		# Get the media file name
 		filename = line1[1]
@@ -58,6 +55,8 @@ class ServerWorker:
 					self.state = self.READY
 				except IOError:
 					self.replyRtsp(self.FILE_NOT_FOUND_404, seq[1])
+     
+				print("state: ", self.state)
 				
 				# Generate a randomized RTSP session ID
 				self.clientInfo['session'] = randint(100000, 999999)
