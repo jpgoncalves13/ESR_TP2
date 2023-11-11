@@ -147,7 +147,7 @@ class ServerWorker:
 			# 200 OK
 			reply = 'RTSP/1.0 200 OK\nCSeq: ' + seq + '\nSession: ' + str(self.clientInfo['session'])
 			connSocket = self.clientInfo['rtspSocket']
-			connSocket.send(reply.encode())
+			connSocket.sendto(reply.encode(), self.clientInfo['clientAddress'])
 		
 		# Error messages
 		elif code == self.FILE_NOT_FOUND_404:
