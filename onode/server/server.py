@@ -13,7 +13,7 @@ class Server:
     def run(self, ep):
 
         # Send message to create the tree if I only have one neighbor
-        if ep.bootstrapper is None:
+        if ep.bootstrapper is None and not ep.rendezvous and len(ep.neighbours) == 1:
             if ep.debug:
                 print("DEBUG: Sending the packet to create the tree")
             self.start_tree(ep)
@@ -31,7 +31,7 @@ class Server:
             ServerWorker(ep).run(request)
 
     def start_tree(self, ep):
-        if len(ep.neighbours) == 1:
-            packet_serialized = Packet('', PacketType.JOIN, 0, 0, 0, []).serialize()
-            udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-            udp_socket.sendto(packet_serialized, (ep.neighbours[0], self.port))
+        packet_serialized = Packet('', PacketType.JOIN, 0, 0, 0).serialize()
+        udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        udp_socket.sendto(packet_serialized, (ep.neighbours[0], self.port))
+        udp_socket.close()

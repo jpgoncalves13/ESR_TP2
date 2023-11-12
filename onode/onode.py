@@ -129,7 +129,9 @@ Bootstrapper Options:
     if neighbours is not None and len(neighbours) > 1:
         # Default interval for the probe messages
         interval = 5
-        # Start the proof messages, only for the nodes not in tree leaves
+        # Start the proof thread only for the nodes not in tree leaves
+        # The messages only start when the table has entries, because we can have
+        # neighbours not listening
         probe_thread = ProbeThread(ep, interval, port)
         probe_thread.start()
 
