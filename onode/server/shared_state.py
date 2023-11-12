@@ -8,12 +8,10 @@ class EP:
         self.debug = debug
         self.bootstrapper = bootstrapper
         self.rendezvous = rendezvous
-        self.table = ForwardingTable(neighbours)
+        self.table = ForwardingTable()
         self.neighbours = neighbours
         self.port = port
 
     def get_neighbours(self):
         return self.neighbours
 
-    def get_entries(self):
-        return self.table.get_entries()
