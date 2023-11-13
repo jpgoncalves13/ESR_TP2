@@ -30,7 +30,7 @@ class ServerWorker:
 
     def handle_join(self, packet, ip):
         # Only requests from neighbors are responded to
-        if ip not in self.ep.get_neighbours():
+        if ip not in self.ep.get_neighbours() or len(self.ep.get_neighbours()) == 1:
             return
 
         # If packet don't have origin, insert
@@ -64,7 +64,7 @@ class ServerWorker:
             neighbour = packet.last_hop
             packet.last_hop = next_hop
             socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            socket_s.sendto(packet.serialize(), ('10.0.0.21', self.ep.port))
+            socket_s.sendto(packet.serialize(), ('10.0.0.20', self.ep.port))
             socket_s.close()
 
     def handle_request(self, request):
