@@ -25,7 +25,6 @@ class Server:
             print("DEBUG: Listening on port " + str(self.port) + "...")
 
         while True:
-            print("ola")
             request = server_socket.recvfrom(self.buffer_size)
             ServerWorker(ep).run(request)
 

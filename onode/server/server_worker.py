@@ -64,7 +64,7 @@ class ServerWorker:
             neighbour = packet.last_hop
             packet.last_hop = next_hop
             socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            print(f"{neighbour}")
+            print(f"aaa{neighbour}aaa")
             socket_s.sendto(packet.serialize(), (neighbour, self.ep.port))
             socket_s.close()
 
