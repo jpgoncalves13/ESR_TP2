@@ -9,12 +9,11 @@ from server.probe_thread import ProbeThread
 
 def request_neighbors(bootstrapper_address, timeout=5, max_retries=3):
     retries = 0
-    packet_serialized = Packet('', PacketType.SETUP, 0, 0, 0).serialize()
+    packet_serialized = Packet(PacketType.SETUP, '0.0.0.0', 0, '0.0.0.0').serialize()
     udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
     response = None
 
     while response is None and retries < max_retries:
-
         udp_socket.sendto(packet_serialized, bootstrapper_address)
         udp_socket.settimeout(timeout)
         try:
@@ -27,11 +26,11 @@ def request_neighbors(bootstrapper_address, timeout=5, max_retries=3):
     if response is not None:
         response = Packet.deserialize(bytearray(response))
         if response.type == PacketType.RSETUP:
-            return response.neighbors
+            return response.payload
     return []
 
 
-def read_args() -> (Bootstrapper, (str, str), bool, bool):
+def read_args():
     i = 1
     bootstrapper = None
     debug = False
@@ -132,8 +131,8 @@ Bootstrapper Options:
         # Start the proof thread only for the nodes not in tree leaves
         # The messages only start when the table has entries, because we can have
         # neighbours not listening
-        probe_thread = ProbeThread(ep, interval, port)
-        probe_thread.start()
+        # probe_thread = ProbeThread(ep, interval, port)
+        # probe_thread.start()
 
     # Start the server
     server = Server(port)
