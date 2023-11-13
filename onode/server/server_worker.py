@@ -58,11 +58,10 @@ class ServerWorker:
                 self.flood_packet(ip, packet.serialize())
 
     def handle_tree_update(self, packet, ip):
-        # leaf, last_hop
         self.ep.table.add_parent(ip)
-
+        print('ola')
+        print(len(self.ep.get_neighbours()))
         if len(self.ep.get_neighbours()) > 1:
-            print('ola')
             next_hop = self.ep.table.update_tree_entry(packet.leaf, packet.last_hop)
             neighbour = packet.last_hop
             packet.last_hop = next_hop
