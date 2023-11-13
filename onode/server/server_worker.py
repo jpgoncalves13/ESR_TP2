@@ -23,7 +23,7 @@ class ServerWorker:
     def flood_packet(self, sender_ip, packet_serialized):
         socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         neighbours = self.ep.get_neighbours()
-        neighbours.pop(sender_ip)
+        neighbours.remove(sender_ip)
         for neighbour in neighbours:
             socket_s.sendto(packet_serialized, (neighbour, self.ep.port))
         socket_s.close()
