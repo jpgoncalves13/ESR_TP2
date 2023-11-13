@@ -65,7 +65,7 @@ class ServerWorker:
             packet.last_hop = next_hop
             socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             print(neighbour)
-            socket_s.sendto(packet.serialize(), (neighbour, self.ep.port))
+            socket_s.sendto(packet.serialize(), ('10.0.18.1', self.ep.port))
             socket_s.close()
 
     def handle_request(self, request):
