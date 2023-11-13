@@ -131,7 +131,7 @@ class ClienteGUI:
 			self.rtpSocket.bind((self.addr, self.port))
 			print('\nBind \n')
 		except:
-			tkinter.messagebox.showwarning('Unable to Bind', 'Unable to bind PORT=%d' %self.rtpPort)
+			tkinter.messagebox.showwarning('Unable to Bind', 'Unable to bind PORT=%d' %self.port)
 
 	def handler(self):
 		"""Handler on explicitly closing the GUI window."""

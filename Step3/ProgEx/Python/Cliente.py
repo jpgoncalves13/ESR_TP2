@@ -1,10 +1,10 @@
 import sys
 from tkinter import Tk
-from ClienteGUI import ClienteGUI
+from ProgEx.Python.ClienteGUI import ClienteGUI
 
 if __name__ == "__main__":
 	try:
-		addr = '127.0.0.1'
+		addr = '10.0.0.21'
 		port = 25000
 	except:
 		print("[Usage: Cliente.py]\n")	
