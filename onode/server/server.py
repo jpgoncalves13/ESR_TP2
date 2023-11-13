@@ -25,9 +25,8 @@ class Server:
             print("DEBUG: Listening on port " + str(self.port) + "...")
 
         while True:
+            print("ola")
             request = server_socket.recvfrom(self.buffer_size)
-            if ep.debug:
-                print("DEBUG: Request received")
             ServerWorker(ep).run(request)
 
     def start_tree(self, ep):
