@@ -31,7 +31,7 @@ class Server:
             ServerWorker(ep).run(request)
 
     def start_tree(self, ep):
-        packet_serialized = Packet('', PacketType.JOIN, 0, 0, 0).serialize()
+        packet_serialized = Packet(PacketType.JOIN, '0.0.0.0', 0, '0.0.0.0').serialize()
         udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
         udp_socket.sendto(packet_serialized, (ep.neighbours[0], self.port))
         udp_socket.close()

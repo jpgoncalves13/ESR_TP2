@@ -20,9 +20,8 @@ class ProbeThread(threading.Thread):
         while self.running:
             if self.ep.debug:
                 print("DEBUG: Sending the probe message to neighbours")
-            #for neighbour in self.ep.get_neighbours():
-                # Update this in the future to do not ask off nodes
-            #    self.send_probe_message(neighbour, udp_socket)
+            for neighbour in self.ep.get_neighbors_to_request():
+                self.send_probe_message(neighbour, udp_socket)
             time.sleep(self.interval)
 
         udp_socket.close()
@@ -31,7 +30,8 @@ class ProbeThread(threading.Thread):
         self.running = False
 
     def send_probe_message(self, neighbour_ip, udp_socket):
-        packet_serialized = Packet(neighbour_ip, PacketType.MEASURE, calendar.timegm(time.gmtime()), 0, 0).serialize()
-        udp_socket.sendto(packet_serialized, (neighbour_ip, self.port))
+        timestamp = calendar.timegm(time.gmtime())
+        # packet_serialized = Packet(PacketType.MEASURE, , 0, 0).serialize()
+        # udp_socket.sendto(packet_serialized, (neighbour_ip, self.port))
         # Table update
-        self.ep.table.update_packets_sent(neighbour_ip)
+        # self.ep.table.update_packets_sent(neighbour_ip)
