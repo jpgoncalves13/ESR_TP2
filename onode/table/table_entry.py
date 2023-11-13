@@ -13,9 +13,5 @@ class TableEntry:
         self.delay = delay
 
     def __str__(self) -> str:
-        return ("Next Hop: " + str(self.next_hop) + "\nDelay: " + str(self.delay) + "\nLoss: "
-                + str(self.loss) + str(self.in_tree))
-    
-    def __repr__(self) -> str:
-        return ("Next Hop: " + str(self.next_hop) + "\nDelay: " + str(self.delay) + "\nLoss: "
-                + str(self.loss) + str(self.in_tree))
+        return ("Next Hop: " + str(self.next_hop) + "; Delay: " + str(self.delay) + "; Loss: "
+                + str(self.loss) + "; In tree:" + str(self.in_tree))
