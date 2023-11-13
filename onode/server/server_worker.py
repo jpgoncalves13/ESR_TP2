@@ -56,6 +56,10 @@ class ServerWorker:
             parents = self.ep.table.get_parents()
             if len(parents) == 0 and len(self.ep.get_neighbours()) > 1:
                 self.flood_packet(ip, packet.serialize())
+            elif len(parents) > 0:
+                socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                socket_s.sendto(packet.serialize(), (parents[0], self.ep.port))
+                socket_s.close()
 
     def handle_tree_update(self, packet, ip):
         self.ep.table.add_parent(ip)

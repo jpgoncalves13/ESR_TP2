@@ -38,6 +38,11 @@ class ForwardingTable:
         with self.lock:
             if leaf in self.table and next_hop in self.table[leaf]:
                 entries = self.table[leaf][next_hop]
+
+                for neighbour, value in self.table[leaf].items():
+                    for entry in value:
+                        entry.in_tree = False
+
                 if len(entries) == 1:
                     entries[0].in_tree = True
                     return entries[0].next_hop
