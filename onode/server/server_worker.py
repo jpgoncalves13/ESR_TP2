@@ -63,9 +63,12 @@ class ServerWorker:
             next_hop = self.ep.table.update_tree_entry(packet.leaf, packet.last_hop)
             neighbour = packet.last_hop
             packet.last_hop = next_hop
-            socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            socket_s.sendto(packet.serialize(), (neighbour, self.ep.port))
-            socket_s.close()
+            try:
+                socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                socket_s.sendto(packet.serialize(), (neighbour, self.ep.port))
+                socket_s.close()
+            except Exception as e:
+                print(f"Erro ao enviar pacote: {e}")
 
     def handle_request(self, request):
         packet = Packet.deserialize(request[0])
