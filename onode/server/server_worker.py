@@ -86,6 +86,9 @@ class ServerWorker:
                     print(self.ep.table)
             elif packet.type == PacketType.TREEUPD:
                 self.handle_tree_update(packet, request[1][0])
+                if self.ep.debug:
+                    print("Debug:")
+                    print(self.ep.table)
             #elif packet.type == PacketType.MEASURE:
             #    self.handle_measure(packet, request[1][0])
             #elif packet.type == PacketType.RMEASURE:
