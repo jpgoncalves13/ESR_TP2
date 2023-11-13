@@ -52,7 +52,7 @@ class ServerWorker:
 
         if not self.ep.rendezvous:
             parents = self.ep.table.get_parents()
-            if len(parents) < 0:
+            if len(parents) == 0 and len(self.ep.get_neighbours()) > 1:
                 self.flood_packet(ip, packet.serialize())
 
     def handle_request(self, request):
