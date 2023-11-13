@@ -34,7 +34,27 @@ class ForwardingTable:
                             return item[0]
             return None
 
-    def add_entry(self, leaf, neighbour, next_hop):  # For join
+    def update_tree_entry(self, leaf, next_hop):
+        with self.lock:
+            if leaf in self.table and next_hop in self.table[leaf]:
+                entries = self.table[leaf][next_hop]
+                if len(entries) == 1:
+                    entries[0].in_tree = True
+                    return entries[0].next_hop
+                elif len(entries) > 1:
+                    best_entry = entries[0]
+                    metric = best_entry.get_metric()
+                    for entry in entries:
+                        metric_i = entry.get_metric()
+                        if metric_i < metric:
+                            best_entry = entry
+                            metric = metric_i
+
+                    best_entry.in_tree = True
+                    return best_entry.next_hop
+                return None
+
+    def add_entry(self, leaf, neighbour, next_hop, is_rendezvous_point):  # For join
         with self.lock:
             entry = TableEntry(next_hop)
             is_first_entry = False
@@ -42,6 +62,8 @@ class ForwardingTable:
             if leaf not in self.table:
                 is_first_entry = True
                 self.table[leaf] = {}
+                if is_rendezvous_point:
+                    entry.in_tree = True
 
             if neighbour not in self.table[leaf]:
                 self.table[leaf][neighbour] = []

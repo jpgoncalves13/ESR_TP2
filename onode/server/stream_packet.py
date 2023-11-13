@@ -20,7 +20,7 @@ class Packet:
         self.leaf = leaf  # 4
         self.stream_id = stream_id  # 1
         self.last_hop = last_hop  # 4
-        self.payload = payload
+        self.payload = payload # RSETUP -> neighbours, RMEASURE -> [(leaf, nex_hop, delay, loss)], STREAM -> bytes
 
     def serialize(self):
         byte_array = bytearray()

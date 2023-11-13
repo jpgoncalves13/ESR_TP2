@@ -41,21 +41,35 @@ class ServerWorker:
         next_hop = packet.last_hop
         packet.last_hop = ip
 
-        is_first_entry = self.ep.table.add_entry(packet.leaf, ip, next_hop)
+        is_first_entry = self.ep.table.add_entry(packet.leaf, ip, next_hop, self.ep.rendezvous)
 
-        # if self.ep.rendezvous and first_entry:
+        if self.ep.rendezvous and is_first_entry:
             # The first packet to arrive is the best option
             # Send response that this is the path
-            # socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            # response = Packet(packet.origin, PacketType.TREEUPD, 0, 0, 0)
-            # socket_s.sendto(response.serialize(), (ip, self.ep.port))
-            # socket_s.close()
-            #return
+            socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            response = Packet(PacketType.TREEUPD, packet.leaf, 0, next_hop)
+            socket_s.sendto(response.serialize(), (ip, self.ep.port))
+            socket_s.close()
+            return
 
         if not self.ep.rendezvous:
             parents = self.ep.table.get_parents()
             if len(parents) == 0 and len(self.ep.get_neighbours()) > 1:
                 self.flood_packet(ip, packet.serialize())
+
+    def handle_tree_update(self, packet, ip):
+        # leaf, last_hop
+        self.ep.table.add_parent(ip)
+
+        if len(self.ep.get_neighbours()) > 1:
+            next_hop = self.ep.table.update_tree_entry(packet.leaf, packet.last_hop)
+            neighbour = packet.last_hop
+            packet.last_hop = next_hop
+            socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            socket_s.sendto(packet.serialize(), (neighbour, self.ep.port))
+            socket_s.close()
+
+        pass
 
     def handle_request(self, request):
         packet = Packet.deserialize(request[0])
@@ -70,8 +84,8 @@ class ServerWorker:
                 if self.ep.debug:
                     print("Debug:")
                     print(self.ep.table)
-            #elif packet.type == PacketType.TREEUPD:
-            #    self.handle_treeupd(packet, request[1][0])
+            elif packet.type == PacketType.TREEUPD:
+                self.handle_tree_update(packet, request[1][0])
             #elif packet.type == PacketType.MEASURE:
             #    self.handle_measure(packet, request[1][0])
             #elif packet.type == PacketType.RMEASURE:

@@ -12,6 +12,11 @@ class TableEntry:
     def set_delay(self, delay):
         self.delay = delay
 
+    def get_metric(self):
+        if self.delay is not None and self.loss is not None:
+            return self.delay * self.loss
+        return 0
+
     def __str__(self) -> str:
         return ("Next Hop: " + str(self.next_hop) + "; Delay: " + str(self.delay) + "; Loss: "
                 + str(self.loss) + "; In tree:" + str(self.in_tree))
