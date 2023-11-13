@@ -1,5 +1,6 @@
 from bootstrapper.bootstrapper import Bootstrapper
 from table.forwarding_table import ForwardingTable
+import copy
 
 
 class EP:
@@ -9,7 +10,7 @@ class EP:
         self.bootstrapper = bootstrapper
         self.rendezvous = rendezvous
         self.table = ForwardingTable()
-        self.neighbours = neighbours
+        self.neighbours = copy.deepcopy(neighbours)
         self.port = port
 
     def get_neighbours(self):
