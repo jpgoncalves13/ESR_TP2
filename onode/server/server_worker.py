@@ -64,8 +64,6 @@ class ServerWorker:
             neighbour = packet.last_hop
             packet.last_hop = next_hop
             udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            if self.ep.debug:
-                print(f"Sending packet to (f{neighbour},f{self.ep.port})")
             udp_socket.sendto(packet.serialize(), (neighbour, self.ep.port))
             udp_socket.close()
 
