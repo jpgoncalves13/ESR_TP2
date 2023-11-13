@@ -35,7 +35,7 @@ class ServerWorker:
 
         # If packet don't have origin, insert
         if packet.leaf == '0.0.0.0':
-            packet.origin = ip
+            packet.leaf = ip
             packet.last_hop = ip
 
         next_hop = packet.last_hop
