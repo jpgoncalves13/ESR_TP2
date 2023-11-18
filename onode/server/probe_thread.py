@@ -50,7 +50,7 @@ class ProbeThread(threading.Thread):
                         except socket.timeout:
                             pass
 
-                    loss_measured = int(100 * (packets_sent - packets_received) / packets_sent) if packets_sent > 0 else 0
+                    loss_measured = 100 * (packets_sent - packets_received) / packets_sent if packets_sent > 0 else 0
                     delay_measured = int(total_delay / packets_received) if packets_received > 0 else 0
 
                     if packets_received > 0:
@@ -59,7 +59,7 @@ class ProbeThread(threading.Thread):
                             list_metrics = last_packet.payload
                             for leaf, next_hop, delay, loss in list_metrics:
                                 self.ep.update_metrics(leaf, neighbour, next_hop,
-                                                       delay + delay_measured, (loss + loss_measured)/2)
+                                                       delay + delay_measured, int((loss + loss_measured)/2))
 
                 time.sleep(self.interval)
         finally:
