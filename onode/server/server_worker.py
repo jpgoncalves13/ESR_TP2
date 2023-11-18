@@ -77,7 +77,7 @@ class ServerWorker:
         best_entries_list = self.ep.get_best_entries()
         if self.ep.rendezvous:
             best_entries_list += ("RP", "RP", 0, 0)
-        packet = Packet(PacketType.RMEASURE, '0.0.0.0', '', '0.0.0.0', best_entries_list)
+        packet = Packet(PacketType.RMEASURE, '0.0.0.0', '', 0, '0.0.0.0', best_entries_list)
         ServerWorker.send_packet(packet, address)
 
     def handle_request(self, response, address):

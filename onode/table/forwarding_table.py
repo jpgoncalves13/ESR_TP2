@@ -97,7 +97,7 @@ class ForwardingTable:
             for leaf in self.table.keys():
                 best_entry_found = False
 
-                for neighbour, entries in self.table[leaf]:
+                for neighbour, entries in self.table[leaf].items():
                     for entry in entries:
                         if entry.in_tree:
                             best_entries.append((leaf, neighbour, entry.delay, entry.loss))
