@@ -34,9 +34,10 @@ class Server:
 
         if ep.debug:
             print("DEBUG: Listening on port " + str(self.port) + "...")
-            print("DEBUG: Sending hello to neighbours")
 
         if ep.bootstrapper is None:
+            if ep.debug:
+                print("DEBUG: Sending hello to neighbours")
             Thread(target=lambda: self.send_hello(ep, 5)).start()
 
         while True:
