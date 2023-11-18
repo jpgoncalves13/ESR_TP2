@@ -63,7 +63,7 @@ class ForwardingTable:
 
     def add_entry(self, node_id, neighbour, next_hop, delay=0, loss=0):  # For join
         with self.lock:
-            entry = TableEntry(next_hop, delay, loss)
+            entry = TableEntry(next_hop, False, delay, loss)
             is_first_entry = False
 
             if node_id not in self.table:

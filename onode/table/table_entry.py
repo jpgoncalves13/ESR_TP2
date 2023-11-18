@@ -3,7 +3,7 @@ class TableEntry:
     A class used to represent a table entry
     A table entry is composed of a list of next hops, the delay and the loss in the link to the next hop
     """
-    def __init__(self, next_hop=None, in_tree=False, delay=None, loss=None):
+    def __init__(self, next_hop, in_tree, delay, loss):
         self.next_hop = next_hop
         self.delay = delay
         self.loss = loss
