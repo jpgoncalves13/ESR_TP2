@@ -173,6 +173,6 @@ class ForwardingTable:
                 for neighbour, entries_list in value.items():
                     st += f"    {neighbour}:\n"
                     for entry in entries_list:
-                        st += f"        {entry}\n"
+                        st += f"        {str(entry)}\n"
 
             return st
