@@ -46,7 +46,7 @@ class ServerWorker:
             if self.ep.debug:
                 print("DEBUG: Sending the packet to create the tree")
             packet = Packet(PacketType.JOIN, '0.0.0.0', '', 0, '0.0.0.0')
-            ServerWorker.send_packet(packet, (self.ep.neighbours[0], self.ep.port))
+            ServerWorker.send_packet(packet, (self.ep.get_neighbours()[0], self.ep.port))
         # This will be updated
 
     def handle_join(self, packet, ip):
