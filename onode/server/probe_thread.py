@@ -45,13 +45,13 @@ class ProbeThread(threading.Thread):
                             end_time = time.time()
                             packets_received += 1
                             list_packets_received.append(Packet.deserialize(response))
-                            total_delay += int((end_time - start_time) * 1000)  # ms
+                            total_delay += (end_time - start_time) * 1000  # ms
 
                         except socket.timeout:
                             pass
 
-                    loss_measured = 100 * (packets_sent - packets_received) / packets_sent if packets_sent > 0 else 0
-                    delay_measured = total_delay / packets_received if packets_received > 0 else 0
+                    loss_measured = int(100 * (packets_sent - packets_received) / packets_sent) if packets_sent > 0 else 0
+                    delay_measured = int(total_delay / packets_received) if packets_received > 0 else 0
 
                     if packets_received > 0:
                         last_packet = list_packets_received[-1]
