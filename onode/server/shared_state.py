@@ -27,7 +27,7 @@ class EP:
 
     def get_neighbours(self):
         with self.neighbours_lock:
-            return copy.copy(self.neighbours)
+            return copy.copy(self.neighbours.keys())
 
     def set_state_of_neighbour(self, neighbour, state):
         with self.neighbours_lock:
