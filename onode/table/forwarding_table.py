@@ -119,9 +119,11 @@ class ForwardingTable:
 
         with self.lock:
             current_entry = self.get_entry(leaf, neighbour, next_hop)
-            if current_entry is None:
-                self.add_entry(leaf, neighbour, next_hop, delay, loss)
 
+        if current_entry is None:
+            self.add_entry(leaf, neighbour, next_hop, delay, loss)
+
+        with self.lock:
             best_entry = None
             best_entry_neighbour = None
 
