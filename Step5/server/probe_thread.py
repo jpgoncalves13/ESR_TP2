@@ -17,12 +17,12 @@ class ProbeThread(threading.Thread):
     def run(self):
         self.running = True
         udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-        while self.running:
+        """while self.running:
             if self.ep.debug:
                 print("DEBUG: Sending the probe message to neighbours")
             for neighbour in self.ep.get_neighbours():
                 self.send_probe_message(neighbour, udp_socket)
-            time.sleep(self.interval)
+            time.sleep(self.interval)"""
 
         udp_socket.close()
 
@@ -34,4 +34,4 @@ class ProbeThread(threading.Thread):
         udp_socket.sendto(packet_serialized, (neighbour_ip, self.port))
 
         # Table update
-        self.ep.table.update_packets_sent(neighbour_ip)
+        self.ep.forwarding_table.update_packets_sent(neighbour_ip)

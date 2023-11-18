@@ -1,6 +1,6 @@
 from bootstrapper.bootstrapper import Bootstrapper
-from table.forwarding_table import ForwardingTable, StreamTable
-
+from table.forwarding_table import ForwardingTable
+from table.stream_table import StreamTable
 
 class EP:
 
@@ -14,7 +14,7 @@ class EP:
         self.port = port
         if neighbours is not None:
             for neighbour in neighbours:
-                self.table.add_entry(neighbour)
+                self.forwarding_table.add_entry(neighbour)
 
     def get_neighbours(self):
         return self.neighbours

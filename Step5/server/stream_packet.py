@@ -1,6 +1,5 @@
 from enum import Enum
 
-
 class PacketType(Enum):
     SETUP = 1
     RSETUP = 2
