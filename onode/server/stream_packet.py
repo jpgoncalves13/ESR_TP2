@@ -58,8 +58,9 @@ class Packet:
             byte_array += len(self.payload).to_bytes(4, byteorder='big')
             for leaf, next_hop, delay, loss in self.payload:
                 # leaf
-                leaf_parts = leaf.split('.')
-                byte_array += b''.join([int(part).to_bytes(1, 'big') for part in leaf_parts])
+                leaf_encoded = leaf.encode('utf-8')
+                byte_array += len(leaf_encoded).to_bytes(1, byteorder='big')
+                byte_array += leaf_encoded
                 # next hop
                 next_hop_parts = next_hop.split('.')
                 byte_array += b''.join([int(part).to_bytes(1, 'big') for part in next_hop_parts])
@@ -113,9 +114,10 @@ class Packet:
             payload = []
             for _ in range(num_measures):
                 # leaf (4 bytes)
-                leaf1_ip_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
-                leaf1 = '.'.join(map(str, leaf1_ip_parts))
+                leaf_len = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
                 offset += 4
+                leaf1 = byte_array[offset: offset + leaf_len].decode('utf-8')
+                offset += leaf_len
                 # next hop (4 bytes)
                 next_hop_ip_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
                 next_hop = '.'.join(map(str, next_hop_ip_parts))
