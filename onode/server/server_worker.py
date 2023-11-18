@@ -1,7 +1,7 @@
 from threading import Thread
 from server.stream_packet import Packet, PacketType
 from server.shared_state import EP
-from probe_thread import ProbeThread
+from server.probe_thread import ProbeThread
 import socket
 
 
