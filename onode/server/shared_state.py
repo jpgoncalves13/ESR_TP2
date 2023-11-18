@@ -11,7 +11,7 @@ class EP:
         self.bootstrapper = bootstrapper
         self.rendezvous = rendezvous
         self.table = ForwardingTable()
-        self.neighbours = copy.deepcopy(neighbours)
+        self.neighbours = neighbours
         self.neighbours_lock = threading.Lock()
         self.port = port
         self.node_id = node_id
@@ -27,7 +27,7 @@ class EP:
 
     def get_neighbours(self):
         with self.neighbours_lock:
-            return copy.copy(self.neighbours.keys())
+            return copy.copy(list(self.neighbours.keys()))
 
     def set_state_of_neighbour(self, neighbour, state):
         with self.neighbours_lock:
