@@ -81,7 +81,7 @@ class ServerWorker:
             best_entries_list += (self.ep.node_id, "0.0.0.0", 0, 0)
 
         if self.ep.debug:
-            print("DEBUG: " + best_entries_list)
+            print("DEBUG: " + str(best_entries_list))
 
         packet = Packet(PacketType.RMEASURE, '0.0.0.0', '', 0, '0.0.0.0', best_entries_list)
         ServerWorker.send_packet(packet, address)
