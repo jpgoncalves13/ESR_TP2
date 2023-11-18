@@ -160,6 +160,10 @@ class ForwardingTable:
                 best_entry.in_tree = False
                 current_entry.in_tree = True
 
+    def get_table(self):
+        with self.lock:
+            return copy.deepcopy(self)
+
     def __str__(self) -> str:
         with self.lock:
             st = "------- Table: -------\n"

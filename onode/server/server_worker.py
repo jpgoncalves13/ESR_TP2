@@ -105,6 +105,10 @@ class ServerWorker:
 
             elif packet.type == PacketType.MEASURE:
                 self.handle_measure(address)
+
+            if self.ep.debug:
+                print("DEBUG:")
+                print(self.ep.get_table())
         # Bootstrapper
         else:
             if packet.type == PacketType.SETUP:

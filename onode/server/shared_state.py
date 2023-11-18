@@ -66,3 +66,6 @@ class EP:
 
     def update_metrics(self, leaf, neighbour, next_hop, delay, loss):
         self.table.update_metrics(leaf, neighbour, next_hop, delay, loss)
+
+    def get_table(self):
+        return self.table.get_table()
