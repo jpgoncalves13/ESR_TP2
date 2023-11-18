@@ -162,7 +162,7 @@ class ForwardingTable:
 
     def get_table(self):
         with self.lock:
-            return copy.deepcopy(self)
+            return copy.deepcopy(self.table)
 
     def __str__(self) -> str:
         with self.lock:
