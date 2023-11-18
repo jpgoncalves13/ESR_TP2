@@ -79,6 +79,10 @@ class ServerWorker:
             best_entries_list += ("RP", "0.0.0.0", 0, 0)
         if len(self.ep.get_neighbours()) == 1 and not self.ep.rendezvous:
             best_entries_list += (self.ep.node_id, "0.0.0.0", 0, 0)
+
+        if self.ep.debug:
+            print("DEBUG: " + best_entries_list)
+
         packet = Packet(PacketType.RMEASURE, '0.0.0.0', '', 0, '0.0.0.0', best_entries_list)
         ServerWorker.send_packet(packet, address)
 
