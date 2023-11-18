@@ -11,16 +11,18 @@ class PacketType(Enum):
     ACK = 8
     STREAMREQ = 9
     STREAM = 10
+    HELLO = 11
 
 
 class Packet:
 
-    def __init__(self, packet_type, leaf, stream_id, last_hop, payload=None):
+    def __init__(self, packet_type, leaf, node_id, stream_id, last_hop, payload=None):
         self.type = packet_type  # 1
         self.leaf = leaf  # 4
         self.stream_id = stream_id  # 1
         self.last_hop = last_hop  # 4
-        self.payload = payload # RSETUP -> neighbours, RMEASURE -> [(leaf, nex_hop, delay, loss)], STREAM -> bytes
+        self.node_id = node_id  # 1
+        self.payload = payload  # RSETUP -> neighbours, RMEASURE -> [(leaf, nex_hop, delay, loss)], STREAM -> bytes
 
     def serialize(self):
         byte_array = bytearray()
@@ -29,6 +31,12 @@ class Packet:
         # leaf
         leaf_ip_parts = self.leaf.split('.')
         byte_array += b''.join([int(part).to_bytes(1, 'big') for part in leaf_ip_parts])
+        # node identifier
+        node_id_encoded = self.node_id.encode('utf-8')
+        padding = 3 - len(node_id_encoded)
+        if padding > 0:
+            node_id_encoded += b'\0' * padding
+        byte_array += node_id_encoded
         # stream_id
         byte_array += self.stream_id.to_bytes(1, byteorder='big')
         # last hop
@@ -72,6 +80,10 @@ class Packet:
         leaf_ip_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset: offset + 4]]
         leaf = '.'.join(map(str, leaf_ip_parts))
         offset += 4
+        # node identifier (3 byte)
+        node_id = byte_array[offset:offset + 3].decode('utf-8')
+        node_id = node_id.rstrip('\0')
+        offset += 3
         # stream_id (1 byte)
         stream_id = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
         offset += 1
@@ -116,8 +128,8 @@ class Packet:
                 offset += 4
                 payload.append((leaf1, next_hop, delay, loss))
 
-        return Packet(message_type, leaf, stream_id, last_hop, payload)
+        return Packet(message_type, leaf, node_id, stream_id, last_hop, payload)
 
     def __str__(self):
-        return (str(self.type.value) + ";" + str(self.stream_id) + ";"
+        return (str(self.type.value) + ";" + str(self.stream_id) + ";" + str(self.node_id) + ";"
                 + str(self.last_hop) + ";" + str(self.leaf) + ";" + str(self.payload))

@@ -4,30 +4,76 @@ from server.server import Server
 from server.stream_packet import Packet, PacketType
 from bootstrapper.bootstrapper import Bootstrapper
 from server.shared_state import EP
-from server.probe_thread import ProbeThread
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("onode: try 'onode --help' for more information")
+        return
+
+    # --help option
+    if len(sys.argv) == 2 and sys.argv[1] == '--help':
+        info = """Usage: onode <bootstrapper-ip(:bootstrapper-port)?> [node options]
+   or: onode --bootstrapper <file> [bootstrapper options]
+
+Node Options:
+ -r, --rendezvous Rendezvous point.
+ -d, --debug      Debug mode.
+
+Bootstrapper Options:
+ -d, --debug      Debug mode.
+"""
+        print(info)
+        return
+
+    # Standard port
+    port = 5000
+    # Parse the arguments
+    bootstrapper, bootstrapper_address, is_rendezvous_point, debug = read_args()
+
+    # The neighbors of this normal node
+    neighbours = None
+    node_id = None
+
+    if bootstrapper is None:
+        # Request the neighbors if is a node and not the bootstrapper
+        if debug:
+            print(f"DEBUG: Requesting the Neighbors")
+        neighbours, node_id = request_neighbors(bootstrapper_address)
+        if debug:
+            print(f"DEBUG: Neighbors -> {neighbours}")
+
+    ep = EP(debug, bootstrapper, is_rendezvous_point, port, neighbours, node_id)
+
+    # Start the server
+    server = Server(port)
+    server.run(ep)
 
 
 def request_neighbors(bootstrapper_address, timeout=5, max_retries=3):
     retries = 0
-    packet_serialized = Packet(PacketType.SETUP, '0.0.0.0', 0, '0.0.0.0').serialize()
     udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-    response = None
+    udp_socket.settimeout(timeout)
+    neighbours = {}
+    node_id = None
 
-    while response is None and retries < max_retries:
-        udp_socket.sendto(packet_serialized, bootstrapper_address)
-        udp_socket.settimeout(timeout)
-        try:
-            response, _ = udp_socket.recvfrom(4096)
-        except socket.timeout:
-            retries += 1
+    try:
+        while retries < max_retries:
+            try:
+                packet_serialized = Packet(PacketType.SETUP, '0.0.0.0', '', 0, '0.0.0.0').serialize()
+                udp_socket.sendto(packet_serialized, bootstrapper_address)
+                response, _ = udp_socket.recvfrom(4096)
+                response_packet = Packet.deserialize(bytearray(response))
+                node_id = response_packet.node_id
+                for neighbour in response_packet.payload:
+                    neighbours[neighbour] = False
+                break
+            except socket.timeout:
+                retries += 1
+    finally:
+        udp_socket.close()
 
-    udp_socket.close()
-
-    if response is not None:
-        response = Packet.deserialize(bytearray(response))
-        if response.type == PacketType.RSETUP:
-            return response.payload
-    return []
+    return neighbours, node_id
 
 
 def read_args():
@@ -85,58 +131,6 @@ def read_args():
         bootstrapper.set_debug(debug)
 
     return bootstrapper, bootstrapper_address, is_rendezvous_point, debug
-
-
-def main():
-    if len(sys.argv) < 2:
-        print("onode: try 'onode --help' for more information")
-        return
-
-    # --help option
-    if len(sys.argv) == 2 and sys.argv[1] == '--help':
-        info = """Usage: onode <bootstrapper-ip(:bootstrapper-port)?> [node options]
-   or: onode --bootstrapper <file> [bootstrapper options]
-
-Node Options:
- -r, --rendezvous Rendezvous point.
- -d, --debug      Debug mode.
-
-Bootstrapper Options:
- -d, --debug      Debug mode.
-"""
-        print(info)
-        return
-
-    # Standard port
-    port = 5000
-    # Parse the arguments
-    bootstrapper, bootstrapper_address, is_rendezvous_point, debug = read_args()
-
-    # The neighbors of this normal node
-    neighbours = None
-
-    if bootstrapper is None:
-        # Request the neighbors if is a node and not the bootstrapper
-        if debug:
-            print(f"DEBUG: Requesting the Neighbors")
-        neighbours = request_neighbors(bootstrapper_address)
-        if debug:
-            print(f"DEBUG: Neighbors -> {neighbours}")
-
-    ep = EP(debug, bootstrapper, is_rendezvous_point, port, neighbours)
-
-    if neighbours is not None and len(neighbours) > 1:
-        # Default interval for the probe messages
-        interval = 5
-        # Start the proof thread only for the nodes not in tree leaves
-        # The messages only start when the table has entries, because we can have
-        # neighbours not listening
-        # probe_thread = ProbeThread(ep, interval, port)
-        # probe_thread.start()
-
-    # Start the server
-    server = Server(port)
-    server.run(ep)
 
 
 if __name__ == '__main__':

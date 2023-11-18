@@ -1,104 +1,114 @@
 from threading import Thread
 from server.stream_packet import Packet, PacketType
 from server.shared_state import EP
+from probe_thread import ProbeThread
 import socket
-import time
-import calendar
 
 
 class ServerWorker:
     def __init__(self, ep: EP):
         self.ep = ep
 
-    def run(self, request):
-        Thread(target=lambda: self.handle_request(request)).start()
+    def run(self, request, address):
+        Thread(target=lambda: self.handle_request(request, address)).start()
 
-    def handle_setup(self, request):
-        request_neighbours = self.ep.bootstrapper.handle_join_request(request[1][0])
-        packet = Packet(PacketType.RSETUP, '0.0.0.0', 0, '0.0.0.0', request_neighbours)
-        socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        socket_s.sendto(packet.serialize(), request[1])
-        socket_s.close()
+    @staticmethod
+    def send_packet(packet, address):
+        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        udp_socket.sendto(packet.serialize(), address)
+        udp_socket.close()
+
+    def handle_setup(self, address):
+        """Bootstrapper response"""
+        request_neighbours, node_id = self.ep.handle_join_request(address[0])
+        packet = Packet(PacketType.RSETUP, '0.0.0.0', node_id, 0, '0.0.0.0', request_neighbours)
+        ServerWorker.send_packet(packet, address)
+
+    def handle_hello(self, address):
+        """Neighbour listening"""
+        if address[0] in self.ep.get_neighbours():
+            self.ep.set_state_of_neighbour(address[0], True)
+            packet = Packet(PacketType.ACK, '0.0.0.0', '', 0, '0.0.0.0')
+            ServerWorker.send_packet(packet, address)
 
     def flood_packet(self, sender_ip, packet_serialized):
-        socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        neighbours = self.ep.get_neighbours()
+        """Send a packet to all listening neighbours, except the one that sent the packet"""
+        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        neighbours = self.ep.get_listening_neighbours()
         neighbours.remove(sender_ip)
         for neighbour in neighbours:
-            socket_s.sendto(packet_serialized, (neighbour, self.ep.port))
-        socket_s.close()
+            udp_socket.sendto(packet_serialized, (neighbour, self.ep.port))
+        udp_socket.close()
+
+    def handle_stream_request(self, packet):
+        """Send message to create the tree if I only have one neighbor"""
+        if self.ep.bootstrapper is None and not self.ep.rendezvous and len(self.ep.get_neighbours()) == 1:
+            if self.ep.debug:
+                print("DEBUG: Sending the packet to create the tree")
+            packet = Packet(PacketType.JOIN, '0.0.0.0', '', 0, '0.0.0.0')
+            ServerWorker.send_packet(packet, (self.ep.neighbours[0], self.ep.port))
+        # This will be updated
 
     def handle_join(self, packet, ip):
-        # Only requests from neighbors are responded to
-        if ip not in self.ep.get_neighbours() or len(self.ep.get_neighbours()) == 1:
-            return
-
-        # If packet don't have origin, insert
         if packet.leaf == '0.0.0.0':
             packet.leaf = ip
             packet.last_hop = ip
+            packet.node_id = self.ep.node_id
 
         next_hop = packet.last_hop
         packet.last_hop = ip
 
-        is_first_entry = self.ep.table.add_entry(packet.leaf, ip, next_hop, self.ep.rendezvous)
+        is_first_entry, already_exists = self.ep.add_entry(packet.node_id, ip, next_hop)
 
-        if self.ep.rendezvous and is_first_entry:
-            # The first packet to arrive is the best option
-            # Send response that this is the path
-            socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            response = Packet(PacketType.TREEUPD, packet.leaf, 0, next_hop)
-            socket_s.sendto(response.serialize(), (ip, self.ep.port))
-            socket_s.close()
+        if self.ep.rendezvous:
+            if is_first_entry:
+                # Start the stream transmission
+                pass
             return
 
-        if not self.ep.rendezvous:
-            parents = self.ep.table.get_parents()
-            if len(parents) == 0 and len(self.ep.get_neighbours()) > 1:
+        if is_first_entry:
+            neighbour = self.ep.get_neighbour_to_rp()
+            if neighbour is not None:
+                ServerWorker.send_packet(packet, (neighbour, self.ep.port))
+            else:
                 self.flood_packet(ip, packet.serialize())
-            elif len(parents) > 0:
-                socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                socket_s.sendto(packet.serialize(), (parents[0], self.ep.port))
-                socket_s.close()
 
-    def handle_tree_update(self, packet, ip):
-        self.ep.table.add_parent(ip)
-        if len(self.ep.get_neighbours()) > 1:
-            next_hop = self.ep.table.update_tree_entry(packet.leaf, packet.last_hop)
-            neighbour = packet.last_hop
-            packet.last_hop = next_hop
-            udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            udp_socket.sendto(packet.serialize(), (neighbour, self.ep.port))
-            udp_socket.close()
+    def handle_measure(self, address):
+        best_entries_list = self.ep.get_best_entries()
+        if self.ep.rendezvous:
+            best_entries_list += ("RP", "RP", 0, 0)
+        packet = Packet(PacketType.RMEASURE, '0.0.0.0', '', '0.0.0.0', best_entries_list)
+        ServerWorker.send_packet(packet, address)
 
-    def handle_request(self, request):
-        packet = Packet.deserialize(request[0])
+    def handle_request(self, response, address):
+        packet = Packet.deserialize(response)
 
         if self.ep.debug:
             print(f"DEBUG: Processing response to packet: {packet}")
 
         # Normal node
         if self.ep.bootstrapper is None:
-            if packet.type == PacketType.JOIN:
-                self.handle_join(packet, request[1][0])
-                if self.ep.debug:
-                    print("Debug:")
-                    print(self.ep.table)
-            elif packet.type == PacketType.TREEUPD:
-                self.handle_tree_update(packet, request[1][0])
-                if self.ep.debug:
-                    print("Debug:")
-                    print(self.ep.table)
-            #elif packet.type == PacketType.MEASURE:
-            #    self.handle_measure(packet, request[1][0])
-            #elif packet.type == PacketType.RMEASURE:
-            #    self.handle_rmeasure(packet)
-            else:
-                print("IN DEVELOPMENT")
+            if packet.type == PacketType.HELLO:
+                self.handle_hello(address)
+
+            elif packet.type == PacketType.STREAMREQ:
+                self.handle_stream_request(packet)
+
+            elif packet.type == PacketType.JOIN:
+                self.handle_join(packet, address[0])
+                if len(self.ep.get_neighbours()) > 1:
+                    # Start the proof thread only for the nodes not in tree leaves
+                    # The messages only start when the table has entries, because we can have
+                    # neighbours not listening
+                    probe_thread = ProbeThread(self.ep, 20, 5, 10, self.ep.port)
+                    probe_thread.start()
+
+            elif packet.type == PacketType.MEASURE:
+                self.handle_measure(address)
         # Bootstrapper
         else:
             if packet.type == PacketType.SETUP:
-                self.handle_setup(request)
+                self.handle_setup(address)
             else:
                 if self.ep.debug:
                     print(f"ERROR: I'm only the bootstrapper: {packet}")
