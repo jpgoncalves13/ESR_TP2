@@ -12,26 +12,35 @@ class StreamTable:
     def add_stream_entry(self, stream_id, clients):
         with self.lock:
             if clients is None:
-                self.table[stream_id] = []
+                self.table[stream_id] = ([],[]) # server, clients
             else:
-                self.table[stream_id] = clients
+                self.table[stream_id][1] = clients
 
     def add_client_to_stream(self, stream_id, client):
         with self.lock:
-            self.table[stream_id].append(client)
+            self.table[stream_id][1].append(client)
 
     def remove_client_from_stream(self, stream_id, client):
         with self.lock:
-            self.table[stream_id].remove(client)
-            if self.table[stream_id] == []:
-                del self.table[stream_id]
+            self.table[stream_id][1].remove(client)
+            
+    def add_server_to_stream(self, stream_id, server_ip):
+        with self.lock:
+            self.table[stream_id][0].append(server_ip)
+            
+    def remove_server_from_stream(self, stream_id, server_ip):
+        with self.lock:
+            self.table[stream_id][0].remove(server_ip)
 
     def remove_entry(self, stream_id):
         with self.lock:
             del self.table[stream_id]
 
-    def consult_entry(self, stream_id):
-        return self.table[stream_id]
+    def consult_entry_clients(self, stream_id):
+        return self.table[stream_id][1]
+    
+    def consult_entry_servers(self, stream_id):
+        return self.table[stream_id][0]
     
     def __str__(self) -> str:
         return self.__repr__()
