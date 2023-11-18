@@ -18,3 +18,6 @@ class TableEntry:
     def __str__(self) -> str:
         return ("Next Hop: " + str(self.next_hop) + "; Delay: " + str(self.delay) + "; Loss: "
                 + str(self.loss) + "; In tree:" + str(self.in_tree))
+
+    def __repr__(self):
+        return str(self)

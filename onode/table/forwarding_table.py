@@ -61,7 +61,7 @@ class ForwardingTable:
                     return best_entry.next_hop
                 return None
 
-    def add_entry(self, node_id, neighbour, next_hop, delay=None, loss=None):  # For join
+    def add_entry(self, node_id, neighbour, next_hop, delay=0, loss=0):  # For join
         with self.lock:
             entry = TableEntry(next_hop, delay, loss)
             is_first_entry = False
@@ -173,6 +173,6 @@ class ForwardingTable:
                 for neighbour, entries_list in value.items():
                     st += f"    {neighbour}:\n"
                     for entry in entries_list:
-                        st += f"        {str(entry)}\n"
+                        st += f"        {entry}\n"
 
             return st
