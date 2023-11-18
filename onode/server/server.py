@@ -36,7 +36,8 @@ class Server:
             print("DEBUG: Listening on port " + str(self.port) + "...")
             print("DEBUG: Sending hello to neighbours")
 
-        Thread(target=lambda: self.send_hello(ep, 5)).start()
+        if ep.bootstrapper is None:
+            Thread(target=lambda: self.send_hello(ep, 5)).start()
 
         while True:
             response, address = server_socket.recvfrom(self.buffer_size)
