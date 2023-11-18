@@ -45,7 +45,7 @@ class ProbeThread(threading.Thread):
                             end_time = time.time()
                             packets_received += 1
                             list_packets_received.append(Packet.deserialize(response))
-                            total_delay += (end_time - start_time) * 1000  # ms
+                            total_delay += int((end_time - start_time) * 1000)  # ms
 
                         except socket.timeout:
                             pass
