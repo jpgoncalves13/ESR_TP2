@@ -54,7 +54,7 @@ class Packet:
             byte_array += len(self.payload).to_bytes(4, byteorder='big')
             for leaf, next_hop, delay, loss in self.payload:
                 # leaf
-                byte_array += leaf.to_bytes(1, byte_order='big')
+                byte_array += leaf.to_bytes(1, byteorder='big')
                 # next hop
                 next_hop_parts = next_hop.split('.')
                 byte_array += b''.join([int(part).to_bytes(1, 'big') for part in next_hop_parts])
