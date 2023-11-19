@@ -2,6 +2,7 @@ import socket
 from server.server_worker import ServerWorker
 from threading import Thread
 from server.stream_packet import Packet, PacketType
+from server.probe_thread import ProbeThread
 
 
 class Server:
@@ -39,6 +40,13 @@ class Server:
             if ep.debug:
                 print("DEBUG: Sending hello to neighbours")
             Thread(target=lambda: self.send_hello(ep, 5)).start()
+
+        if ep.bootstrapper is None and len(ep.get_neighbours()) > 1:
+            # Start the proof thread only for the nodes not in tree leaves
+            # The messages only start when the table has entries, because we can have
+            # neighbours not listening
+            probe_thread = ProbeThread(ep, 20, 5, 10, ep.port)
+            probe_thread.start()
 
         while True:
             response, address = server_socket.recvfrom(self.buffer_size)

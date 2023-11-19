@@ -103,12 +103,6 @@ class ServerWorker:
 
             elif packet.type == PacketType.JOIN:
                 self.handle_join(packet, address[0])
-                if len(self.ep.get_neighbours()) > 1:
-                    # Start the proof thread only for the nodes not in tree leaves
-                    # The messages only start when the table has entries, because we can have
-                    # neighbours not listening
-                    probe_thread = ProbeThread(self.ep, 20, 5, 10, self.ep.port)
-                    probe_thread.start()
 
             elif packet.type == PacketType.MEASURE:
                 self.handle_measure(address)
