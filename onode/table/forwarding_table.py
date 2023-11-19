@@ -158,6 +158,10 @@ class ForwardingTable:
             current_entry.delay = delay
             current_entry.loss = loss
 
+            if best_entry is None:
+                current_entry.in_tree = True
+                return
+
             if best_entry.get_metric() > current_entry.get_metric():
                 best_entry.in_tree = False
                 current_entry.in_tree = True
