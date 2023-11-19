@@ -8,12 +8,7 @@ import copy
 class ForwardingTable:
     def __init__(self):
         self.table = {}  # Leaf -> Neighbour -> Entry
-        self.parents = []  # We may also store the parents of this node in the tree
         self.lock = threading.Lock()  # Add a lock for thread safety
-
-    def get_parents(self):
-        with self.lock:
-            return copy.copy(self.parents)
 
     def get_neighbours_to_request(self):  # For measure
         with self.lock:
@@ -22,44 +17,6 @@ class ForwardingTable:
                 for neighbour in self.table[leaf].keys():
                     neighbours.append(neighbour)
             return neighbours
-
-    def add_parent(self, parent):  # For tree update
-        with self.lock:
-            self.parents.append(parent)
-
-    def get_neighbour_to_request(self, leaf):  # For tree update, to send to the next child in the tree
-        with self.lock:
-            if leaf in self.table:
-                for neighbour, value in self.table[leaf].items():
-                    for entry in value:
-                        if entry.in_tree:
-                            return neighbour
-            return None
-
-    def update_tree_entry(self, leaf, next_hop):
-        with self.lock:
-            if leaf in self.table and next_hop in self.table[leaf]:
-                entries = self.table[leaf][next_hop]
-
-                for neighbour, value in self.table[leaf].items():
-                    for entry in value:
-                        entry.in_tree = False
-
-                if len(entries) == 1:
-                    entries[0].in_tree = True
-                    return entries[0].next_hop
-                elif len(entries) > 1:
-                    best_entry = entries[0]
-                    metric = best_entry.get_metric()
-                    for entry in entries:
-                        metric_i = entry.get_metric()
-                        if metric_i < metric:
-                            best_entry = entry
-                            metric = metric_i
-
-                    best_entry.in_tree = True
-                    return best_entry.next_hop
-                return None
 
     def add_entry(self, node_id, neighbour, next_hop, delay=0, loss=0):  # For join
         with self.lock:

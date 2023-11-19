@@ -37,20 +37,8 @@ class EP:
         with self.neighbours_lock:
             return self.neighbours[neighbour]
 
-    def get_parents(self):
-        return self.table.get_parents()
-
     def get_neighbours_to_request(self):  # For measure
         return self.table.get_neighbours_to_request()
-
-    def add_parent(self, parent):  # For tree update
-        self.table.add_parent(parent)
-
-    def get_neighbour_to_request(self, leaf):  # For tree update, to send to the next child in the tree
-        return self.table.get_neighbour_to_request(leaf)
-
-    def update_tree_entry(self, leaf, next_hop):
-        return self.table.update_tree_entry(leaf, next_hop)
 
     def add_entry(self, leaf, neighbour, next_hop):  # For join
         return self.table.add_entry(leaf, neighbour, next_hop)
