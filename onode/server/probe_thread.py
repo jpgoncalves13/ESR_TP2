@@ -23,7 +23,7 @@ class ProbeThread(threading.Thread):
 
         try:
             while self.running:
-                neighbours = self.ep.get_neighbours_to_request()
+                neighbours = self.ep.get_neighbours()  # needed change
                 if self.ep.debug:
                     print(f"DEBUG: Sending the probe message to neighbours {neighbours}")
 
@@ -58,8 +58,11 @@ class ProbeThread(threading.Thread):
                         if last_packet.type == PacketType.RMEASURE:
                             list_metrics = last_packet.payload
                             for leaf, next_hop, delay, loss in list_metrics:
-                                self.ep.update_metrics(leaf, neighbour, next_hop,
-                                                       delay + delay_measured, int((loss + loss_measured)/2))
+                                if self.ep.rendezvous and leaf == 255:
+                                    pass
+                                else:
+                                    self.ep.update_metrics(leaf, neighbour, next_hop,
+                                                           delay + delay_measured, int((loss + loss_measured)/2))
 
                 time.sleep(self.interval)
         finally:
