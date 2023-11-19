@@ -22,6 +22,8 @@ class EP:
         if neighbours is not None:
             for neighbour in neighbours:
                 self.forwarding_table.add_entry(neighbour)
+                
+        self.count = 0 # Conta o número de mensagens recebidas
 
     def get_neighbours(self):
         return self.neighbours

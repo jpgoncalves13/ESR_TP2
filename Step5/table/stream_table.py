@@ -70,6 +70,9 @@ class StreamTable:
 def read_stream_table(filename):
     with open(filename, 'r') as file:
         data = json.load(file)
+
+    for key in data:
+        data[key] = ([], data[key])
         
     print(data)
     return data

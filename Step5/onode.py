@@ -83,13 +83,11 @@ def read_args() -> (Bootstrapper, (str, str), bool, bool):
                 # for the debug mode
                 debug = True
             elif sys.argv[i] == '--f_table':
-                print('aqui')
                 # To specify forwarding
                 filename = sys.argv[i+1]
                 f_table = ForwardingTable(filename)
                 i += 1
             elif sys.argv[i] == '--s_table':
-                print('aqui')
                 filename = sys.argv[i+1]
                 s_table = StreamTable(filename)
                 i += 1

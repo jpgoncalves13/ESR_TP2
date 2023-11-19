@@ -50,19 +50,26 @@ class ServerWorker:
         stream_id = packet.origin
         stream_servers = self.ep.stream_table.consult_entry_servers(stream_id)
         
+        
         if ip not in stream_servers:
             self.ep.stream_table.add_server_to_stream(stream_id, ip)
             
         stream_servers = self.ep.stream_table.consult_entry_servers(stream_id)
-
+        
         if ip == stream_servers[0]:
             packet = Packet(packet.origin, PacketType.STREAM, 0, 0, 0, payload=payload) # Estou a considerar o campo origin como o indentificador da STREAM
             
-            stream_clients = self.ep.stream_table.consult_entry_clients(packet.origin) # Obter os clientes que estão a pedir a stream
+            stream_clients = self.ep.stream_table.consult_entry_clients(stream_id) # Obter os clientes que estão a pedir a stream
+            next_hops = []
             for client in stream_clients:
-                print((client, self.ep.port))
+                next_hop = self.ep.forwarding_table.consult_entry(client)
+                if next_hop not in next_hops:
+                    next_hops.append(next_hop)
+            
+            print(next_hops)
+            for next_hop in next_hops:    
                 socket_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                socket_s.sendto(packet.serialize(), (client, self.ep.port))
+                socket_s.sendto(packet.serialize(), (next_hop, self.ep.port))
                 socket_s.close()
 
     def handle_stream_request(self, packet, ip):
@@ -84,6 +91,9 @@ class ServerWorker:
 
         if self.ep.debug:
             print(f"DEBUG: Processing response to packet of type {packet.type}")
+            print(f"DEBUG: Request number {self.ep.count}")
+            
+        self.ep.count += 1
 
         if self.ep.bootstrapper is None:
             if packet.type == PacketType.JOIN:
@@ -108,3 +118,5 @@ class ServerWorker:
             else:
                 if self.ep.debug:
                     print(f"ERROR: I'm only the bootstrapper: {packet.type}")
+                    
+        
