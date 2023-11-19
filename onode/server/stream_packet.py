@@ -32,11 +32,7 @@ class Packet:
         leaf_ip_parts = self.leaf.split('.')
         byte_array += b''.join([int(part).to_bytes(1, 'big') for part in leaf_ip_parts])
         # node identifier
-        node_id_encoded = self.node_id.encode('utf-8')
-        padding = 3 - len(node_id_encoded)
-        if padding > 0:
-            node_id_encoded += b'\0' * padding
-        byte_array += node_id_encoded
+        byte_array += self.node_id.to_bytes(1, byteorder='big')
         # stream_id
         byte_array += self.stream_id.to_bytes(1, byteorder='big')
         # last hop
@@ -58,9 +54,7 @@ class Packet:
             byte_array += len(self.payload).to_bytes(4, byteorder='big')
             for leaf, next_hop, delay, loss in self.payload:
                 # leaf
-                leaf_encoded = leaf.encode('utf-8')
-                byte_array += len(leaf_encoded).to_bytes(1, byteorder='big')
-                byte_array += leaf_encoded
+                byte_array += leaf.to_bytes(1, byte_order='big')
                 # next hop
                 next_hop_parts = next_hop.split('.')
                 byte_array += b''.join([int(part).to_bytes(1, 'big') for part in next_hop_parts])
@@ -82,9 +76,8 @@ class Packet:
         leaf = '.'.join(map(str, leaf_ip_parts))
         offset += 4
         # node identifier (3 byte)
-        node_id = byte_array[offset:offset + 3].decode('utf-8')
-        node_id = node_id.rstrip('\0')
-        offset += 3
+        node_id = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
+        offset += 1
         # stream_id (1 byte)
         stream_id = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
         offset += 1
@@ -113,11 +106,9 @@ class Packet:
             offset += 4
             payload = []
             for _ in range(num_measures):
-                # leaf (4 bytes)
-                leaf_len = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
-                offset += 4
-                leaf1 = byte_array[offset: offset + leaf_len].decode('utf-8')
-                offset += leaf_len
+                # leaf (1 bytes)
+                leaf1 = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
+                offset += 1
                 # next hop (4 bytes)
                 next_hop_ip_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
                 next_hop = '.'.join(map(str, next_hop_ip_parts))

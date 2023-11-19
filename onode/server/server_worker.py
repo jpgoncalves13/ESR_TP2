@@ -28,7 +28,7 @@ class ServerWorker:
         """Neighbour listening"""
         if address[0] in self.ep.get_neighbours():
             self.ep.set_state_of_neighbour(address[0], True)
-            packet = Packet(PacketType.ACK, '0.0.0.0', '', 0, '0.0.0.0')
+            packet = Packet(PacketType.ACK, '0.0.0.0', 0, 0, '0.0.0.0')
             ServerWorker.send_packet(packet, address)
 
     def flood_packet(self, sender_ip, packet_serialized):
@@ -45,7 +45,7 @@ class ServerWorker:
         if self.ep.bootstrapper is None and not self.ep.rendezvous and len(self.ep.get_neighbours()) == 1:
             if self.ep.debug:
                 print("DEBUG: Sending the packet to create the tree")
-            packet = Packet(PacketType.JOIN, '0.0.0.0', '', 0, '0.0.0.0')
+            packet = Packet(PacketType.JOIN, '0.0.0.0', 0, 0, '0.0.0.0')
             ServerWorker.send_packet(packet, (self.ep.get_neighbours()[0], self.ep.port))
         # This will be updated
 
@@ -76,14 +76,15 @@ class ServerWorker:
     def handle_measure(self, address):
         best_entries_list = self.ep.get_best_entries()
         if self.ep.rendezvous:
-            best_entries_list.append(("RP", "0.0.0.0", 0, 0))
+            # 255 reserved for RP
+            best_entries_list.append((255, "0.0.0.0", 0, 0))
         if len(self.ep.get_neighbours()) == 1 and not self.ep.rendezvous:
-            best_entries_list.append((self.ep.node_id, "0.0.0.0", 0, 0))
+            best_entries_list = []
 
         if self.ep.debug:
             print("DEBUG: " + str(best_entries_list))
 
-        packet = Packet(PacketType.RMEASURE, '0.0.0.0', '', 0, '0.0.0.0', best_entries_list)
+        packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, 0, '0.0.0.0', best_entries_list)
         ServerWorker.send_packet(packet, address)
 
     def handle_request(self, response, address):

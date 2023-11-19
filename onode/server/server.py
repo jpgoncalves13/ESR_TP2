@@ -15,7 +15,7 @@ class Server:
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         udp_socket.settimeout(timeout)
         try:
-            packet = Packet(PacketType.HELLO, '0.0.0.0', '', 0, '0.0.0.0').serialize()
+            packet = Packet(PacketType.HELLO, '0.0.0.0', 0, 0, '0.0.0.0').serialize()
             for neighbour in ep.get_neighbours():
                 udp_socket.sendto(packet, (neighbour, self.port))
                 try:

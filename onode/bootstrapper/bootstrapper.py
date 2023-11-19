@@ -13,7 +13,7 @@ class Bootstrapper:
         return self.nodes["nodes"][self.nodes["names"][node_ip]]
 
     def get_id(self, node_ip):
-        return self.nodes["names"][node_ip]
+        return int(self.nodes["names"][node_ip])
 
     def set_debug(self, debug):
         self.debug = debug

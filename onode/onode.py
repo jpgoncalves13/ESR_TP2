@@ -60,7 +60,7 @@ def request_neighbors(bootstrapper_address, timeout=5, max_retries=3):
     try:
         while retries < max_retries:
             try:
-                packet_serialized = Packet(PacketType.SETUP, '0.0.0.0', '', 0, '0.0.0.0').serialize()
+                packet_serialized = Packet(PacketType.SETUP, '0.0.0.0', 0, 0, '0.0.0.0').serialize()
                 udp_socket.sendto(packet_serialized, bootstrapper_address)
                 response, _ = udp_socket.recvfrom(4096)
                 response_packet = Packet.deserialize(bytearray(response))
@@ -85,6 +85,10 @@ def read_args():
 
     if sys.argv[i] == '--bootstrapper':
         # --bootstrapper <file> [opt]
+        if len(sys.argv) == 2:
+            print("Error: Incorrect number of arguments")
+            exit(1)
+
         file = sys.argv[i + 1]
         i += 2
         bootstrapper = Bootstrapper(file)

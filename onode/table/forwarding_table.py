@@ -83,8 +83,8 @@ class ForwardingTable:
 
     def get_neighbour_to_rp(self):
         with self.lock:
-            if "RP" in self.table:
-                for neighbour, entries in self.table["RP"]:
+            if 255 in self.table:
+                for neighbour, entries in self.table[255]:
                     for entry in entries:
                         if entry.in_tree:
                             return neighbour
