@@ -23,10 +23,10 @@ class ProbeThread(threading.Thread):
 
         try:
             while self.running:
-                if self.ep.debug:
-                    print("DEBUG: Sending the probe message to neighbours")
-
                 neighbours = self.ep.get_neighbours_to_request()
+                if self.ep.debug:
+                    print(f"DEBUG: Sending the probe message to neighbours {neighbours}")
+
                 for neighbour in neighbours:
 
                     packets_sent = 0

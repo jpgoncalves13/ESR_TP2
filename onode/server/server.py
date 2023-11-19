@@ -45,7 +45,7 @@ class Server:
             # Start the proof thread only for the nodes not in tree leaves
             # The messages only start when the table has entries, because we can have
             # neighbours not listening
-            probe_thread = ProbeThread(ep, 20, 5, 10, ep.port)
+            probe_thread = ProbeThread(ep, 5, 2, 2, ep.port)
             probe_thread.start()
 
         while True:
