@@ -1,5 +1,6 @@
 from table.table_entry import TableEntry
 import threading
+import json
 
 
 class ForwardingTable:
@@ -8,10 +9,15 @@ class ForwardingTable:
     For each destination node reachable from the tree, we store the next hops
     The list of next hops may be variable 
     """
-    def __init__(self):
-        self.table = {}
-        self.parents = []  # We may also store the parents of this node in the tree
-        self.lock = threading.Lock()
+    def __init__(self, filename=None):
+        if filename is not None:
+            self.table = read_forwarding_table(filename)
+            self.parents = []  # We may also store the parents of this node in the tree
+            self.lock = threading.Lock()
+        else:
+            self.table = {}
+            self.parents = []  # We may also store the parents of this node in the tree
+            self.lock = threading.Lock()
 
     def add_entry(self, destination):
         with self.lock:
@@ -44,3 +50,10 @@ class ForwardingTable:
             st += entry + "->>>>>>>>>>>>>\n" + str(self.table[entry]) + "\n"
 
         return st
+    
+
+def read_forwarding_table(filename):
+    with open(filename, 'r') as file:
+        data = json.load(file)
+    print(data)
+    return data

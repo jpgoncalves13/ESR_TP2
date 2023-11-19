@@ -5,6 +5,8 @@ from server.stream_packet import Packet, PacketType
 from bootstrapper.bootstrapper import Bootstrapper
 from server.shared_state import EP
 from server.probe_thread import ProbeThread
+from table.stream_table import StreamTable
+from table.forwarding_table import ForwardingTable
 
 
 def request_neighbors(bootstrapper_address, timeout=5, max_retries=3):
@@ -37,6 +39,8 @@ def read_args() -> (Bootstrapper, (str, str), bool, bool):
     debug = False
     bootstrapper_address = None
     is_rendezvous_point = False
+    f_table = None
+    s_table = None
 
     if sys.argv[i] == '--bootstrapper':
         # --bootstrapper <file> [opt]
@@ -78,6 +82,17 @@ def read_args() -> (Bootstrapper, (str, str), bool, bool):
             elif sys.argv[i] == '--debug':
                 # for the debug mode
                 debug = True
+            elif sys.argv[i] == '--f_table':
+                print('aqui')
+                # To specify forwarding
+                filename = sys.argv[i+1]
+                f_table = ForwardingTable(filename)
+                i += 1
+            elif sys.argv[i] == '--s_table':
+                print('aqui')
+                filename = sys.argv[i+1]
+                s_table = StreamTable(filename)
+                i += 1
             else:
                 print(f"Invalid argument: {sys.argv[i]}")
             i += 1
@@ -85,7 +100,7 @@ def read_args() -> (Bootstrapper, (str, str), bool, bool):
     if bootstrapper is not None and debug:
         bootstrapper.set_debug(debug)
 
-    return bootstrapper, bootstrapper_address, is_rendezvous_point, debug
+    return bootstrapper, bootstrapper_address, is_rendezvous_point, debug, f_table, s_table
 
 
 def main():
@@ -111,7 +126,7 @@ Bootstrapper Options:
     # Standard port
     port = 5000
     # Parse the arguments
-    bootstrapper, bootstrapper_address, is_rendezvous_point, debug = read_args()
+    bootstrapper, bootstrapper_address, is_rendezvous_point, debug, f_table, s_table = read_args()
 
     # The neighbors of this normal node
     neighbours = None
@@ -124,7 +139,7 @@ Bootstrapper Options:
         if debug:
             print(f"DEBUG: Neighbors -> {neighbours}")
 
-    ep = EP(debug, bootstrapper, is_rendezvous_point, port, neighbours)
+    ep = EP(debug, bootstrapper, is_rendezvous_point, port, neighbours, f_table, s_table)
 
     if neighbours is not None and len(neighbours) > 1:
         # Default interval for the probe messages

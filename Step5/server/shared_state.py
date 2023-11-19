@@ -4,12 +4,19 @@ from table.stream_table import StreamTable
 
 class EP:
 
-    def __init__(self, debug: bool, bootstrapper: Bootstrapper, rendezvous: bool, port, neighbours: [str]):
+    def __init__(self, debug: bool, bootstrapper: Bootstrapper, rendezvous: bool, port, neighbours: [str], forwarding_table: ForwardingTable, stream_table: StreamTable):
         self.debug = debug
         self.bootstrapper = bootstrapper
         self.rendezvous = rendezvous
-        self.forwarding_table = ForwardingTable()
-        self.stream_table = StreamTable()
+        if forwarding_table is None:
+            self.forwarding_table = ForwardingTable()
+        else:
+            self.forwarding_table = forwarding_table
+        
+        if stream_table is None:
+            self.stream_table = StreamTable()
+        else:
+            self.stream_table = stream_table
         self.neighbours = neighbours
         self.port = port
         if neighbours is not None:

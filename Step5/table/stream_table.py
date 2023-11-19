@@ -1,13 +1,18 @@
 import threading
+import json
 
 class StreamTable:
     """
     This class is used to store the stream information of each Node.
     For each possible stream (identified by a number, store the list of clients waiting for that streaming) 
     """
-    def __init__(self):
-        self.table = {}
-        self.lock = threading.Lock()
+    def __init__(self, filename=None):
+        if filename is not None:
+            self.table = read_stream_table(filename)
+            self.lock = threading.Lock()
+        else:
+            self.table = {}
+            self.lock = threading.Lock()
 
     def add_stream_entry(self, stream_id, servers, clients):
         with self.lock:
@@ -61,3 +66,10 @@ class StreamTable:
             str += entry + "->>>>>>>>>>>>>\n" + self.table[entry].__str__() + "\n"
 
         return str
+    
+def read_stream_table(filename):
+    with open(filename, 'r') as file:
+        data = json.load(file)
+        
+    print(data)
+    return data
