@@ -74,13 +74,15 @@ class ForwardingTable:
 
     def update_metrics(self, leaf, neighbour, next_hop, delay, loss):
 
+        is_first_entry, _ = self.add_entry(leaf, neighbour, next_hop, delay, loss)
+
         with self.lock:
             current_entry = self.get_entry(leaf, neighbour, next_hop)
 
-        if current_entry is None:
-            self.add_entry(leaf, neighbour, next_hop, delay, loss)
+            if is_first_entry:
+                current_entry.in_tree = True
+                return
 
-        with self.lock:
             best_entry = None
             best_entry_neighbour = None
 
