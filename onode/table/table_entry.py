@@ -3,28 +3,21 @@ class TableEntry:
     A class used to represent a table entry
     A table entry is composed of a list of next hops, the delay and the loss in the link to the next hop
     """
-    def __init__(self, next_hops=None, delay=None, packages_sent=0, packets_received=0):
-        if next_hops is None:
-            next_hops = []
-
-        self.next_hops = next_hops
+    def __init__(self, next_hop, in_tree, delay, loss):
+        self.next_hop = next_hop
         self.delay = delay
-        self.packets_sent = packages_sent
-        self.packets_received = packets_received
+        self.loss = loss
+        self.in_tree = in_tree
 
-    def update_packets_sent(self):
-        self.packets_sent += 1
-
-    def update_packets_received(self):
-        self.packets_received += 1
-
-    def update_delay(self, delay):
+    def set_delay(self, delay):
         self.delay = delay
+
+    def get_metric(self):
+        return 0.7 * self.delay / 1000 + 0.3 * self.loss
 
     def __str__(self) -> str:
-        return ("Next Hops: " + str(self.next_hops) + "\nDelay: " + str(self.delay) + "\nLoss: "
-                + str(self.packets_received/self.packets_sent)) if self.packets_sent > 0 else "N/A"
-    
-    def __repr__(self) -> str:
-        return ("Next Hops: " + str(self.next_hops) + "\nDelay: " + str(self.delay) + "\nLoss: "
-                + str(self.packets_received/self.packets_sent)) if self.packets_sent > 0 else "N/A"
+        return ("Next Hop: " + str(self.next_hop) + "; Delay: " + str(self.delay) + "; Loss: "
+                + str(self.loss) + "; In tree:" + str(self.in_tree))
+
+    def __repr__(self):
+        return str(self)

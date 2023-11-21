@@ -1,6 +1,8 @@
 import socket
 from server.server_worker import ServerWorker
+from threading import Thread
 from server.stream_packet import Packet, PacketType
+from server.probe_thread import ProbeThread
 
 
 class Server:
@@ -10,28 +12,42 @@ class Server:
         self.port = port
         self.buffer_size = buffer_size
 
+    def send_hello(self, ep, timeout):
+        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        udp_socket.settimeout(timeout)
+        try:
+            packet = Packet(PacketType.HELLO, '0.0.0.0', 0, 0, '0.0.0.0').serialize()
+            for neighbour in ep.get_neighbours():
+                udp_socket.sendto(packet, (neighbour, self.port))
+                try:
+                    response, address = udp_socket.recvfrom(self.buffer_size)
+                    response_packet = Packet.deserialize(bytearray(response))
+                    if response_packet.type == PacketType.ACK and address[0] == neighbour:
+                        ep.set_state_of_neighbour(neighbour, True)
+                except socket.timeout:
+                    pass
+        finally:
+            udp_socket.close()
+
     def run(self, ep):
-
-        # Send message to create the tree if I only have one neighbor
-        if ep.bootstrapper is None:
-            if ep.debug:
-                print("DEBUG: Sending the packet to create the tree")
-            self.start_tree(ep)
-
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         server_socket.bind(('', self.port))
 
         if ep.debug:
             print("DEBUG: Listening on port " + str(self.port) + "...")
 
-        while True:
-            request = server_socket.recvfrom(self.buffer_size)
+        if ep.bootstrapper is None:
             if ep.debug:
-                print("DEBUG: Request received")
-            ServerWorker(ep).run(request)
+                print("DEBUG: Sending hello to neighbours")
+            Thread(target=lambda: self.send_hello(ep, 5)).start()
 
-    def start_tree(self, ep):
-        if len(ep.neighbours) == 1:
-            packet_serialized = Packet('', PacketType.JOIN, 0, 0, 0, []).serialize()
-            udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-            udp_socket.sendto(packet_serialized, (ep.neighbours[0], self.port))
+        if ep.bootstrapper is None and len(ep.get_neighbours()) > 1:
+            # Start the proof thread only for the nodes not in tree leaves
+            # The messages only start when the table has entries, because we can have
+            # neighbours not listening
+            probe_thread = ProbeThread(ep, 5, 2, 2, ep.port)
+            probe_thread.start()
+
+        while True:
+            response, address = server_socket.recvfrom(self.buffer_size)
+            ServerWorker(ep).run(response, address)
