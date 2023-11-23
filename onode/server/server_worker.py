@@ -50,23 +50,22 @@ class ServerWorker:
         # This will be updated
     
     def handle_stream(self, packet, ip):
-        payload = packet.payload # Dados da Stream encapsulados em RTP
+        payload = packet.payload  # Encapsulated stream data in RTP
         stream_id = packet.stream_id
         stream_servers = self.ep.stream_table.consult_entry_servers(stream_id)
-        
-        
+
         if ip not in stream_servers:
             self.ep.stream_table.add_server_to_stream(stream_id, ip)
             
         stream_servers = self.ep.stream_table.consult_entry_servers(stream_id)
         
         if ip == stream_servers[0]:
-            packet = Packet(PacketType.STREAM, 0, 0, stream_id, 0, payload=payload) # Estou a considerar o campo origin como o indentificador da STREAM
+            packet = Packet(PacketType.STREAM, 0, 0, stream_id, 0, payload=payload)
             
-            stream_clients = self.ep.stream_table.consult_entry_clients(stream_id) # Obter os clientes que estão a pedir a stream
+            stream_clients = self.ep.stream_table.consult_entry_clients(stream_id)  # Get clients requesting the stream
             next_hops = []
             for client in stream_clients:
-                next_hop = self.ep.forwarding_table.get_best_entry(client)
+                next_hop = self.ep.table.get_best_entry(client)
                 if next_hop not in next_hops:
                     next_hops.append(next_hop)
             
@@ -100,11 +99,12 @@ class ServerWorker:
             else:
                 self.flood_packet(ip, packet.serialize())
 
-    def handle_measure(self, address):
+    def handle_measure(self, packet, address):
         best_entries_list = self.ep.get_best_entries()
+        best_entries_list = [tup for tup in best_entries_list if tup[1] != packet.node_id]
         if self.ep.rendezvous:
             # 255 reserved for RP
-            best_entries_list.append((255, "0.0.0.0", 0, 0))
+            best_entries_list.append((255, '0.0.0.0', 0, 0))
         if len(self.ep.get_neighbours()) == 1 and not self.ep.rendezvous:
             best_entries_list = []
 
@@ -132,7 +132,7 @@ class ServerWorker:
                 self.handle_join(packet, address[0])
 
             elif packet.type == PacketType.MEASURE:
-                self.handle_measure(address)
+                self.handle_measure(packet, address)
 
             if self.ep.debug:
                 print("DEBUG:")

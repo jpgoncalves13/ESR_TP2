@@ -32,7 +32,7 @@ class ProbeThread(threading.Thread):
                     packets_sent = 0
                     packets_received = 0
                     total_delay = 0
-                    packet_serialized = Packet(PacketType.MEASURE, '0.0.0.0', 0, 0, '0.0.0.0').serialize()
+                    packet_serialized = Packet(PacketType.MEASURE, '0.0.0.0', self.ep.node_id, 0, '0.0.0.0').serialize()
                     list_packets_received = []
 
                     for _ in range(self.block):
