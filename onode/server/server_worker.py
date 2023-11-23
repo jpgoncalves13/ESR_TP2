@@ -48,6 +48,33 @@ class ServerWorker:
             packet = Packet(PacketType.JOIN, '0.0.0.0', 0, 0, '0.0.0.0')
             ServerWorker.send_packet(packet, (self.ep.get_neighbours()[0], self.ep.port))
         # This will be updated
+    
+    def handle_stream(self, packet, ip):
+        payload = packet.payload # Dados da Stream encapsulados em RTP
+        stream_id = packet.stream_id
+        stream_servers = self.ep.stream_table.consult_entry_servers(stream_id)
+        
+        
+        if ip not in stream_servers:
+            self.ep.stream_table.add_server_to_stream(stream_id, ip)
+            
+        stream_servers = self.ep.stream_table.consult_entry_servers(stream_id)
+        
+        if ip == stream_servers[0]:
+            packet = Packet(PacketType.STREAM, 0, 0, stream_id, 0, payload=payload) # Estou a considerar o campo origin como o indentificador da STREAM
+            
+            stream_clients = self.ep.stream_table.consult_entry_clients(stream_id) # Obter os clientes que estão a pedir a stream
+            next_hops = []
+            for client in stream_clients:
+                next_hop = self.ep.forwarding_table.get_best_entry(client)
+                if next_hop not in next_hops:
+                    next_hops.append(next_hop)
+            
+            udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            for next_hop in next_hops:    
+                udp_socket.sendto(packet.serialize(), (next_hop, self.ep.port))
+            
+            udp_socket.close()
 
     def handle_join(self, packet, ip):
         if packet.leaf == '0.0.0.0':
