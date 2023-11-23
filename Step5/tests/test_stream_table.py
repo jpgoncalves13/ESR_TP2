@@ -1,5 +1,5 @@
 import unittest
-from stream_table import StreamTable
+from table import StreamTable
 
 # TODO -> Add tests
 class TestStreamTable(unittest.TestCase):
