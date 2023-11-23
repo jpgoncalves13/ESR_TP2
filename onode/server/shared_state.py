@@ -1,5 +1,6 @@
 from bootstrapper.bootstrapper import Bootstrapper
 from table.forwarding_table import ForwardingTable
+from table.stream_table import StreamTable
 import copy
 import threading
 
@@ -11,6 +12,7 @@ class EP:
         self.bootstrapper = bootstrapper
         self.rendezvous = rendezvous
         self.table = ForwardingTable()
+        self.stream_table = StreamTable()
         self.neighbours = neighbours
         self.neighbours_lock = threading.Lock()
         self.port = port

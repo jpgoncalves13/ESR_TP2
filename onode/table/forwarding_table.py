@@ -65,6 +65,15 @@ class ForwardingTable:
 
         return best_entries
 
+    def get_best_entry(self, node_id):
+        with self.lock:
+            if node_id in self.table:
+                for entries in self.table[node_id].values():
+                    for entry in entries:
+                        if entry.in_tree:
+                            return entry
+        return None
+
     def get_entry(self, leaf, neighbour, next_hop):
         if leaf in self.table and neighbour in self.table[leaf]:
             for entry in self.table[leaf][neighbour]:
