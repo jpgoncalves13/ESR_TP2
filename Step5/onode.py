@@ -98,12 +98,13 @@ def read_args() -> (Bootstrapper, (str, str), bool, bool):
     if bootstrapper is not None and debug:
         bootstrapper.set_debug(debug)
 
+    print(f_table)
     return bootstrapper, bootstrapper_address, is_rendezvous_point, debug, f_table, s_table
 
 
 def main():
     if len(sys.argv) < 2:
-        print("onode: try 'onode --help' for more information")
+        print("onode: try 'onodrtpporte --help' for more information")
         return
 
     # --help option
@@ -133,7 +134,8 @@ Bootstrapper Options:
         # Request the neighbors if is a node and not the bootstrapper
         if debug:
             print(f"DEBUG: Requesting the Neighbors")
-        neighbours = request_neighbors(bootstrapper_address)
+        neighbours = []
+        #neighbours = request_neighbors(bootstrapper_address)
         if debug:
             print(f"DEBUG: Neighbors -> {neighbours}")
 

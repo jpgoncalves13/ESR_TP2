@@ -2,6 +2,7 @@ from tkinter import *
 import tkinter.messagebox as messagebox
 from PIL import Image, ImageTk
 import socket, threading, sys, traceback, os
+from stream_packet import Packet, PacketType
 
 from RtpPacket import RtpPacket
 
@@ -34,6 +35,8 @@ class Client:
 		self.teardownAcked = 0
 		self.connectToServer()
 		self.frameNbr = 0
+		self.openRtpPort()
+		self.listenRtp()
 		
 	def createWidgets(self):
 		"""Build GUI."""
@@ -93,11 +96,13 @@ class Client:
 	def listenRtp(self):		
 		"""Listen for RTP packets."""
 		while True:
+			print('received')
 			try:
 				data = self.rtpSocket.recv(20480)
 				if data:
 					rtpPacket = RtpPacket()
 					rtpPacket.decode(data)
+					rtpPacket = Packet.deserialize(data[0]).payload
 					
 					currFrameNbr = rtpPacket.seqNum()
 					print("Current Seq Num: " + str(currFrameNbr))
@@ -107,8 +112,8 @@ class Client:
 						self.updateMovie(self.writeFrame(rtpPacket.getPayload()))
 			except:
 				# Stop listening upon requesting PAUSE or TEARDOWN
-				if self.playEvent.isSet(): 
-					break
+				#if self.playEvent.isSet(): 
+					#break
 				
 				# Upon receiving ACK for TEARDOWN request,
 				# close the RTP socket
@@ -267,7 +272,7 @@ class Client:
 								 
 	def openRtpPort(self):
 		"""Open RTP socket binded to a specified port."""
-
+		print('aqui')
 		# Create a new datagram socket to receive RTP packets from the server
 		self.rtpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		
