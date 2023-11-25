@@ -11,125 +11,118 @@ class PacketType(Enum):
     ACK = 8
     STREAMREQ = 9
     STREAM = 10
+    HELLO = 11
 
 
 class Packet:
 
-    def __init__(self, origin: str, message_type: PacketType, delay: int, loss: int, number_of_hops: int,
-                 last_hops: [str] = None, neighbours: [str] = None, payload: bytes = None):
-        if neighbours is None:
-            neighbours = []
-        if payload is None:
-            payload = bytes()
-        if last_hops is None:
-            last_hops = []
+    def __init__(self, packet_type, leaf, node_id, stream_id, last_hop, payload=None):
+        self.type = packet_type  # 1
+        self.leaf = leaf  # 4
+        self.stream_id = stream_id  # 1
+        self.last_hop = last_hop  # 4
+        self.node_id = node_id  # 1
+        self.payload = payload  # RSETUP -> neighbours, RMEASURE -> [(leaf, nex_hop, delay, loss)], STREAM -> bytes
 
-        self.origin = origin
-        self.type = message_type
-        self.delay = delay
-        self.loss = loss
-        self.number_of_hops = number_of_hops
-        self.last_hops = last_hops
-        self.neighbors = neighbours
-        self.payload = payload
-
-    def serialize(self) -> bytearray:
+    def serialize(self):
         byte_array = bytearray()
-
         # type
         byte_array += self.type.value.to_bytes(1, byteorder='big')
+        # leaf
+        leaf_ip_parts = self.leaf.split('.')
+        byte_array += b''.join([int(part).to_bytes(1, 'big') for part in leaf_ip_parts])
+        # node identifier
+        byte_array += self.node_id.to_bytes(1, byteorder='big')
+        # stream_id
+        byte_array += self.stream_id.to_bytes(1, byteorder='big')
+        # last hop
+        last_hop_ip_parts = self.last_hop.split('.')
+        byte_array += b''.join([int(part).to_bytes(1, 'big') for part in last_hop_ip_parts])
 
-        # origin
-        byte_array += len(self.origin).to_bytes(2, byteorder='big')
-        byte_array += self.origin.encode('ascii')
+        if self.type == PacketType.RSETUP:  # List of neighbours
+            # neighbors
+            byte_array += len(self.payload).to_bytes(4, byteorder='big')
+            for neighbour in self.payload:
+                neighbour_parts = neighbour.split('.')
+                byte_array += b''.join([int(part).to_bytes(1, 'big') for part in neighbour_parts])
 
-        # delay
-        byte_array += self.delay.to_bytes(4, byteorder='big')
-
-        # loss
-        byte_array += self.loss.to_bytes(1, byteorder='big')
-
-        # number of hops
-        byte_array += self.number_of_hops.to_bytes(4, byteorder='big')
-
-        # last hops
-        byte_array += len(self.last_hops).to_bytes(4, byteorder='big')
-        for hop in self.last_hops:
-            byte_array += len(hop).to_bytes(2, byteorder='big')
-            byte_array += hop.encode('ascii')
-
-        # neighbors
-        byte_array += len(self.neighbors).to_bytes(4, byteorder='big')
-        for neighbour in self.neighbors:
-            byte_array += len(neighbour).to_bytes(2, byteorder='big')
-            byte_array += neighbour.encode('ascii')
-
-        # payload
-        byte_array += len(self.payload).to_bytes(4, byteorder='big')
-        if len(self.payload) > 0:
+        elif self.type == PacketType.STREAM:  # Payload in bytes
+            byte_array += len(self.payload).to_bytes(4, byteorder='big')
             byte_array += self.payload
+
+        elif self.type == PacketType.RMEASURE:  # Delay and Loss in a list of tuples
+            byte_array += len(self.payload).to_bytes(4, byteorder='big')
+            for leaf, next_hop, delay, loss in self.payload:
+                # leaf
+                byte_array += leaf.to_bytes(1, byteorder='big')
+                # next hop
+                next_hop_parts = next_hop.split('.')
+                byte_array += b''.join([int(part).to_bytes(1, 'big') for part in next_hop_parts])
+                # delay
+                byte_array += delay.to_bytes(4, byteorder='big')
+                # loss
+                byte_array += loss.to_bytes(4, byteorder='big')
 
         return byte_array
 
     @staticmethod
-    def deserialize(byte_array: bytearray):
+    def deserialize(byte_array):
         offset = 0
-
         # Read type (1 byte)
         message_type = PacketType(int.from_bytes(byte_array[offset:offset + 1], byteorder='big'))
         offset += 1
-
-        # origin
-        length_origin = int.from_bytes(byte_array[offset:offset + 2], byteorder='big')
-        offset += 2
-        origin = byte_array[offset:offset + length_origin].decode('ascii')
-        offset += length_origin
-
-        # Deserialize delay (4 bytes)
-        delay = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
+        # leaf (4 bytes)
+        leaf_ip_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset: offset + 4]]
+        leaf = '.'.join(map(str, leaf_ip_parts))
         offset += 4
-
-        # Deserialize loss (1 byte)
-        loss = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
+        # node identifier (3 byte)
+        node_id = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
         offset += 1
-
-        # Deserialize number of hops (4 bytes)
-        number_of_hops = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
+        # stream_id (1 byte)
+        stream_id = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
+        offset += 1
+        # last_hop
+        last_hop_ip_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
+        last_hop = '.'.join(map(str, last_hop_ip_parts))
         offset += 4
 
-        # Deserialize last hops (array of strings)
-        last_hops_count = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
-        offset += 4
-        last_hops = []
-        for _ in range(last_hops_count):
-            str_length = int.from_bytes(byte_array[offset:offset + 2], byteorder='big')
-            offset += 2
-            hop = byte_array[offset:offset + str_length].decode('ascii')
-            offset += str_length
-            last_hops.append(hop)
+        payload = None
+        if message_type == PacketType.STREAM:
+            num_bytes = int.from_bytes(byte_array[offset: offset + 4], 'big')
+            offset += 4
+            payload = byte_array[offset:offset + num_bytes]
 
-        # Deserialize neighbors (array of strings)
-        neighbours_count = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
-        offset += 4
-        neighbours = []
-        for _ in range(neighbours_count):
-            str_length = int.from_bytes(byte_array[offset:offset + 2], byteorder='big')
-            offset += 2
-            neighbour = byte_array[offset:offset + str_length].decode('ascii')
-            offset += str_length
-            neighbours.append(neighbour)
+        elif message_type == PacketType.RSETUP:
+            num_neighbours = int.from_bytes(byte_array[offset: offset + 4], 'big')
+            offset += 4
+            payload = []
+            for _ in range(num_neighbours):
+                neighbour_ip_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
+                payload.append('.'.join(map(str, neighbour_ip_parts)))
+                offset += 4
 
-        # Payload
-        payload_bytes_count = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
-        offset += 4
-        if payload_bytes_count > 0:
-            payload_bytes = byte_array[offset:offset + payload_bytes_count]
-        else:
-            payload_bytes = []
+        elif message_type == PacketType.RMEASURE:
+            num_measures = int.from_bytes(byte_array[offset: offset + 4], 'big')
+            offset += 4
+            payload = []
+            for _ in range(num_measures):
+                # leaf (1 bytes)
+                leaf1 = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
+                offset += 1
+                # next hop (4 bytes)
+                next_hop_ip_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
+                next_hop = '.'.join(map(str, next_hop_ip_parts))
+                offset += 4
+                # delay (4 bytes)
+                delay = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
+                offset += 4
+                # loss (4 bytes)
+                loss = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
+                offset += 4
+                payload.append((leaf1, next_hop, delay, loss))
 
-        return Packet(origin, message_type, delay, loss, number_of_hops, last_hops, neighbours, payload_bytes)
+        return Packet(message_type, leaf, node_id, stream_id, last_hop, payload)
 
     def __str__(self):
-        return (self.origin + ";" + str(self.type.value) + ";" + str(self.delay) + ";" + str(self.loss) + ";" +
-                str(self.number_of_hops) + ";" + str(self.last_hops) + ";" + str(self.neighbors) + ";" +
-                str(self.payload))
+        return (str(self.type.value) + ";" + str(self.stream_id) + ";" + str(self.node_id) + ";"
+                + str(self.last_hop) + ";" + str(self.leaf) + ";" + str(self.payload))

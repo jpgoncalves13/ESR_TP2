@@ -1,9 +1,10 @@
-import sys, socket
+import sys, socket, time
 from server.server import Server
 from server.stream_packet import Packet, PacketType
 from video_stream import VideoStream
 from rtp_packet import RtpPacket
-import time
+from stream_server.video_stream import VideoStream
+from stream_server.rtp_packet import RtpPacket
 
 def main():
     if len(sys.argv) < 2:
@@ -24,7 +25,7 @@ def main():
     i=0
     while True:
         data = stream.nextFrame()
-        
+        time.sleep(0.01)
         if data:
             frameNumber = stream.frameNbr()
             print(i)

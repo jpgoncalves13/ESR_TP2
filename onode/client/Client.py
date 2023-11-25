@@ -3,7 +3,7 @@ import tkinter.messagebox as messagebox
 from PIL import Image, ImageTk
 import socket, threading, sys, traceback, os
 
-from RtpPacket import RtpPacket
+from client.RtpPacket import RtpPacket
 
 CACHE_FILE_NAME = "cache-"
 CACHE_FILE_EXT = ".jpg"
@@ -20,14 +20,14 @@ class Client:
 	TEARDOWN = 3
 	
 	# Initiation..
-	def __init__(self, master, serveraddr, serverport, rtpport, filename):
+	def __init__(self, master, serveraddr, serverport, rtpport, stream_id):
 		self.master = master
 		self.master.protocol("WM_DELETE_WINDOW", self.handler)
 		self.createWidgets()
 		self.serverAddr = serveraddr
 		self.serverPort = int(serverport)
 		self.rtpPort = int(rtpport)
-		self.fileName = filename
+		self.stream_id = stream_id
 		self.rtspSeq = 0
 		self.sessionId = 0
 		self.requestSent = -1
@@ -151,7 +151,7 @@ class Client:
 			
 			# Write the RTSP request to be sent.
 			request = (
-            	f"SETUP {self.fileName}\n"
+            	f"SETUP {self.stream_id}\n"
             	f"CSeq: {self.rtspSeq}\n"
             	f"Port: {self.rtpPort}\n"
         	)
@@ -167,7 +167,7 @@ class Client:
 			
 			# Write the RTSP request to be sent.
 			request = (
-            	f"PLAY {self.fileName}\n"
+            	f"PLAY {self.stream_id}\n"
             	f"CSeq: {self.rtspSeq}\n"
             	#f"Port: {self.rtpPort}\n"
         	)
@@ -182,7 +182,7 @@ class Client:
 			
 			# Write the RTSP request to be sent.
 			request = (
-            	f"PAUSE {self.fileName}\n"
+            	f"PAUSE {self.stream_id}\n"
             	f"CSeq: {self.rtspSeq}\n"
             	f"Port: {self.rtpPort}\n" #VER MELHOR
         	)
@@ -197,7 +197,7 @@ class Client:
 			
 			# Write the RTSP request to be sent.
 			request = (
-            	f"TEARDOWN {self.fileName}\n"
+            	f"TEARDOWN {self.stream_id}\n"
             	f"CSeq: {self.rtspSeq}\n"
             	f"Port: {self.rtpPort}\n" #VER MELHOR
         	)

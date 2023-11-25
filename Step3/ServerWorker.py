@@ -9,40 +9,30 @@ class ServerWorker:
 	PLAY = 'PLAY'
 	PAUSE = 'PAUSE'
 	TEARDOWN = 'TEARDOWN'
-	
+ 
 	INIT = 0
 	READY = 1
 	PLAYING = 2
-	state = INIT
 
 	OK_200 = 0
 	FILE_NOT_FOUND_404 = 1
 	CON_ERR_500 = 2
 	
-	clientInfo = {}
-	
-	def __init__(self, clientInfo):
+	def __init__(self, clientInfo, streams, data):
 		self.clientInfo = clientInfo
+		self.data = data
+		self.streams = streams
 		
 	def run(self):
-		threading.Thread(target=self.recvRtspRequest).start()
+		threading.Thread(target=self.processRtspRequest()).start()
 	
-	def recvRtspRequest(self):
-		"""Receive RTSP request from the client."""
-		connSocket = self.clientInfo['rtspSocket'][0]
-		while True:            
-			data = connSocket.recv(256)
-			if data:
-				print("Data received:\n" + data.decode("utf-8"))
-				self.processRtspRequest(data.decode("utf-8"))
-	
-	def processRtspRequest(self, data):
+	def processRtspRequest(self):
 		"""Process RTSP request sent from the client."""
 
-		print(data)
+		print(self.data)
 
 		# Get the request type
-		request = data.split('\n')
+		request = self.data.split('\n')
 		line1 = request[0].split(' ')
 		requestType = line1[0]
 		
@@ -54,15 +44,22 @@ class ServerWorker:
 		
 		# Process SETUP request
 		if requestType == self.SETUP:
-			if self.state == self.INIT:
+			if self.clientInfo['state'] == self.INIT:
 				# Update state
 				print("processing SETUP\n")
 				
 				try:
-					self.clientInfo['videoStream'] = VideoStream(filename)
-					self.state = self.READY
+					if filename not in self.streams:
+						self.clientInfo['videoStream'] = VideoStream(filename)
+						self.streams[filename] = self.clientInfo['videoStream']
+					else:
+						self.clientInfo['videoStream'] = self.streams[filename]
+      
+					self.clientInfo['state'] = self.READY
 				except IOError:
 					self.replyRtsp(self.FILE_NOT_FOUND_404, seq[1])
+     
+				print("state: ", self.clientInfo['state'])
 				
 				# Generate a randomized RTSP session ID
 				self.clientInfo['session'] = randint(100000, 999999)
@@ -75,9 +72,10 @@ class ServerWorker:
 		
 		# Process PLAY request 		
 		elif requestType == self.PLAY:
-			if self.state == self.READY:
+			print("state: ", self.clientInfo['state'])
+			if self.clientInfo['state'] == self.READY:
 				print("processing PLAY\n")
-				self.state = self.PLAYING
+				self.clientInfo['state'] = self.PLAYING
 				
 				# Create a new socket for RTP/UDP
 				self.clientInfo["rtpSocket"] = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -91,9 +89,9 @@ class ServerWorker:
 		
 		# Process PAUSE request
 		elif requestType == self.PAUSE:
-			if self.state == self.PLAYING:
+			if self.clientInfo['state'] == self.PLAYING:
 				print("processing PAUSE\n")
-				self.state = self.READY
+				self.clientInfo['state'] = self.READY
 				
 				self.clientInfo['event'].set()
 			
@@ -123,7 +121,7 @@ class ServerWorker:
 			if data: 
 				frameNumber = self.clientInfo['videoStream'].frameNbr()
 				try:
-					address = self.clientInfo['rtspSocket'][1][0]
+					address = self.clientInfo['clientAddress'][0]
 					port = int(self.clientInfo['rtpPort'])
 					self.clientInfo['rtpSocket'].sendto(self.makeRtp(data, frameNumber),(address,port))
 				except:
@@ -152,10 +150,10 @@ class ServerWorker:
 	def replyRtsp(self, code, seq):
 		"""Send RTSP reply to the client."""
 		if code == self.OK_200:
-			#print("200 OK")
+			# 200 OK
 			reply = 'RTSP/1.0 200 OK\nCSeq: ' + seq + '\nSession: ' + str(self.clientInfo['session'])
-			connSocket = self.clientInfo['rtspSocket'][0]
-			connSocket.send(reply.encode())
+			connSocket = self.clientInfo['rtspSocket']
+			connSocket.sendto(reply.encode(), self.clientInfo['clientAddress'])
 		
 		# Error messages
 		elif code == self.FILE_NOT_FOUND_404:
