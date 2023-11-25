@@ -12,7 +12,7 @@ if __name__ == "__main__":
 	root = Tk()
 	
 	# Create a new client
-	app = Client(root, serverAddr, 5000, 5001, stream_id)
+	app = Client(root, serverAddr, 5001, 5000, stream_id)
 	app.master.title("RTPClient")	
 	root.mainloop()
 	
