@@ -46,6 +46,7 @@ class ServerWorker:
 
     def handle_stream(self, packet, ip):
         print("Recebi stream do " + ip)
+        print(self.ep.forwarding_table)
         payload = packet.payload # Dados da Stream encapsulados em RTP
         stream_id = packet.origin
         stream_servers = self.ep.stream_table.consult_entry_servers(stream_id)

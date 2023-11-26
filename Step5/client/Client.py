@@ -1,8 +1,9 @@
 from tkinter import *
 import tkinter.messagebox as messagebox
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageFile
 import socket, threading, sys, traceback, os
 from stream_packet import Packet, PacketType
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 from RtpPacket import RtpPacket
 
@@ -36,7 +37,7 @@ class Client:
 		self.connectToServer()
 		self.frameNbr = 0
 		self.openRtpPort()
-		self.listenRtp()
+		#self.listenRtp()
 		
 	def createWidgets(self):
 		"""Build GUI."""
@@ -86,41 +87,43 @@ class Client:
 	
 	def playMovie(self):
 		"""Play button handler."""
-		if self.state == self.READY:
+		#if self.state == self.READY:
 			# Create a new thread to listen for RTP packets
-			threading.Thread(target=self.listenRtp).start()
-			self.playEvent = threading.Event()
-			self.playEvent.clear()
-			self.sendRtspRequest(self.PLAY)
+		threading.Thread(target=self.listenRtp).start()
+		self.playEvent = threading.Event()
+		self.playEvent.clear()
+		self.sendRtspRequest(self.PLAY)
 	
 	def listenRtp(self):		
 		"""Listen for RTP packets."""
 		while True:
-			print('received')
 			try:
 				data = self.rtpSocket.recv(20480)
 				if data:
-					rtpPacket = RtpPacket()
-					rtpPacket.decode(data)
-					rtpPacket = Packet.deserialize(data[0]).payload
+					rtp = RtpPacket()
+					rtp.decode(Packet.deserialize(data).payload)
 					
-					currFrameNbr = rtpPacket.seqNum()
+					currFrameNbr = rtp.seqNum()
 					print("Current Seq Num: " + str(currFrameNbr))
 										
 					if currFrameNbr > self.frameNbr: # Discard the late packet
 						self.frameNbr = currFrameNbr
-						self.updateMovie(self.writeFrame(rtpPacket.getPayload()))
-			except:
+						self.updateMovie(self.writeFrame(rtp.getPayload()))
+      
+			except Exception as exc:
+				print(type(exc))
+				print(exc.args)
+#				print(exc)
 				# Stop listening upon requesting PAUSE or TEARDOWN
 				#if self.playEvent.isSet(): 
 					#break
 				
 				# Upon receiving ACK for TEARDOWN request,
 				# close the RTP socket
-				if self.teardownAcked == 1:
-					self.rtpSocket.shutdown(socket.SHUT_RDWR)
-					self.rtpSocket.close()
-					break
+#				if self.teardownAcked == 1:
+#					self.rtpSocket.shutdown(socket.SHUT_RDWR)
+#					self.rtpSocket.close()
+#					break
 					
 	def writeFrame(self, data):
 		"""Write the received frame to a temp image file. Return the image file."""
@@ -272,7 +275,6 @@ class Client:
 								 
 	def openRtpPort(self):
 		"""Open RTP socket binded to a specified port."""
-		print('aqui')
 		# Create a new datagram socket to receive RTP packets from the server
 		self.rtpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		
