@@ -111,7 +111,7 @@ class ServerWorker:
             return
 
         best_entries_list = self.ep.get_best_entries()
-        best_entries_list = [tup for tup in best_entries_list if tup[1] != address]
+        best_entries_list = [tup for tup in best_entries_list if tup[1] != address[0]]
 
         if self.ep.rendezvous:
             # 255 reserved for RP
