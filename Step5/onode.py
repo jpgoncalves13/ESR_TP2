@@ -98,7 +98,12 @@ def read_args() -> (Bootstrapper, (str, str), bool, bool):
     if bootstrapper is not None and debug:
         bootstrapper.set_debug(debug)
 
+    print("Forwarding table")
     print(f_table)
+    
+    print("Stream table")
+    print(s_table)
+    
     return bootstrapper, bootstrapper_address, is_rendezvous_point, debug, f_table, s_table
 
 
@@ -134,7 +139,6 @@ Bootstrapper Options:
         # Request the neighbors if is a node and not the bootstrapper
         if debug:
             print(f"DEBUG: Requesting the Neighbors")
-        neighbours = []
         #neighbours = request_neighbors(bootstrapper_address)
         if debug:
             print(f"DEBUG: Neighbors -> {neighbours}")
