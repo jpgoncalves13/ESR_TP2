@@ -41,7 +41,7 @@ class Server:
                 print("DEBUG: Sending hello to neighbours")
             Thread(target=lambda: self.send_hello(ep, 5)).start()
 
-        if ep.bootstrapper is None and len(ep.get_neighbours()) > 1:
+        if ep.bootstrapper is None and ep.get_num_neighbours() > 1:
             # Start the proof thread only for the nodes not in tree leaves
             # The messages only start when the table has entries, because we can have
             # neighbours not listening

@@ -34,7 +34,7 @@ class EP:
         return self.neighbours.keys()
 
     def get_num_neighbours(self):
-        return len(self.neighbours.keys())
+        return self.num_neighbours
 
     def set_state_of_neighbour(self, neighbour, state):
         with self.neighbours_lock:

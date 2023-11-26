@@ -74,39 +74,35 @@ class ForwardingTable:
             best_entry_neighbour = None
 
             # Find the best entry
-            for entry_neighbour, entry_list in self.table[node_id].items():
-                for entry in entry_list:
-                    if entry.in_tree:
-                        best_entry = entry
-                        best_entry_neighbour = entry_neighbour
-                        break
-                if best_entry is not None:
-                    break
+            with self.tree_lock:
+                if node_id in self.tree:
+                    best_entry = self.tree[node_id][1]
+                    best_entry_neighbour = self.tree[node_id][0]
 
             # The entry to update is the best entry
             if best_entry_neighbour == neighbour and best_entry.next_hop == next_hop:
                 best_entry.delay = delay
                 best_entry.loss = loss
-                best_entry.in_tree = False
 
                 # Obtain the best entry
                 best_score = sys.maxsize
                 for leaf in self.table.keys():
-                    for entries in self.table[leaf].values():
+                    for ng, entries in self.table[leaf].items():
                         for entry in entries:
                             entry_score = entry.get_metric()
                             if entry_score < best_score:
                                 best_entry = entry
+                                best_entry_neighbour = ng
 
-                best_entry.in_tree = True
+                with self.tree_lock:
+                    self.tree[node_id] = (best_entry_neighbour, best_entry)
+
                 return
 
             current_entry.delay = delay
             current_entry.loss = loss
 
             if best_entry.get_metric() > current_entry.get_metric():
-                best_entry.in_tree = False
-                current_entry.in_tree = True
                 best_entry = current_entry
 
             with self.tree_lock:
