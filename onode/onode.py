@@ -40,6 +40,11 @@ Bootstrapper Options:
         if debug:
             print(f"DEBUG: Requesting the Neighbors")
         neighbours, node_id = request_neighbors(bootstrapper_address)
+
+        if node_id == 0:
+            print("This is not a overlay node")
+            exit(1)
+
         if debug:
             print(f"DEBUG: Neighbors -> {neighbours}")
 

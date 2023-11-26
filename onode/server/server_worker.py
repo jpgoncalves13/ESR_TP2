@@ -20,8 +20,9 @@ class ServerWorker:
 
     def handle_setup(self, address):
         """Bootstrapper response"""
-        request_neighbours, node_id = self.ep.handle_join_request(address[0])
-        packet = Packet(PacketType.RSETUP, '0.0.0.0', node_id, 0, '0.0.0.0', request_neighbours)
+        request_neighbours, node_id = self.ep.get_node_info(address[0])
+        packet = Packet(PacketType.RSETUP, '0.0.0.0', node_id if node_id is not None else 0, 0,
+                        '0.0.0.0', request_neighbours if request_neighbours is not None else [])
         ServerWorker.send_packet(packet, address)
 
     def handle_hello(self, address):
@@ -76,15 +77,18 @@ class ServerWorker:
             udp_socket.close()
 
     def handle_join(self, packet, ip):
+        """Handle the join messages to the tree"""
+        is_first_entry = False
+
         if packet.leaf == '0.0.0.0':
+            # When it's a border node
             packet.leaf = ip
-            packet.last_hop = ip
             packet.node_id = self.ep.node_id
+        else:
+            # Other nodes
+            is_first_entry, _ = self.ep.add_entry(packet.node_id, ip, packet.last_hop)
 
-        next_hop = packet.last_hop
         packet.last_hop = ip
-
-        is_first_entry, already_exists = self.ep.add_entry(packet.node_id, ip, next_hop)
 
         if self.ep.rendezvous:
             if is_first_entry:
@@ -99,17 +103,19 @@ class ServerWorker:
             else:
                 self.flood_packet(ip, packet.serialize())
 
-    def handle_measure(self, packet, address):
+    def handle_measure(self, address):
+        """Handle the packets requesting the metrics"""
+        if self.ep.get_num_neighbours() == 1 and not self.ep.rendezvous:
+            packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, 0, '0.0.0.0', [])
+            ServerWorker.send_packet(packet, address)
+            return
+
         best_entries_list = self.ep.get_best_entries()
-        best_entries_list = [tup for tup in best_entries_list if tup[1] != packet.node_id]
+        best_entries_list = [tup for tup in best_entries_list if tup[1] != address]
+
         if self.ep.rendezvous:
             # 255 reserved for RP
             best_entries_list.append((255, '0.0.0.0', 0, 0))
-        if len(self.ep.get_neighbours()) == 1 and not self.ep.rendezvous:
-            best_entries_list = []
-
-        if self.ep.debug:
-            print("DEBUG: " + str(best_entries_list))
 
         packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, 0, '0.0.0.0', best_entries_list)
         ServerWorker.send_packet(packet, address)
@@ -132,7 +138,7 @@ class ServerWorker:
                 self.handle_join(packet, address[0])
 
             elif packet.type == PacketType.MEASURE:
-                self.handle_measure(packet, address)
+                self.handle_measure(address)
 
             if self.ep.debug:
                 print("DEBUG:")

@@ -14,9 +14,12 @@ class EP:
         self.table = ForwardingTable()
         self.stream_table = StreamTable()
         self.neighbours = neighbours
+        self.num_neighbours = len(neighbours)
         self.neighbours_lock = threading.Lock()
         self.port = port
         self.node_id = node_id
+
+    # NEIGHBOURS
 
     def get_listening_neighbours(self):
         with self.neighbours_lock:
@@ -28,8 +31,10 @@ class EP:
             return listening_neighbours
 
     def get_neighbours(self):
-        with self.neighbours_lock:
-            return copy.copy(list(self.neighbours.keys()))
+        return self.neighbours.keys()
+
+    def get_num_neighbours(self):
+        return len(self.neighbours.keys())
 
     def set_state_of_neighbour(self, neighbour, state):
         with self.neighbours_lock:
@@ -39,14 +44,15 @@ class EP:
         with self.neighbours_lock:
             return self.neighbours[neighbour]
 
-    def get_neighbours_to_request(self):  # For measure
-        return self.table.get_neighbours_to_request()
+    # BOOTSTRAPPER
+
+    def get_node_info(self, ip):
+        return self.bootstrapper.get_node_info(ip)
+
+    # TABLE
 
     def add_entry(self, leaf, neighbour, next_hop):  # For join
         return self.table.add_entry(leaf, neighbour, next_hop)
-
-    def handle_join_request(self, ip):
-        return self.bootstrapper.handle_join_request(ip)
 
     def get_best_entries(self):
         return self.table.get_best_entries()
