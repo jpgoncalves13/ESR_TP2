@@ -43,7 +43,7 @@ class ServerWorker:
 
     def handle_stream_request(self, packet):
         """Send message to create the tree if I only have one neighbor"""
-        if self.ep.bootstrapper is None and not self.ep.rendezvous and len(self.ep.get_neighbours()) == 1:
+        if self.ep.bootstrapper is None and not self.ep.rendezvous and self.ep.get_num_neighbours() == 1:
             if self.ep.debug:
                 print("DEBUG: Sending the packet to create the tree")
             packet = Packet(PacketType.JOIN, '0.0.0.0', 0, 0, '0.0.0.0')

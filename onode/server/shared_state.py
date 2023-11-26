@@ -31,7 +31,7 @@ class EP:
             return listening_neighbours
 
     def get_neighbours(self):
-        return self.neighbours.keys()
+        return list(self.neighbours.keys())
 
     def get_num_neighbours(self):
         return self.num_neighbours
