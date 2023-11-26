@@ -78,30 +78,39 @@ class ServerWorker:
 
     def handle_join(self, packet, ip):
         """Handle the join messages to the tree"""
-        is_first_entry = False
 
+        # Handling logic for border nodes
         if packet.leaf == '0.0.0.0':
-            # When it's a border node
             packet.leaf = ip
             packet.node_id = self.ep.node_id
-        else:
-            # Other nodes
-            is_first_entry, _ = self.ep.add_entry(packet.node_id, ip, packet.last_hop)
+            packet.last_hop = ip
 
-        packet.last_hop = ip
+            already_exists = self.ep.add_client(packet.node_id, packet.leaf)
 
-        if self.ep.rendezvous:
-            if is_first_entry:
+            if self.ep.rendezvous and not already_exists:
                 # Start the stream transmission
                 pass
-            return
+            elif not self.ep.rendezvous and not already_exists:
+                neighbour = self.ep.get_neighbour_to_rp()
+                if neighbour is not None:
+                    ServerWorker.send_packet(packet, (neighbour, self.ep.port))
+                else:
+                    self.flood_packet(ip, packet.serialize())
 
-        if is_first_entry:
-            neighbour = self.ep.get_neighbour_to_rp()
-            if neighbour is not None:
-                ServerWorker.send_packet(packet, (neighbour, self.ep.port))
-            else:
-                self.flood_packet(ip, packet.serialize())
+        # Handling logic for other nodes
+        else:
+            is_first_entry, _ = self.ep.add_entry(packet.node_id, ip, packet.last_hop)
+            packet.last_hop = ip
+
+            if self.ep.rendezvous and is_first_entry:
+                # Start the stream transmission
+                pass
+            elif not self.ep.rendezvous and is_first_entry:
+                neighbour = self.ep.get_neighbour_to_rp()
+                if neighbour is not None:
+                    ServerWorker.send_packet(packet, (neighbour, self.ep.port))
+                else:
+                    self.flood_packet(ip, packet.serialize())
 
     def handle_measure(self, address):
         """Handle the packets requesting the metrics"""
@@ -116,6 +125,9 @@ class ServerWorker:
         if self.ep.rendezvous:
             # 255 reserved for RP
             best_entries_list.append((255, '0.0.0.0', 0, 0))
+
+        if self.ep.im_requesting():
+            best_entries_list.append((self.ep.node_id, '0.0.0.0', 0, 0))
 
         packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, 0, '0.0.0.0', best_entries_list)
         ServerWorker.send_packet(packet, address)

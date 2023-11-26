@@ -18,6 +18,8 @@ class EP:
         self.neighbours_lock = threading.Lock()
         self.port = port
         self.node_id = node_id
+        self.clients_info = {}
+        self.clients_lock = threading.Lock()
 
     # NEIGHBOURS
 
@@ -65,3 +67,21 @@ class EP:
 
     def get_table(self):
         return self.table.get_table()
+
+    # CLIENTS
+
+    def add_client(self, node_id, client):
+        with self.clients_lock:
+            if node_id not in self.clients_info:
+                self.clients_info[node_id] = []
+            if client not in self.clients_info[node_id]:
+                self.clients_info[node_id].append(client)
+                return True
+            return False
+
+    def im_requesting(self):
+        with self.clients_lock:
+            if self.node_id in self.clients_info:
+                return True
+            return False
+
