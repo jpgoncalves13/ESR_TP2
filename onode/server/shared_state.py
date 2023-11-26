@@ -14,7 +14,7 @@ class EP:
         self.table = ForwardingTable()
         self.stream_table = StreamTable()
         self.neighbours = neighbours
-        self.num_neighbours = len(neighbours)
+        self.num_neighbours = len(neighbours) if neighbours is not None else 0
         self.neighbours_lock = threading.Lock()
         self.port = port
         self.node_id = node_id
