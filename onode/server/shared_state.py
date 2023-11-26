@@ -14,9 +14,14 @@ class EP:
         self.table = ForwardingTable()
         self.stream_table = StreamTable()
         self.neighbours = neighbours
+        self.num_neighbours = len(neighbours) if neighbours is not None else 0
         self.neighbours_lock = threading.Lock()
         self.port = port
         self.node_id = node_id
+        self.clients_info = {}
+        self.clients_lock = threading.Lock()
+
+    # NEIGHBOURS
 
     def get_listening_neighbours(self):
         with self.neighbours_lock:
@@ -28,8 +33,10 @@ class EP:
             return listening_neighbours
 
     def get_neighbours(self):
-        with self.neighbours_lock:
-            return copy.copy(list(self.neighbours.keys()))
+        return list(self.neighbours.keys())
+
+    def get_num_neighbours(self):
+        return self.num_neighbours
 
     def set_state_of_neighbour(self, neighbour, state):
         with self.neighbours_lock:
@@ -39,14 +46,15 @@ class EP:
         with self.neighbours_lock:
             return self.neighbours[neighbour]
 
-    def get_neighbours_to_request(self):  # For measure
-        return self.table.get_neighbours_to_request()
+    # BOOTSTRAPPER
+
+    def get_node_info(self, ip):
+        return self.bootstrapper.get_node_info(ip)
+
+    # TABLE
 
     def add_entry(self, leaf, neighbour, next_hop):  # For join
         return self.table.add_entry(leaf, neighbour, next_hop)
-
-    def handle_join_request(self, ip):
-        return self.bootstrapper.handle_join_request(ip)
 
     def get_best_entries(self):
         return self.table.get_best_entries()
@@ -59,3 +67,21 @@ class EP:
 
     def get_table(self):
         return self.table.get_table()
+
+    # CLIENTS
+
+    def add_client(self, node_id, client):
+        with self.clients_lock:
+            if node_id not in self.clients_info:
+                self.clients_info[node_id] = []
+            if client not in self.clients_info[node_id]:
+                self.clients_info[node_id].append(client)
+                return True
+            return False
+
+    def im_requesting(self):
+        with self.clients_lock:
+            if self.node_id in self.clients_info:
+                return True
+            return False
+

@@ -53,11 +53,11 @@ class Packet:
         elif self.type == PacketType.RMEASURE:  # Delay and Loss in a list of tuples
             byte_array += len(self.payload).to_bytes(4, byteorder='big')
             for leaf, next_hop, delay, loss in self.payload:
-                # leaf
+                # node_id
                 byte_array += leaf.to_bytes(1, byteorder='big')
-                # next hop
-                next_hop_parts = next_hop.split('.')
-                byte_array += b''.join([int(part).to_bytes(1, 'big') for part in next_hop_parts])
+                # neighbour
+                neighbour_parts = next_hop.split('.')
+                byte_array += b''.join([int(part).to_bytes(1, 'big') for part in neighbour_parts])
                 # delay
                 byte_array += delay.to_bytes(4, byteorder='big')
                 # loss
@@ -106,12 +106,12 @@ class Packet:
             offset += 4
             payload = []
             for _ in range(num_measures):
-                # leaf (1 bytes)
+                # node_id (1 bytes)
                 leaf1 = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
                 offset += 1
-                # next hop (4 bytes)
-                next_hop_ip_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
-                next_hop = '.'.join(map(str, next_hop_ip_parts))
+                # neighbour (4 bytes)
+                neighbour_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
+                neighbour1 = '.'.join(map(str, neighbour_parts))
                 offset += 4
                 # delay (4 bytes)
                 delay = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
@@ -119,7 +119,7 @@ class Packet:
                 # loss (4 bytes)
                 loss = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
                 offset += 4
-                payload.append((leaf1, next_hop, delay, loss))
+                payload.append((leaf1, neighbour1, delay, loss))
 
         return Packet(message_type, leaf, node_id, stream_id, last_hop, payload)
 
