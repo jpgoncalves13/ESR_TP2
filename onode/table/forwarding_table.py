@@ -9,7 +9,7 @@ class ForwardingTable:
     def __init__(self):
         self.table = {}  # Node_Id -> Neighbour -> Entry
         self.table_lock = threading.Lock()  # Add a lock for thread safety
-        self.tree = {}  # Node_Id -> Neighbour
+        self.tree = {}  # Node_Id -> (Neighbour, Entry)
         self.tree_lock = threading.Lock()
 
     def add_entry(self, node_id, neighbour, next_hop, delay=0, loss=0):  # For join

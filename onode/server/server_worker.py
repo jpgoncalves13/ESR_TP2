@@ -41,15 +41,6 @@ class ServerWorker:
             udp_socket.sendto(packet_serialized, (neighbour, self.ep.port))
         udp_socket.close()
 
-    def handle_stream_request(self, packet):
-        """Send message to create the tree if I only have one neighbor"""
-        if self.ep.bootstrapper is None and not self.ep.rendezvous and self.ep.get_num_neighbours() == 1:
-            if self.ep.debug:
-                print("DEBUG: Sending the packet to create the tree")
-            packet = Packet(PacketType.JOIN, '0.0.0.0', 0, 0, '0.0.0.0')
-            ServerWorker.send_packet(packet, (self.ep.get_neighbours()[0], self.ep.port))
-        # This will be updated
-    
     def handle_stream(self, packet, ip):
         payload = packet.payload  # Encapsulated stream data in RTP
         stream_id = packet.stream_id
@@ -142,9 +133,6 @@ class ServerWorker:
         if self.ep.bootstrapper is None:
             if packet.type == PacketType.HELLO:
                 self.handle_hello(address)
-
-            elif packet.type == PacketType.STREAMREQ:
-                self.handle_stream_request(packet)
 
             elif packet.type == PacketType.JOIN:
                 self.handle_join(packet, address[0])
