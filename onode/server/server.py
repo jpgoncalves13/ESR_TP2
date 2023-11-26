@@ -8,7 +8,7 @@ from server.probe_thread import ProbeThread
 class Server:
     def __init__(self, port, buffer_size=None):
         if buffer_size is None:
-            buffer_size = 4096
+            buffer_size = 20480
         self.port = port
         self.buffer_size = buffer_size
 

@@ -18,7 +18,7 @@ class EP:
         self.neighbours_lock = threading.Lock()
         self.port = port
         self.node_id = node_id
-        self.clients_info = {}
+        self.clients_info = {}  # Node_id -> [Clients]  Stream_id : ([SERVERS], [NODE_IDS])
         self.clients_lock = threading.Lock()
 
     # NEIGHBOURS
