@@ -34,40 +34,43 @@ class ServerWorker:
 
     def flood_packet(self, sender_ip, packet_serialized):
         """Send a packet to all listening neighbours, except the one that sent the packet"""
+        neighbours = self.ep.get_listening_neighbours()
+        if sender_ip in neighbours:
+            neighbours.remove(sender_ip)
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        neighbours = self.ep.get_neighbours()
-        neighbours.remove(sender_ip)
         for neighbour in neighbours:
             udp_socket.sendto(packet_serialized, (neighbour, self.ep.port))
         udp_socket.close()
 
     def handle_stream(self, packet, ip):
-        payload = packet.payload  # Encapsulated stream data in RTP
-        stream_id = packet.stream_id
-        stream_servers = self.ep.stream_table.consult_entry_servers(stream_id)
+        stream_servers = self.ep.consult_entry_servers(packet.stream_id)
 
         if ip not in stream_servers:
-            self.ep.stream_table.add_server_to_stream(stream_id, ip)
-            
-        stream_servers = self.ep.stream_table.consult_entry_servers(stream_id)
-        
+            self.ep.stream_table.add_server_to_stream(packet.stream_id, ip)
+
+        # UPDATE THIS
+        stream_servers.append(ip)
+
         if ip == stream_servers[0]:
-            packet = Packet(PacketType.STREAM, '0.0.0.0', 0, stream_id, '0.0.0.0', payload=payload)
+            packet = Packet(PacketType.STREAM, '0.0.0.0', 0, packet.stream_id, '0.0.0.0', packet.payload)
             
-            stream_clients = self.ep.stream_table.consult_entry_clients(stream_id)  # Get clients requesting the stream
+            stream_clients = self.ep.consult_entry_clients(packet.stream_id)
             next_hops = []
             for client in stream_clients:
                 if type(client) is int:
-                    next_hop = self.ep.table.get_neighbour_to_client(client)
+                    next_hop = self.ep.get_neighbour_to_client(client)
                 else:
                     next_hop = client
                 
                 if next_hop not in next_hops:
                     next_hops.append(next_hop)
-            
+
+            if self.ep.debug:
+                print("DEBUG: Packet sent to: " + str(next_hops))
+
             udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            print("Next hops: " + str(next_hops))
-            for next_hop in next_hops:    
+
+            for next_hop in next_hops:
                 udp_socket.sendto(packet.serialize(), (next_hop, self.ep.port))
             
             udp_socket.close()
@@ -82,12 +85,9 @@ class ServerWorker:
             packet.last_hop = ip
 
             already_exists = self.ep.add_client(packet.node_id, packet.leaf)
-            self.ep.stream_table.add_client_to_stream(packet.stream_id, ip)
+            self.ep.add_client_to_stream(packet.stream_id, ip)
 
-            if self.ep.rendezvous and not already_exists:
-                # Start the stream transmission
-                pass
-            elif not self.ep.rendezvous and not already_exists:
+            if not self.ep.rendezvous and not already_exists:
                 neighbour = self.ep.get_neighbour_to_rp()
                 if neighbour is not None:
                     ServerWorker.send_packet(packet, (neighbour, self.ep.port))
@@ -96,14 +96,11 @@ class ServerWorker:
 
         # Handling logic for other nodes
         else:
-            self.ep.stream_table.add_client_to_stream(packet.stream_id, packet.node_id)
+            self.ep.add_client_to_stream(packet.stream_id, packet.node_id)
             is_first_entry, _ = self.ep.add_entry(packet.node_id, ip, packet.last_hop)
             packet.last_hop = ip
 
-            if self.ep.rendezvous and is_first_entry:
-                # Start the stream transmission
-                pass
-            elif not self.ep.rendezvous and is_first_entry:
+            if not self.ep.rendezvous and is_first_entry:
                 neighbour = self.ep.get_neighbour_to_rp()
                 if neighbour is not None:
                     ServerWorker.send_packet(packet, (neighbour, self.ep.port))
@@ -124,10 +121,11 @@ class ServerWorker:
             # 255 reserved for RP
             best_entries_list.append((255, '0.0.0.0', 0, 0))
 
-        if self.ep.im_requesting():
+        clients = self.ep.get_clients()
+        if len(clients) > 0:
             best_entries_list.append((self.ep.node_id, '0.0.0.0', 0, 0))
 
-        packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, 0, '0.0.0.0', best_entries_list)
+        packet = Packet(PacketType.RMEASURE, '0.0.0.0', self.ep.node_id, 0, '0.0.0.0', (best_entries_list, clients, []))
         ServerWorker.send_packet(packet, address)
 
     def handle_request(self, response, address):
@@ -147,17 +145,18 @@ class ServerWorker:
             elif packet.type == PacketType.MEASURE:
                 self.handle_measure(address)
             
-            elif packet.type == PacketType.STREAM:
-                self.handle_stream(packet, address[0])
-                
-            print(self.ep.table)
+            #elif packet.type == PacketType.STREAM:
+            #    self.handle_stream(packet, address[0])
+
+            if self.ep.debug:
+                print(self.ep.get_table())
         # Bootstrapper
         else:
             if packet.type == PacketType.SETUP:
                 self.handle_setup(address)
             else:
                 if self.ep.debug:
-                    print(f"ERROR: I'm only the bootstrapper: {packet}")
+                    print(f"ERROR: I'm only the bootstrapper: {packet.type}")
                     
 
 

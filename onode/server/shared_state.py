@@ -68,6 +68,20 @@ class EP:
     def get_table(self):
         return self.table.get_table()
 
+    def get_neighbour_to_client(self, client):
+        return self.table.get_neighbour_to_client(client)
+
+    # STREAM TABLE
+
+    def add_client_to_stream(self, stream_id, ip):
+        self.stream_table.add_client_to_stream(stream_id, ip)
+
+    def consult_entry_servers(self, stream_id):
+        return self.stream_table.consult_entry_servers(stream_id)
+
+    def consult_entry_clients(self, stream_id):
+        return self.stream_table.consult_entry_clients(stream_id)
+
     # CLIENTS
 
     def add_client(self, node_id, client):
@@ -79,9 +93,9 @@ class EP:
                 return False
             return True
 
-    def im_requesting(self):
+    def get_clients(self):
         with self.clients_lock:
             if self.node_id in self.clients_info:
-                return True
-            return False
+                return self.clients_info[self.node_id]
+            return []
 

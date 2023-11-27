@@ -56,13 +56,14 @@ class ProbeThread(threading.Thread):
                     last_packet = list_packets_received[-1] if len(list_packets_received) > 0 else None
 
                     if last_packet is not None and last_packet.type == PacketType.RMEASURE:
-                        list_metrics = last_packet.payload
+                        list_metrics, clients, stream_clients = last_packet.payload
                         for leaf, next_hop, delay, loss in list_metrics:
-                            if self.ep.rendezvous and leaf == 255:
-                                pass
-                            else:
+                            if not (self.ep.rendezvous and leaf == 255):
                                 self.ep.update_metrics(leaf, neighbour, next_hop,
                                                        delay + delay_measured, int((loss + loss_measured)/2))
+
+                        for client in clients:
+                            self.ep.add_client(last_packet.node_id, client)
 
                 time.sleep(self.interval)
         finally:

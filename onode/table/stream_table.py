@@ -17,14 +17,14 @@ class StreamTable:
     def add_stream_entry(self, stream_id, servers, clients):
         with self.lock:
             if clients is None:
-                self.table[stream_id] = ([],[]) # server, clients
+                self.table[stream_id] = ([], [])  # server, clients
             else:
                 self.table[stream_id][1] = clients
 
     def add_client_to_stream(self, stream_id, client):
         with self.lock:
             if stream_id not in self.table:
-                self.table[stream_id] = ([], [client])
+                self.table[stream_id] = ([], [])
             self.table[stream_id][1].append(client)
 
     def remove_client_from_stream(self, stream_id, client):
@@ -64,13 +64,13 @@ class StreamTable:
             string += str(entry) + "->>>>>>>>>>>>>\n" + str(self.table[entry]) + "\n"
 
         return string
-    
+
+
 def read_stream_table(filename):
     with open(filename, 'r') as file:
         data = json.load(file)
 
     for key in data:
         data[key] = ([], data[key])
-        
-    print(data)
+
     return data

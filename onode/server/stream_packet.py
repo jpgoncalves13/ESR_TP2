@@ -22,7 +22,9 @@ class Packet:
         self.stream_id = stream_id  # 1
         self.last_hop = last_hop  # 4
         self.node_id = node_id  # 1
-        self.payload = payload  # RSETUP -> neighbours, RMEASURE -> [(leaf, nex_hop, delay, loss)], STREAM -> bytes
+        self.payload = payload  # RSETUP -> neighbours,
+        # RMEASURE -> ([(leaf, nex_hop, delay, loss)], [clients], [stream clients]),
+        # STREAM -> bytes
 
     def serialize(self):
         byte_array = bytearray()
@@ -51,8 +53,11 @@ class Packet:
             byte_array += self.payload
 
         elif self.type == PacketType.RMEASURE:  # Delay and Loss in a list of tuples
-            byte_array += len(self.payload).to_bytes(4, byteorder='big')
-            for leaf, next_hop, delay, loss in self.payload:
+
+            best_entries, clients, stream_clients = self.payload
+
+            byte_array += len(best_entries).to_bytes(4, byteorder='big')
+            for leaf, next_hop, delay, loss in best_entries:
                 # node_id
                 byte_array += leaf.to_bytes(1, byteorder='big')
                 # neighbour
@@ -62,6 +67,14 @@ class Packet:
                 byte_array += delay.to_bytes(4, byteorder='big')
                 # loss
                 byte_array += loss.to_bytes(4, byteorder='big')
+
+            byte_array += len(clients).to_bytes(4, byteorder='big')
+            for client in clients:
+                # client
+                client_parts = client.split('.')
+                byte_array += b''.join([int(part).to_bytes(1, 'big') for part in client_parts])
+
+            # DO STREAM CLIENTS NEXT
 
         return byte_array
 
@@ -102,10 +115,10 @@ class Packet:
                 offset += 4
 
         elif message_type == PacketType.RMEASURE:
-            num_measures = int.from_bytes(byte_array[offset: offset + 4], 'big')
+            num_entries = int.from_bytes(byte_array[offset: offset + 4], 'big')
             offset += 4
-            payload = []
-            for _ in range(num_measures):
+            best_entries = []
+            for _ in range(num_entries):
                 # node_id (1 bytes)
                 leaf1 = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
                 offset += 1
@@ -119,7 +132,21 @@ class Packet:
                 # loss (4 bytes)
                 loss = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
                 offset += 4
-                payload.append((leaf1, neighbour1, delay, loss))
+                best_entries.append((leaf1, neighbour1, delay, loss))
+
+            num_clients = int.from_bytes(byte_array[offset: offset + 4], 'big')
+            offset += 4
+            clients = []
+            for _ in range(num_clients):
+                # clients (4 bytes)
+                client_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
+                client = '.'.join(map(str, client_parts))
+                offset += 4
+                clients.append(client)
+
+            # DO STREAM CLIENTS NEXT
+
+            payload = (best_entries, clients, [])
 
         return Packet(message_type, leaf, node_id, stream_id, last_hop, payload)
 
