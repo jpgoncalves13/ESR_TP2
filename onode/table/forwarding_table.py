@@ -53,6 +53,12 @@ class ForwardingTable:
             if node_id in self.tree:
                 return self.tree[node_id][1]
         return None
+    
+    def get_neighbour_to_client(self, node_id):
+        with self.tree_lock:
+            if node_id in self.tree:
+                return self.tree[node_id][0]
+        return None
 
     def get_entry(self, node_id, neighbour, next_hop):
         if node_id in self.table and neighbour in self.table[node_id]:

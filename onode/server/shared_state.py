@@ -76,8 +76,8 @@ class EP:
                 self.clients_info[node_id] = []
             if client not in self.clients_info[node_id]:
                 self.clients_info[node_id].append(client)
-                return True
-            return False
+                return False
+            return True
 
     def im_requesting(self):
         with self.clients_lock:
