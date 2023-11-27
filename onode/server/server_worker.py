@@ -43,49 +43,43 @@ class ServerWorker:
         udp_socket.close()
 
     def handle_stream(self, packet, ip):
-        stream_servers = self.ep.consult_entry_servers(packet.stream_id)
+        if self.ep.rendezvous:
+            self.ep.add_server_to_stream(packet.stream_id, ip)
+        if self.ep.rendezvous and not self.ep.its_best_server(packet.stream_id, ip):
+            return
 
-        if ip not in stream_servers:
-            self.ep.stream_table.add_server_to_stream(packet.stream_id, ip)
+        packet = Packet(PacketType.STREAM, '0.0.0.0', 0, packet.stream_id, '0.0.0.0', packet.payload)
+        stream_clients = self.ep.get_stream_clients(packet.stream_id)
+        neighbours_to_send = []
 
-        # UPDATE THIS
-        stream_servers.append(ip)
+        for client in stream_clients:
+            if client == self.ep.node_id:
+                for c in self.ep.get_clients():
+                    if c not in neighbours_to_send:
+                        neighbours_to_send.append(c)
+            else:
+                neighbour = self.ep.get_neighbour_to_client(client)
+                if neighbour not in neighbours_to_send:
+                    neighbours_to_send.append(neighbour)
 
-        if ip == stream_servers[0]:
-            packet = Packet(PacketType.STREAM, '0.0.0.0', 0, packet.stream_id, '0.0.0.0', packet.payload)
-            
-            stream_clients = self.ep.consult_entry_clients(packet.stream_id)
-            next_hops = []
-            for client in stream_clients:
-                if type(client) is int:
-                    next_hop = self.ep.get_neighbour_to_client(client)
-                else:
-                    next_hop = client
-                
-                if next_hop not in next_hops:
-                    next_hops.append(next_hop)
+        if self.ep.debug:
+            print("DEBUG: Packet sent to: " + str(neighbours_to_send))
 
-            if self.ep.debug:
-                print("DEBUG: Packet sent to: " + str(next_hops))
-
-            udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-            for next_hop in next_hops:
-                udp_socket.sendto(packet.serialize(), (next_hop, self.ep.port))
-            
-            udp_socket.close()
+        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        for neighbour in neighbours_to_send:
+            udp_socket.sendto(packet.serialize(), (neighbour, self.ep.port))
+        udp_socket.close()
 
     def handle_join(self, packet, ip):
         """Handle the join messages to the tree"""
-        
+
         # Handling logic for border nodes
         if packet.leaf == '0.0.0.0':
             packet.leaf = ip
             packet.node_id = self.ep.node_id
-            packet.last_hop = ip
 
             already_exists = self.ep.add_client(packet.node_id, packet.leaf)
-            self.ep.add_client_to_stream(packet.stream_id, ip)
+            self.ep.add_client_to_stream(packet.stream_id, packet.node_id)
 
             if not self.ep.rendezvous and not already_exists:
                 neighbour = self.ep.get_neighbour_to_rp()
@@ -106,7 +100,7 @@ class ServerWorker:
                     ServerWorker.send_packet(packet, (neighbour, self.ep.port))
                 else:
                     self.flood_packet(ip, packet.serialize())
-                    
+
     def handle_measure(self, address):
         """Handle the packets requesting the metrics"""
         if self.ep.get_num_neighbours() == 1 and not self.ep.rendezvous:
@@ -125,7 +119,8 @@ class ServerWorker:
         if len(clients) > 0:
             best_entries_list.append((self.ep.node_id, '0.0.0.0', 0, 0))
 
-        packet = Packet(PacketType.RMEASURE, '0.0.0.0', self.ep.node_id, 0, '0.0.0.0', (best_entries_list, clients, []))
+        packet = Packet(PacketType.RMEASURE, '0.0.0.0', self.ep.node_id, 0, '0.0.0.0',
+                        (best_entries_list, clients, self.ep.get_stream_clients()))
         ServerWorker.send_packet(packet, address)
 
     def handle_request(self, response, address):
@@ -144,9 +139,9 @@ class ServerWorker:
 
             elif packet.type == PacketType.MEASURE:
                 self.handle_measure(address)
-            
-            #elif packet.type == PacketType.STREAM:
-            #    self.handle_stream(packet, address[0])
+
+            elif packet.type == PacketType.STREAM:
+                self.handle_stream(packet, address[0])
 
             if self.ep.debug:
                 print(self.ep.get_table())
@@ -157,8 +152,3 @@ class ServerWorker:
             else:
                 if self.ep.debug:
                     print(f"ERROR: I'm only the bootstrapper: {packet.type}")
-                    
-
-
-
-

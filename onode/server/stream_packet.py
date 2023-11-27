@@ -74,7 +74,14 @@ class Packet:
                 client_parts = client.split('.')
                 byte_array += b''.join([int(part).to_bytes(1, 'big') for part in client_parts])
 
-            # DO STREAM CLIENTS NEXT
+            byte_array += len(stream_clients).to_bytes(4, byteorder='big')
+            for stream_id, client_list in stream_clients:
+                # stream id
+                byte_array += stream_id.to_bytes(1, byteorder='big')
+                # client
+                byte_array += len(client_list).to_bytes(1, byteorder='big')
+                for client in client_list:
+                    byte_array += client.to_bytes(1, byteorder='big')
 
         return byte_array
 
@@ -144,9 +151,24 @@ class Packet:
                 offset += 4
                 clients.append(client)
 
-            # DO STREAM CLIENTS NEXT
+            num_stream_clients = int.from_bytes(byte_array[offset: offset + 4], 'big')
+            offset += 4
+            stream_clients = []
+            for _ in range(num_stream_clients):
+                # stream_id (1 byte)
+                stream_id = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
+                offset += 1
+                num_clients = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
+                clients_list = []
+                offset += 1
+                for _ in range(num_clients):
+                    client = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
+                    offset += 1
+                    clients_list.append(client)
 
-            payload = (best_entries, clients, [])
+                stream_clients.append((stream_id, clients_list))
+
+            payload = (best_entries, clients, stream_clients)
 
         return Packet(message_type, leaf, node_id, stream_id, last_hop, payload)
 

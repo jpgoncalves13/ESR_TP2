@@ -73,14 +73,20 @@ class EP:
 
     # STREAM TABLE
 
-    def add_client_to_stream(self, stream_id, ip):
-        self.stream_table.add_client_to_stream(stream_id, ip)
+    def add_client_to_stream(self, stream_id, node_id):
+        self.stream_table.add_client_to_stream(stream_id, node_id)
 
-    def consult_entry_servers(self, stream_id):
-        return self.stream_table.consult_entry_servers(stream_id)
+    def add_server_to_stream(self, stream_id, server_ip):
+        self.stream_table.add_server_to_stream(stream_id, server_ip)
 
-    def consult_entry_clients(self, stream_id):
-        return self.stream_table.consult_entry_clients(stream_id)
+    def its_best_server(self, stream_id, server_ip):
+        return self.stream_table.its_best_server(stream_id, server_ip)
+
+    def get_stream_clients(self, stream_id):
+        return self.stream_table.get_stream_clients(stream_id)
+
+    def get_stream_clients(self):
+        return self.stream_table.get_clients()
 
     # CLIENTS
 

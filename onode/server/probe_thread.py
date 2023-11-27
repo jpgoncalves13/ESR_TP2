@@ -65,6 +65,10 @@ class ProbeThread(threading.Thread):
                         for client in clients:
                             self.ep.add_client(last_packet.node_id, client)
 
+                        for stream_id, clients in stream_clients:
+                            for client in clients:
+                                self.ep.add_client_to_stream(stream_id, client)
+
                 time.sleep(self.interval)
         finally:
             udp_socket.close()
