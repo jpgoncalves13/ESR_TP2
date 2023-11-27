@@ -32,11 +32,9 @@ class StreamTable:
             self.table[stream_id][1].remove(client)
             
     def add_server_to_stream(self, stream_id, server_ip):
-        print(stream_id)
-        print(server_ip)
         with self.lock:
             if stream_id not in self.table:
-                self.table[stream_id] = ([server_ip], ['10.0.11.1'])
+                self.table[stream_id] = ([server_ip], [])
             self.table[stream_id][0].append(server_ip)
             
     def remove_server_from_stream(self, stream_id, server_ip):
@@ -60,12 +58,12 @@ class StreamTable:
         return self.__repr__()
     
     def __repr__(self) -> str:
-        str = "------- Table: -------\n"
+        string = "------- Table: -------\n"
 
         for entry in self.table:
-            str += entry + "->>>>>>>>>>>>>\n" + self.table[entry].__str__() + "\n"
+            string += str(entry) + "->>>>>>>>>>>>>\n" + str(self.table[entry]) + "\n"
 
-        return str
+        return string
     
 def read_stream_table(filename):
     with open(filename, 'r') as file:

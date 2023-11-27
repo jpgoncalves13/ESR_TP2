@@ -1,10 +1,7 @@
 import sys, socket, time
-from server.server import Server
-from server.stream_packet import Packet, PacketType
+from stream_packet import Packet, PacketType
 from video_stream import VideoStream
 from rtp_packet import RtpPacket
-from stream_server.video_stream import VideoStream
-from stream_server.rtp_packet import RtpPacket
 
 def main():
     if len(sys.argv) < 2:
@@ -13,7 +10,7 @@ def main():
 
     # --help option
     if len(sys.argv) == 2 and sys.argv[1] == '--help':
-        info = "Usage: server <rendezvouz-ip(:bootstrapper-port)?> <video_file>"
+        info = "Usage: server <rendezvouz-ip> <video_file>"
         print(info)
         return
 
@@ -24,19 +21,20 @@ def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     i=0
     while True:
+        stream = VideoStream(sys.argv[2])
         data = stream.nextFrame()
-        time.sleep(0.01)
-        if data:
+        while data:
             frameNumber = stream.frameNbr()
             print(i)
-            time.sleep(0.01)
+            time.sleep(0.05)
             i+=1
             try:
                 rtp_packet = makeRtp(data, frameNumber)
-                sock.sendto(Packet('Stream1',PacketType.STREAM,0,0,0,[],[],rtp_packet).serialize(), (rp_ip, rp_port))
+                sock.sendto(Packet(PacketType.STREAM,'0.0.0.0',0,1,'0.0.0.0',rtp_packet).serialize(), (rp_ip, rp_port))
             except Exception as e:
                 print(e)
                 break
+            data = stream.nextFrame()
         
     
 def makeRtp(payload, frameNbr):
