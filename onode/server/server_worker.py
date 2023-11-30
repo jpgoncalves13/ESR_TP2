@@ -98,7 +98,7 @@ class ServerWorker:
     def handle_measure(self, address):
         """Handle the packets requesting the metrics"""
         if self.ep.get_num_neighbours() == 1 and not self.ep.rendezvous:
-            packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, '0.0.0.0', [])
+            packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, '0.0.0.0', ([], []))
             ServerWorker.send_packet(packet, address)
             return
 
