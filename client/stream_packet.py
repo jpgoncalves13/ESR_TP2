@@ -51,12 +51,13 @@ class Packet:
 
         elif self.type == PacketType.RMEASURE:  # Delay and Loss in a list of tuples
 
-            best_entries, stream_clients = self.payload
+            best_entries, rp_entry, stream_clients = self.payload
 
             byte_array += len(best_entries).to_bytes(4, byteorder='big')
-            for leaf, next_hop, delay, loss in best_entries:
-                # node_id
-                byte_array += leaf.to_bytes(1, byteorder='big')
+            for leaf, next_hop, delay, loss, rp in best_entries:
+                # leaf
+                leaf_parts = leaf.split('.')
+                byte_array += b''.join([int(part).to_bytes(1, 'big') for part in leaf_parts])
                 # neighbour
                 neighbour_parts = next_hop.split('.')
                 byte_array += b''.join([int(part).to_bytes(1, 'big') for part in neighbour_parts])
@@ -64,6 +65,21 @@ class Packet:
                 byte_array += delay.to_bytes(4, byteorder='big')
                 # loss
                 byte_array += loss.to_bytes(4, byteorder='big')
+
+            if rp_entry is not None:
+                byte_array += int(1).to_bytes(1, byteorder='big')
+                # rp_ip
+                leaf_parts = rp_entry[0].split('.')
+                byte_array += b''.join([int(part).to_bytes(1, 'big') for part in leaf_parts])
+                # neighbour
+                neighbour_parts = rp_entry[1].split('.')
+                byte_array += b''.join([int(part).to_bytes(1, 'big') for part in neighbour_parts])
+                # delay
+                byte_array += rp_entry[2].to_bytes(4, byteorder='big')
+                # loss
+                byte_array += rp_entry[3].to_bytes(4, byteorder='big')
+            else:
+                byte_array += int(0).to_bytes(1, byteorder='big')
 
             byte_array += len(stream_clients).to_bytes(4, byteorder='big')
             for stream_id, client_list in stream_clients:
@@ -114,9 +130,10 @@ class Packet:
             offset += 4
             best_entries = []
             for _ in range(num_entries):
-                # node_id (1 bytes)
-                leaf1 = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
-                offset += 1
+                # leaf (4 bytes)
+                leaf_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
+                leaf1 = '.'.join(map(str, leaf_parts))
+                offset += 4
                 # neighbour (4 bytes)
                 neighbour_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
                 neighbour1 = '.'.join(map(str, neighbour_parts))
@@ -128,6 +145,27 @@ class Packet:
                 loss = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
                 offset += 4
                 best_entries.append((leaf1, neighbour1, delay, loss))
+
+            rp_entry_exists = int.from_bytes(byte_array[offset: offset + 1], 'big')
+            offset += 1
+            if rp_entry_exists == 1:
+                # rp_ip (4 bytes)
+                rp_ip_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
+                rp_ip = '.'.join(map(str, rp_ip_parts))
+                offset += 4
+                # neighbour (4 bytes)
+                neighbour_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
+                neighbour1 = '.'.join(map(str, neighbour_parts))
+                offset += 4
+                # delay (4 bytes)
+                delay = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
+                offset += 4
+                # loss (4 bytes)
+                loss = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
+                offset += 4
+                rp_entry = (rp_ip, neighbour1, delay, loss)
+            else:
+                rp_entry = None
 
             num_stream_clients = int.from_bytes(byte_array[offset: offset + 4], 'big')
             offset += 4
@@ -146,7 +184,7 @@ class Packet:
 
                 stream_clients.append((stream_id, clients_list))
 
-            payload = (best_entries, stream_clients)
+            payload = (best_entries, rp_entry, stream_clients)
 
         return Packet(message_type, leaf, stream_id, last_hop, payload)
 
