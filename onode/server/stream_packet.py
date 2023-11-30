@@ -88,7 +88,8 @@ class Packet:
                 # client
                 byte_array += len(client_list).to_bytes(1, byteorder='big')
                 for client in client_list:
-                    byte_array += client.to_bytes(1, byteorder='big')
+                    client_parts = client.split('.')
+                    byte_array += b''.join([int(part).to_bytes(1, 'big') for part in client_parts])
 
         return byte_array
 
@@ -178,8 +179,10 @@ class Packet:
                 clients_list = []
                 offset += 1
                 for _ in range(num_clients):
-                    client = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
-                    offset += 1
+                    # client (4 bytes)
+                    client_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
+                    client = '.'.join(map(str, client_parts))
+                    offset += 4
                     clients_list.append(client)
 
                 stream_clients.append((stream_id, clients_list))
