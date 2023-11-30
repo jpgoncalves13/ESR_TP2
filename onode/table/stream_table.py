@@ -9,6 +9,7 @@ class StreamTable:
     """
     def __init__(self):
         self.table = {}
+        self.servers_entries = {}
         self.lock = threading.Lock()
 
     def add_client_to_stream(self, stream_id, client):

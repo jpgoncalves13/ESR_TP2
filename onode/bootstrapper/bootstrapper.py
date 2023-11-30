@@ -14,11 +14,6 @@ class Bootstrapper:
             return self.nodes["nodes"][self.nodes["names"][node_ip]]
         return None
 
-    def get_id(self, node_ip):
-        if node_ip in self.nodes["names"]:
-            return int(self.nodes["names"][node_ip])
-        return None
-
     def set_debug(self, debug):
         self.debug = debug
     
@@ -26,7 +21,6 @@ class Bootstrapper:
         if self.debug:
             print(f"DEBUG: Received a request to join the topology from node {node_ip}")
         neighbors = self.get_neighbors(node_ip)
-        node_id = self.get_id(node_ip)
         if self.debug:
             print(f"DEBUG: Sending neighbors {neighbors} to node {node_ip}")
-        return neighbors, node_id
+        return neighbors

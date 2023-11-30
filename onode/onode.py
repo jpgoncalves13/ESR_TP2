@@ -4,6 +4,7 @@ from server.server import Server
 from server.stream_packet import Packet, PacketType
 from bootstrapper.bootstrapper import Bootstrapper
 from server.shared_state import EP
+import re
 
 
 def main():
@@ -13,14 +14,10 @@ def main():
 
     # --help option
     if len(sys.argv) == 2 and sys.argv[1] == '--help':
-        info = """Usage: onode <bootstrapper-ip(:bootstrapper-port)?> [node options]
-   or: onode --bootstrapper <file> [bootstrapper options]
+        info = """Usage: onode (--bootstrapper <file>)? <bootstrapper-ip(:bootstrapper-port)?> [node options]
 
 Node Options:
  -r, --rendezvous Rendezvous point.
- -d, --debug      Debug mode.
-
-Bootstrapper Options:
  -d, --debug      Debug mode.
 """
         print(info)
@@ -31,24 +28,22 @@ Bootstrapper Options:
     # Parse the arguments
     bootstrapper, bootstrapper_address, is_rendezvous_point, debug = read_args()
 
-    # The neighbors of this normal node
-    neighbours = None
-    node_id = None
-
+    # Request the neighbors if is a node and not the bootstrapper
     if bootstrapper is None:
-        # Request the neighbors if is a node and not the bootstrapper
         if debug:
             print(f"DEBUG: Requesting the Neighbors")
-        neighbours, node_id = request_neighbors(bootstrapper_address)
+        neighbours = request_neighbors(bootstrapper_address)
+    else:
+        neighbours = bootstrapper.get_neighbors(bootstrapper_address[0])
 
-        if node_id == 0:
-            print("This is not a overlay node")
-            exit(1)
+    if len(neighbours.keys()) == 0:
+        print("This is not a overlay node")
+        exit(1)
 
-        if debug:
-            print(f"DEBUG: Neighbors -> {neighbours}")
+    if debug:
+        print(f"DEBUG: Neighbors -> {neighbours.keys()}")
 
-    ep = EP(debug, bootstrapper, is_rendezvous_point, port, neighbours, node_id)
+    ep = EP(debug, bootstrapper, is_rendezvous_point, port, neighbours)
 
     # Start the server
     server = Server(port)
@@ -60,16 +55,14 @@ def request_neighbors(bootstrapper_address, timeout=5, max_retries=3):
     udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
     udp_socket.settimeout(timeout)
     neighbours = {}
-    node_id = None
 
     try:
         while retries < max_retries:
             try:
-                packet_serialized = Packet(PacketType.SETUP, '0.0.0.0', 0, 0, '0.0.0.0').serialize()
+                packet_serialized = Packet(PacketType.SETUP, '0.0.0.0', 0, '0.0.0.0').serialize()
                 udp_socket.sendto(packet_serialized, bootstrapper_address)
                 response, _ = udp_socket.recvfrom(4096)
                 response_packet = Packet.deserialize(bytearray(response))
-                node_id = response_packet.node_id
                 for neighbour in response_packet.payload:
                     neighbours[neighbour] = False
                 break
@@ -78,63 +71,69 @@ def request_neighbors(bootstrapper_address, timeout=5, max_retries=3):
     finally:
         udp_socket.close()
 
-    return neighbours, node_id
+    return neighbours
+
+
+def is_valid_ip(ip):
+    pattern = r'^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$'
+    return re.match(pattern, ip) is not None
+
+
+def get_bootstrapper_address(words):
+    if len(words) == 2:
+        if not words[1].isdigit():
+            print("Error: The bootstrapper port should be an integer")
+            exit(1)
+
+        if is_valid_ip(words[0]):
+            return words[0], int(words[1])
+        else:
+            print(f"Error: {words[0]} is not a valid IP address")
+            exit(1)
+    elif len(words) == 1:
+        if is_valid_ip(words[0]):
+            return words[0], 5000
+        else:
+            print(f"Error: {words[0]} is not a valid IP address")
+            exit(1)
+    else:
+        print("Error: Wrong bootstrapper configuration\nTry --help for more information")
+        exit(1)
 
 
 def read_args():
     i = 1
     bootstrapper = None
     debug = False
-    bootstrapper_address = None
     is_rendezvous_point = False
 
     if sys.argv[i] == '--bootstrapper':
-        # --bootstrapper <file> [opt]
-        if len(sys.argv) == 2:
-            print("Error: Incorrect number of arguments")
-            exit(1)
-
-        file = sys.argv[i + 1]
-        i += 2
-        bootstrapper = Bootstrapper(file)
-
-        while i < len(sys.argv):
-            if sys.argv[i] == '--debug':
-                # for the debug mode
-                debug = True
-            else:
-                print(f"Invalid argument: {sys.argv[i]}")
-            i += 1
-    else:
-        # <bootstrapper-ip:bootstrapper-port> [opt]
-        if ':' in sys.argv[i]:
-            words = sys.argv[i].split(':')
-        else:
-            words = [sys.argv[i]]
-
-        if len(words) == 2:
-            try:
-                bootstrapper_address = (words[0], int(words[1]))
-            except ValueError:
-                print("Error: The bootstrapper port was to be an integer")
-                exit(1)
-        elif len(words) == 1:
-            bootstrapper_address = (words[0], 5000)
-        else:
-            print("Error: Wrong bootstrapper configuration\n Try --help for more information")
-            exit(1)
-
+        # --bootstrapper <file>
         i += 1
-        while i < len(sys.argv):
-            if sys.argv[i] == '--rendezvous':
-                # for the rendezvous point
-                is_rendezvous_point = True
-            elif sys.argv[i] == '--debug':
-                # for the debug mode
-                debug = True
-            else:
-                print(f"Invalid argument: {sys.argv[i]}")
-            i += 1
+        file = sys.argv[i]
+        bootstrapper = Bootstrapper(file)
+        i += 1
+
+    # <bootstrapper-ip:bootstrapper-port>
+    if ':' in sys.argv[i]:
+        words = sys.argv[i].split(':')
+    else:
+        words = [sys.argv[i]]
+
+    bootstrapper_address = get_bootstrapper_address(words)
+    i += 1
+
+    # options
+    while i < len(sys.argv):
+        if sys.argv[i] == '--rendezvous':
+            # for the rendezvous point
+            is_rendezvous_point = True
+        elif sys.argv[i] == '--debug':
+            # for the debug mode
+            debug = True
+        else:
+            print(f"Invalid argument: {sys.argv[i]}")
+        i += 1
 
     if bootstrapper is not None and debug:
         bootstrapper.set_debug(debug)

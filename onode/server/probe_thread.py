@@ -32,7 +32,7 @@ class ProbeThread(threading.Thread):
                     packets_sent = 0
                     packets_received = 0
                     total_delay = 0
-                    packet_serialized = Packet(PacketType.MEASURE, '0.0.0.0', 0, 0, '0.0.0.0').serialize()
+                    packet_serialized = Packet(PacketType.MEASURE, '0.0.0.0', 0, '0.0.0.0').serialize()
                     list_packets_received = []
 
                     for _ in range(self.block):
@@ -56,14 +56,11 @@ class ProbeThread(threading.Thread):
                     last_packet = list_packets_received[-1] if len(list_packets_received) > 0 else None
 
                     if last_packet is not None and last_packet.type == PacketType.RMEASURE:
-                        list_metrics, clients, stream_clients = last_packet.payload
+                        list_metrics, stream_clients = last_packet.payload
                         for leaf, next_hop, delay, loss in list_metrics:
                             if not (self.ep.rendezvous and leaf == 255):
                                 self.ep.update_metrics(leaf, neighbour, next_hop,
                                                        delay + delay_measured, int((loss + loss_measured)/2))
-
-                        for client in clients:
-                            self.ep.add_client(last_packet.node_id, client)
 
                         for stream_id, clients in stream_clients:
                             for client in clients:

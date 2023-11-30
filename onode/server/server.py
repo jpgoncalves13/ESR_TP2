@@ -16,7 +16,7 @@ class Server:
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         udp_socket.settimeout(timeout)
         try:
-            packet = Packet(PacketType.HELLO, '0.0.0.0', 0, 0, '0.0.0.0').serialize()
+            packet = Packet(PacketType.HELLO, '0.0.0.0', 0, '0.0.0.0').serialize()
             for neighbour in ep.get_neighbours():
                 udp_socket.sendto(packet, (neighbour, self.port))
                 try:
@@ -36,15 +36,12 @@ class Server:
         if ep.debug:
             print("DEBUG: Listening on port " + str(self.port) + "...")
 
-        if ep.bootstrapper is None:
-            if ep.debug:
-                print("DEBUG: Sending hello to neighbours")
-            Thread(target=lambda: self.send_hello(ep, 5)).start()
+        if ep.debug:
+            print("DEBUG: Sending hello to neighbours")
+        Thread(target=lambda: self.send_hello(ep, 5)).start()
 
-        if ep.bootstrapper is None and ep.get_num_neighbours() > 1:
+        if ep.get_num_neighbours() > 1:
             # Start the proof thread only for the nodes not in tree leaves
-            # The messages only start when the table has entries, because we can have
-            # neighbours not listening
             probe_thread = ProbeThread(ep, 5, 2, 2, ep.port)
             probe_thread.start()
 
