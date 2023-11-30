@@ -109,6 +109,8 @@ class ServerWorker:
             rp_entry = ('0.0.0.0', '0.0.0.0', 0, 0)
         else:
             rp_entry = self.ep.get_best_entry_rp()
+            if rp_entry[1] == address[0]:
+                rp_entry = None
 
         packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, '0.0.0.0',
                         (best_entries_list, rp_entry, self.ep.get_stream_table_info()))
