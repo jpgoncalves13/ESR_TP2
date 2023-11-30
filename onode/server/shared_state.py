@@ -71,6 +71,9 @@ class EP:
     def get_table(self):
         return self.table.get_table()
 
+    def get_table_rp(self):
+        return self.table.get_table_rp()
+
     def get_neighbour_to_client(self, client):
         return self.table.get_neighbour_to_client(client)
 

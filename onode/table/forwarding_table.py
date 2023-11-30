@@ -25,15 +25,15 @@ class ForwardingTable:
                     self.rp_entry = (rp_ip, neighbour, entry)
 
             if rp_ip not in self.rp_table:
-                self.table[rp_ip] = {}
+                self.rp_table[rp_ip] = {}
 
             if neighbour not in self.table[rp_ip]:
-                self.table[rp_ip][neighbour] = []
+                self.rp_table[rp_ip][neighbour] = []
 
-            already_exists = any(en.next_hop == next_hop for en in self.table[rp_ip][neighbour])
+            already_exists = any(en.next_hop == next_hop for en in self.rp_table[rp_ip][neighbour])
 
             if not already_exists:
-                self.table[rp_ip][neighbour].append(entry)
+                self.rp_table[rp_ip][neighbour].append(entry)
 
             return is_first_entry, already_exists
 
@@ -100,7 +100,7 @@ class ForwardingTable:
 
     def get_entry_rp(self, rp_ip, neighbour, next_hop):
         if rp_ip in self.rp_table and neighbour in self.rp_table[rp_ip]:
-            for entry in self.table[rp_ip][neighbour]:
+            for entry in self.rp_table[rp_ip][neighbour]:
                 if entry.next_hop == next_hop:
                     return entry
         return None
@@ -204,6 +204,10 @@ class ForwardingTable:
     def get_table(self):
         with self.table_lock:
             return copy.deepcopy(self.table)
+
+    def get_table_rp(self):
+        with self.table_lock:
+            return copy.deepcopy(self.rp_table)
 
     def __str__(self) -> str:
         with self.table_lock:

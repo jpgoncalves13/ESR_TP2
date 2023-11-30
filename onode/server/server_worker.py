@@ -146,4 +146,5 @@ class ServerWorker:
             self.handle_setup(address)
 
         if self.ep.debug:
-            print(self.ep.get_table())
+            print("TABLE" + self.ep.get_table())
+            print("RP" + self.ep.get_table_rp())
