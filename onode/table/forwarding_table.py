@@ -27,7 +27,7 @@ class ForwardingTable:
             if rp_ip not in self.rp_table:
                 self.rp_table[rp_ip] = {}
 
-            if neighbour not in self.table[rp_ip]:
+            if neighbour not in self.rp_table[rp_ip]:
                 self.rp_table[rp_ip][neighbour] = []
 
             already_exists = any(en.next_hop == next_hop for en in self.rp_table[rp_ip][neighbour])
