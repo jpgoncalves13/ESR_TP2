@@ -54,7 +54,7 @@ class Packet:
             best_entries, rp_entry, stream_clients = self.payload
 
             byte_array += len(best_entries).to_bytes(4, byteorder='big')
-            for leaf, next_hop, delay, loss, rp in best_entries:
+            for leaf, next_hop, delay, loss in best_entries:
                 # leaf
                 leaf_parts = leaf.split('.')
                 byte_array += b''.join([int(part).to_bytes(1, 'big') for part in leaf_parts])

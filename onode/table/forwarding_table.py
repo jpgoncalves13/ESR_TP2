@@ -68,8 +68,8 @@ class ForwardingTable:
         best_entries = []
 
         with self.tree_lock:
-            for node_id, value in self.tree.items():
-                best_entries.append((node_id, value[0], value[1].delay, value[1].loss))
+            for leaf, value in self.tree.items():
+                best_entries.append((leaf, value[0], value[1].delay, value[1].loss))
 
         return best_entries
 
