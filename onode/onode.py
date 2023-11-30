@@ -34,7 +34,10 @@ Node Options:
             print(f"DEBUG: Requesting the Neighbors")
         neighbours = request_neighbors(bootstrapper_address)
     else:
-        neighbours = bootstrapper.get_neighbors(bootstrapper_address[0])
+        neighbours = {}
+        neighbours_list = bootstrapper.get_neighbors(bootstrapper_address[0])
+        for neighbour in neighbours_list:
+            neighbours[neighbour] = False
 
     if len(neighbours.keys()) == 0:
         print("This is not a overlay node")
