@@ -96,9 +96,9 @@ class Client:
         # if self.state == self.READY:
         # Create a new thread to listen for RTP packets
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        packet = Packet(PacketType.JOIN,'0.0.0.0',0,1,'0.0.0.0')
+        packet = Packet(PacketType.STREAMREQ,'0.0.0.0',1,'0.0.0.0')
         sock.sendto(packet.serialize(), (self.serverAddr, self.serverPort))
-        print('JOIN enviado ao ' + str(self.serverAddr) + ':' + str(self.serverPort))
+        print('STREAM REQUEST enviado ao ' + str(self.serverAddr) + ':' + str(self.serverPort))
         threading.Thread(target=self.listenRtp).start()
         self.playEvent = threading.Event()
         self.playEvent.clear()
