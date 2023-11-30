@@ -75,9 +75,9 @@ class Packet:
                 neighbour_parts = rp_entry[1].split('.')
                 byte_array += b''.join([int(part).to_bytes(1, 'big') for part in neighbour_parts])
                 # delay
-                byte_array += rp_entry[3].to_bytes(4, byteorder='big')
+                byte_array += rp_entry[2].to_bytes(4, byteorder='big')
                 # loss
-                byte_array += rp_entry[4].to_bytes(4, byteorder='big')
+                byte_array += rp_entry[3].to_bytes(4, byteorder='big')
             else:
                 byte_array += int(0).to_bytes(1, byteorder='big')
 
