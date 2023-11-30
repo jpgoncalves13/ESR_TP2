@@ -177,7 +177,7 @@ class ForwardingTable:
                 # Obtain the best entry
                 best_score = sys.maxsize
                 for rp in self.rp_table.keys():
-                    for ng, entries in self.table[rp].items():
+                    for ng, entries in self.rp_table[rp].items():
                         for entry in entries:
                             entry_score = entry.get_metric()
                             if entry_score < best_score:
