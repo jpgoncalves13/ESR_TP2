@@ -108,7 +108,7 @@ class ServerWorker:
         if self.ep.rendezvous:
             rp_entry = ('0.0.0.0', '0.0.0.0', 0, 0)
         else:
-            rp_entry = None
+            rp_entry = self.ep.get_best_entry_rp()
 
         packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, '0.0.0.0',
                         (best_entries_list, rp_entry, self.ep.get_stream_table_info()))

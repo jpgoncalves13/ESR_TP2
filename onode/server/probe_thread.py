@@ -61,7 +61,7 @@ class ProbeThread(threading.Thread):
                             self.ep.update_metrics(leaf, neighbour, next_hop,
                                                    delay + delay_measured, int((loss + loss_measured)/2))
 
-                        if rp_entry is not None:
+                        if rp_entry is not None and not self.ep.rendezvous:
                             rp_ip = rp_entry[0]
                             if rp_ip == "0.0.0.0":
                                 rp_ip = neighbour

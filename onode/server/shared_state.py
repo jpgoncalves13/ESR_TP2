@@ -56,6 +56,9 @@ class EP:
     def get_best_entries(self):
         return self.table.get_best_entries()
 
+    def get_best_entry_rp(self):
+        return self.table.get_best_entry_rp()
+
     def get_neighbour_to_rp(self):
         return self.table.get_neighbour_to_rp()
 
