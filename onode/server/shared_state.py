@@ -59,6 +59,9 @@ class EP:
     def get_neighbour_to_rp(self):
         return self.table.get_neighbour_to_rp()
 
+    def update_metrics_rp(self, leaf, neighbour, next_hop, delay, loss):
+        self.table.update_metrics_rp(leaf, neighbour, next_hop, delay, loss)
+
     def update_metrics(self, leaf, neighbour, next_hop, delay, loss):
         self.table.update_metrics(leaf, neighbour, next_hop, delay, loss)
 

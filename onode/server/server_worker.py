@@ -106,11 +106,12 @@ class ServerWorker:
         best_entries_list = [tup for tup in best_entries_list if tup[1] != address[0]]
 
         if self.ep.rendezvous:
-            # 255 reserved for RP
-            best_entries_list.append((255, '0.0.0.0', 0, 0))
+            rp_entry = ('0.0.0.0', '0.0.0.0', 0, 0)
+        else:
+            rp_entry = None
 
         packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, '0.0.0.0',
-                        (best_entries_list, self.ep.get_stream_table_info()))
+                        (best_entries_list, rp_entry, self.ep.get_stream_table_info()))
         ServerWorker.send_packet(packet, address)
 
     def handle_stream_request(self):
