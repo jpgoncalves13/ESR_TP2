@@ -1,6 +1,7 @@
 import os
 import socket
 import threading
+import time
 import tkinter.messagebox as messagebox
 from datetime import datetime
 from tkinter import *
@@ -140,7 +141,7 @@ class Client:
 
     def writeFrame(self, data):
         """Write the received frame to a temp image file. Return the image file."""
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        timestamp = int(time.time())
         cachename = f"{CACHE_FILE_NAME}{self.sessionId}_{timestamp}{CACHE_FILE_EXT}"
         file = open(cachename, "wb")
         file.write(data)
