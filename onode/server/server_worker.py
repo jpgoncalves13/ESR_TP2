@@ -95,6 +95,19 @@ class ServerWorker:
                 ServerWorker.send_packet(packet, (neighbour, self.ep.port))
             else:
                 self.flood_packet(ip, packet.serialize())
+    def handle_leave(self, packet, ip):
+        """Handle the client leave message to the tree"""
+        
+        # Handling logic for leaf neighbours nodes
+        if packet.leaf == '0.0.0.0':
+            packet.leaf = ip
+            
+        if not self.ep.rendezvous:
+            neighbour = self.ep.get_neighbour_to_rp()
+            ServerWorker.send_packet(packet, (neighbour, self.ep.port))
+        
+        self.ep.remove_client_from_stream(packet.leaf)
+        self.ep.remove_client_from_forwarding_table(packet.leaf)
 
     def handle_measure(self, address):
         """Handle the packets requesting the metrics"""
@@ -143,12 +156,15 @@ class ServerWorker:
 
         elif packet.type == PacketType.STREAMREQ:
             self.handle_stream_request(packet)
+        
+        elif packet.type == PacketType.LEAVE:
+            self.handle_leave(packet, address[0])
 
         # Bootstrapper
         elif packet.type == PacketType.SETUP and self.ep.bootstrapper is not None:
             self.handle_setup(address)
 
         if self.ep.debug:
-            print("TABLE" + str(self.ep.get_table()))
-            print("RP" + str(self.ep.get_table_rp()))
-            print("SERVERS" + str(self.ep.get_stream_table()))
+            print("CLIENTS_TABLE" + str(self.ep.get_table()) + "\n")
+            print("RP_TABLE" + str(self.ep.get_table_rp()) + "\n")
+            print("STREAM_TABLE" + str(self.ep.get_stream_table()) + "\n")
