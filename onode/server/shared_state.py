@@ -85,6 +85,9 @@ class EP:
     def add_server_to_stream(self, stream_id, server_ip):
         self.stream_table.add_server_to_stream(stream_id, server_ip)
 
+    def get_servers(self):
+        return self.stream_table.get_servers()
+
     def its_best_server(self, stream_id, server_ip):
         return self.stream_table.its_best_server(stream_id, server_ip)
 
@@ -94,4 +97,6 @@ class EP:
     def get_stream_table_info(self):
         return self.stream_table.get_clients()
 
+    def update_metrics_server(self, server, delay, loss):
+        self.stream_table.update_metrics_server(server, delay, loss)
 

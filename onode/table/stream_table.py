@@ -1,6 +1,7 @@
+import sys
 import threading
 import json
-
+from table.table_entry import TableEntry
 
 class StreamTable:
     """
@@ -25,10 +26,29 @@ class StreamTable:
                 self.table[stream_id] = ([], [])
             if server_ip not in self.table[stream_id][0]:
                 self.table[stream_id][0].append(server_ip)
+            if server_ip not in self.servers_entries:
+                self.servers_entries[server_ip] = TableEntry('0.0.0.0', 0, 0)
+
+    def get_servers(self):
+        with self.lock:
+            return list(self.servers_entries.keys())
+
+    def update_metrics_server(self, server, delay, loss):
+        with self.lock:
+            self.servers_entries[server] = TableEntry('0.0.0.0', delay, loss)
 
     def its_best_server(self, stream_id, server_ip):
-        # We have to update this
-        return True
+        with self.lock:
+            clients, servers = self.table[stream_id]
+
+            score = sys.maxsize
+            best_server = None
+            for server in servers:
+                entry = self.servers_entries[server]
+                if entry.get_metric() < score:
+                    score = entry.get_metric()
+                    best_server = server
+        return best_server == server_ip
 
     def get_stream_clients(self, stream_id):
         with self.lock:
