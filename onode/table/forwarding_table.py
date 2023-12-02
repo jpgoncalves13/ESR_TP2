@@ -34,9 +34,9 @@ class ForwardingTable:
                 new_entry_metric = entry.get_metric()
                 old_entry_metric = self.table[rp_ip][neighbour].get_metric()
                 if new_entry_metric < old_entry_metric:
-                    self.table[rp_ip][neighbour] = entry
+                    self.rp_table[rp_ip][neighbour] = entry
             else:
-                self.table[rp_ip][neighbour] = entry
+                self.rp_table[rp_ip][neighbour] = entry
 
             return is_first_entry
 
