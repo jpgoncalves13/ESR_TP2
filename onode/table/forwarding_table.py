@@ -30,7 +30,7 @@ class ForwardingTable:
             if neighbour not in self.rp_table[rp_ip]:
                 self.rp_table[rp_ip][neighbour] = None
 
-            if self.rp_table[rp_ip][neighbour] is None:
+            if self.rp_table[rp_ip][neighbour] is not None:
                 new_entry_metric = entry.get_metric()
                 old_entry_metric = self.table[rp_ip][neighbour].get_metric()
                 if new_entry_metric < old_entry_metric:
