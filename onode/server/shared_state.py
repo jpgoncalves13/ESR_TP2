@@ -7,7 +7,7 @@ import threading
 
 class EP:
 
-    def __init__(self, debug: bool, bootstrapper: Bootstrapper, rendezvous: bool, port, neighbours: [str]):
+    def __init__(self, debug: bool, bootstrapper: Bootstrapper, rendezvous: bool, port, neighbours: [str], tag):
         self.debug = debug
         self.bootstrapper = bootstrapper
         self.rendezvous = rendezvous
@@ -17,6 +17,7 @@ class EP:
         self.num_neighbours = len(neighbours) if neighbours is not None else 0
         self.neighbours_lock = threading.Lock()
         self.port = port
+        self.tag = tag
 
     # NEIGHBOURS
 
