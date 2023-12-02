@@ -55,12 +55,13 @@ class ServerWorker:
 
         for client in stream_clients:
             neighbour = self.ep.get_neighbour_to_client(client)
-            if client == neighbour:
-                if client not in clients_to_send:
-                    clients_to_send.append(client)
-            else:
-                if neighbour not in neighbours_to_send:
-                    neighbours_to_send.append(neighbour)
+            if neighbour is not None:
+                if client == neighbour:
+                    if client not in clients_to_send:
+                        clients_to_send.append(client)
+                else:
+                    if neighbour not in neighbours_to_send:
+                        neighbours_to_send.append(neighbour)
 
         if self.ep.debug:
             print("DEBUG: Packet sent to: " + str(neighbours_to_send))
@@ -102,12 +103,12 @@ class ServerWorker:
             ServerWorker.send_packet(packet, address)
             return
 
-        best_entries_list = self.ep.get_best_entries()
-        best_entries_list = [tup for tup in best_entries_list if tup[1] != address[0]]
-
         if self.ep.rendezvous:
+            best_entries_list = []
             rp_entry = ('0.0.0.0', '0.0.0.0', 0, 0)
         else:
+            best_entries_list = self.ep.get_best_entries()
+            best_entries_list = [tup for tup in best_entries_list if tup[1] != address[0]]
             rp_entry = self.ep.get_best_entry_rp()
             if rp_entry is not None and rp_entry[1] == address[0]:
                 rp_entry = None
