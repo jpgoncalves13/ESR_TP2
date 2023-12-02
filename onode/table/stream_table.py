@@ -3,6 +3,7 @@ import threading
 import json
 from table.table_entry import TableEntry
 
+
 class StreamTable:
     """
     This class is used to store the stream information of each Node.

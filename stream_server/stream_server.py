@@ -2,6 +2,7 @@ import sys, socket, time
 from stream_packet import Packet, PacketType
 from video_stream import VideoStream
 from rtp_packet import RtpPacket
+from metrics_thread import MetricsThread
 
 
 def main():
@@ -14,6 +15,8 @@ def main():
         info = "Usage: server <rendezvouz-ip> <video_file>"
         print(info)
         return
+
+    MetricsThread(5000, 4096).start()
 
     # Preparar a stream
     stream = VideoStream(sys.argv[2])
