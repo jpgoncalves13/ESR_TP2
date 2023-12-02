@@ -88,8 +88,9 @@ class Client:
 
     def pauseMovie(self):
         """Pause button handler."""
-        if self.state == self.PLAYING:
-            self.sendRtspRequest(self.PAUSE)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        packet = Packet(PacketType.LEAVE,'0.0.0.0',0,'0.0.0.0')
+        sock.sendto(packet.serialize(), (self.serverAddr, self.serverPort))
 
     def playMovie(self):
         """Play button handler."""

@@ -88,12 +88,24 @@ class ServerWorker:
         is_first_entry, _ = self.ep.add_entry(packet.leaf, ip, packet.last_hop)
         packet.last_hop = ip
 
-        if not self.ep.rendezvous and is_first_entry:
+        if not self.ep.rendezvous:
             neighbour = self.ep.get_neighbour_to_rp()
             if neighbour is not None:
                 ServerWorker.send_packet(packet, (neighbour, self.ep.port))
             else:
                 self.flood_packet(ip, packet.serialize())
+    def handle_leave(self, packet, ip):
+        """Handle the client leave message to the tree"""
+        
+        # Handling logic for leaf neighbours nodes
+        if packet.leaf == '0.0.0.0':
+            packet.leaf = ip
+            
+        if not self.ep.rendezvous:
+            neighbour = self.ep.get_neighbour_to_rp()
+            ServerWorker.send_packet(packet, (neighbour, self.ep.port))
+        else:
+            self.ep.remove_client_from_stream(packet.leaf)
 
     def handle_measure(self, address):
         """Handle the packets requesting the metrics"""
@@ -142,6 +154,9 @@ class ServerWorker:
 
         elif packet.type == PacketType.STREAMREQ:
             self.handle_stream_request(packet)
+        
+        elif packet.type == PacketType.LEAVE:
+            self.handle_leave(packet, address[0])
 
         # Bootstrapper
         elif packet.type == PacketType.SETUP and self.ep.bootstrapper is not None:

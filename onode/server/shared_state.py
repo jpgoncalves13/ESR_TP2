@@ -81,6 +81,9 @@ class EP:
 
     def add_client_to_stream(self, stream_id, node_id):
         self.stream_table.add_client_to_stream(stream_id, node_id)
+        
+    def remove_client_from_stream(self, node_id):
+        self.stream_table.remove_client_from_stream(node_id)
 
     def add_server_to_stream(self, stream_id, server_ip):
         self.stream_table.add_server_to_stream(stream_id, server_ip)
