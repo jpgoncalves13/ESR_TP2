@@ -102,18 +102,14 @@ class ForwardingTable:
                 return self.tree[node_ip][0]
         return None
 
-    def get_entry(self, node_id, neighbour, next_hop):
+    def get_entry(self, node_id, neighbour):
         if node_id in self.table and neighbour in self.table[node_id]:
-            for entry in self.table[node_id][neighbour]:
-                if entry.next_hop == next_hop:
-                    return entry
+            return self.table[node_id][neighbour]
         return None
 
-    def get_entry_rp(self, rp_ip, neighbour, next_hop):
+    def get_entry_rp(self, rp_ip, neighbour):
         if rp_ip in self.rp_table and neighbour in self.rp_table[rp_ip]:
-            for entry in self.rp_table[rp_ip][neighbour]:
-                if entry.next_hop == next_hop:
-                    return entry
+            return self.rp_table[rp_ip][neighbour]
         return None
 
     def update_metrics(self, node_id, neighbour, next_hop, delay, loss):
@@ -123,7 +119,7 @@ class ForwardingTable:
             return
 
         with self.table_lock:
-            current_entry = self.get_entry(node_id, neighbour, next_hop)
+            current_entry = self.get_entry(node_id, neighbour)
 
             best_entry = None
             best_entry_neighbour = None
@@ -167,7 +163,7 @@ class ForwardingTable:
             return
 
         with self.table_lock:
-            current_entry = self.get_entry_rp(rp_ip, neighbour, next_hop)
+            current_entry = self.get_entry_rp(rp_ip, neighbour)
 
             # Find the best entry
             with self.tree_lock:
