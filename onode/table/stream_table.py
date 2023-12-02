@@ -41,7 +41,7 @@ class StreamTable:
 
     def its_best_server(self, stream_id, server_ip):
         with self.lock:
-            clients, servers = self.table[stream_id]
+            servers, clients = self.table[stream_id]
 
             score = sys.maxsize
             best_server = None

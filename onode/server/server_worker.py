@@ -116,9 +116,9 @@ class ServerWorker:
                         (best_entries_list, rp_entry, self.ep.get_stream_table_info()))
         ServerWorker.send_packet(packet, address)
 
-    def handle_stream_request(self):
+    def handle_stream_request(self, packet):
         if self.ep.get_num_neighbours() == 1:
-            packet = Packet(PacketType.JOIN, '0.0.0.0', 0, '0.0.0.0')
+            packet = Packet(PacketType.JOIN, '0.0.0.0', packet.stream_id, '0.0.0.0')
             ServerWorker.send_packet(packet, (self.ep.get_neighbours()[0], self.ep.port))
 
     def handle_request(self, response, address):
@@ -141,7 +141,7 @@ class ServerWorker:
             self.handle_stream(packet, address[0])
 
         elif packet.type == PacketType.STREAMREQ:
-            self.handle_stream_request()
+            self.handle_stream_request(packet)
 
         # Bootstrapper
         elif packet.type == PacketType.SETUP and self.ep.bootstrapper is not None:
