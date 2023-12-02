@@ -1,6 +1,7 @@
 import sys
 import threading
 import json
+import copy
 from table.table_entry import TableEntry
 
 
@@ -49,7 +50,8 @@ class StreamTable:
                 if entry.get_metric() < score:
                     score = entry.get_metric()
                     best_server = server
-        return best_server == server_ip
+
+            return best_server == server_ip
 
     def get_stream_clients(self, stream_id):
         with self.lock:
@@ -72,6 +74,10 @@ class StreamTable:
     def remove_server_from_stream(self, stream_id, server_ip):
         with self.lock:
             self.table[stream_id][0].remove(server_ip)
+
+    def get_stream_table(self):
+        with self.lock:
+            return copy.deepcopy(self.table)
 
     def __str__(self) -> str:
         return self.__repr__()

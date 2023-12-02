@@ -100,3 +100,5 @@ class EP:
     def update_metrics_server(self, server, delay, loss):
         self.stream_table.update_metrics_server(server, delay, loss)
 
+    def get_stream_table(self):
+        return self.stream_table.get_stream_table()

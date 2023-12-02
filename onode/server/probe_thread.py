@@ -82,14 +82,15 @@ class ProbeThread(threading.Thread):
                     if last_packet is not None and last_packet.type == PacketType.RMEASURE:
                         self.handle_neighbours(neighbour, last_packet, delay_measured, loss_measured)
 
-                servers = self.ep.get_servers()
-                if self.ep.debug:
-                    print(f"DEBUG: Sending the probe message to servers {servers}")
+                if self.ep.rendezvous:
+                    servers = self.ep.get_servers()
+                    if self.ep.debug:
+                        print(f"DEBUG: Sending the probe message to servers {servers}")
 
-                for server in servers:
-                    loss_measured, delay_measured, last_packet = self.measure(udp_socket, server)
-                    if last_packet is not None and last_packet.type == PacketType.RMEASURE:
-                        self.handle_server(server, last_packet, delay_measured, loss_measured)
+                    for server in servers:
+                        loss_measured, delay_measured, last_packet = self.measure(udp_socket, server)
+                        if last_packet is not None and last_packet.type == PacketType.RMEASURE:
+                            self.handle_servers(server, last_packet, delay_measured, loss_measured)
 
                 time.sleep(self.interval)
         finally:
