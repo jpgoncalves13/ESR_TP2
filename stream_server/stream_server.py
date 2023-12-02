@@ -3,16 +3,18 @@ from stream_packet import Packet, PacketType
 from video_stream import VideoStream
 from rtp_packet import RtpPacket
 from metrics_thread import MetricsThread
+import re
 
 
 def main():
+    
     if len(sys.argv) < 2:
         print("server: try 'server --help' for more information")
         return
 
     # --help option
     if len(sys.argv) == 2 and sys.argv[1] == '--help':
-        info = "Usage: server <rendezvouz-ip> <video_file>"
+        info = "Usage: server <rendezvouz-ip> <video_file> <stream_id>"
         print(info)
         return
 
@@ -21,6 +23,7 @@ def main():
     # Preparar a stream
     stream = VideoStream(sys.argv[2])
     rp_ip = sys.argv[1].split(':')[0]
+    stream_id = sys.argv[3]
     rp_port = 5000
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     i = 0
@@ -34,8 +37,8 @@ def main():
             i += 1
             try:
                 rtp_packet = makeRtp(data, frameNumber)
-                sock.sendto(Packet(PacketType.STREAM, '0.0.0.0', 1, '0.0.0.0', rtp_packet).serialize(),
-                            (rp_ip, rp_port))
+                sock.sendto(Packet(PacketType.STREAM, '0.0.0.0', int(stream_id), '0.0.0.0', rtp_packet).serialize(),
+                                (rp_ip, rp_port))
             except Exception as e:
                 print(e)
                 break
@@ -49,7 +52,7 @@ def makeRtp(payload, frameNbr):
     extension = 0
     cc = 0
     marker = 0
-    pt = 26  # MJPEG type
+    pt = 26 # MJPEG
     seqnum = frameNbr
     ssrc = 0
 
