@@ -11,6 +11,37 @@ class ForwardingTable:
         self.table_lock = threading.Lock()  # Add a lock for thread safety
         self.tree = {}  # Node_Id -> (Neighbour, Entry)
         self.tree_lock = threading.Lock()
+        self.rp_table = {}
+        self.rp_entry = None  # (rp_IP, Neighbour, entry)
+
+    def add_entry_rp(self, rp_ip, neighbour, next_hop, delay=0, loss=0):
+        with self.table_lock:
+            entry = TableEntry(next_hop, delay, loss)
+            is_first_entry = False
+
+            if len(self.rp_table.keys()) == 0:
+                is_first_entry = True
+                with self.tree_lock:
+                    self.rp_entry = (rp_ip, neighbour, entry)
+
+            if rp_ip not in self.rp_table:
+                self.rp_table[rp_ip] = {}
+
+            if neighbour not in self.rp_table[rp_ip]:
+                self.rp_table[rp_ip][neighbour] = []
+
+            already_exists = any(en.next_hop == next_hop for en in self.rp_table[rp_ip][neighbour])
+
+            if not already_exists:
+                self.rp_table[rp_ip][neighbour].append(entry)
+
+            return is_first_entry, already_exists
+
+    def get_neighbour_to_rp(self):
+        with self.tree_lock:
+            if self.rp_entry is not None:
+                return self.rp_entry[1]
+            return None
 
     def add_entry(self, node_id, neighbour, next_hop, delay=0, loss=0):  # For join
         with self.table_lock:
@@ -33,36 +64,43 @@ class ForwardingTable:
 
             return is_first_entry, already_exists
 
-    def get_neighbour_to_rp(self):
-        with self.tree_lock:
-            if 255 in self.tree:
-                return self.tree[255][0]
-            return None
-
     def get_best_entries(self):
         best_entries = []
 
         with self.tree_lock:
-            for node_id, value in self.tree.items():
-                best_entries.append((node_id, value[0], value[1].delay, value[1].loss))
+            for leaf, value in self.tree.items():
+                best_entries.append((leaf, value[0], value[1].delay, value[1].loss))
 
         return best_entries
 
-    def get_best_entry(self, node_id):
+    def get_best_entry_rp(self):
         with self.tree_lock:
-            if node_id in self.tree:
-                return self.tree[node_id][1]
+            if self.rp_entry is not None:
+                return self.rp_entry[0], self.rp_entry[1], self.rp_entry[2].delay, self.rp_entry[2].loss
+            return None
+
+    def get_best_entry(self, node_ip):
+        with self.tree_lock:
+            if node_ip in self.tree:
+                return self.tree[node_ip][1]
         return None
     
-    def get_neighbour_to_client(self, node_id):
+    def get_neighbour_to_client(self, node_ip):
         with self.tree_lock:
-            if node_id in self.tree:
-                return self.tree[node_id][0]
+            if node_ip in self.tree:
+                return self.tree[node_ip][0]
         return None
 
     def get_entry(self, node_id, neighbour, next_hop):
         if node_id in self.table and neighbour in self.table[node_id]:
             for entry in self.table[node_id][neighbour]:
+                if entry.next_hop == next_hop:
+                    return entry
+        return None
+
+    def get_entry_rp(self, rp_ip, neighbour, next_hop):
+        if rp_ip in self.rp_table and neighbour in self.rp_table[rp_ip]:
+            for entry in self.rp_table[rp_ip][neighbour]:
                 if entry.next_hop == next_hop:
                     return entry
         return None
@@ -92,13 +130,12 @@ class ForwardingTable:
 
                 # Obtain the best entry
                 best_score = sys.maxsize
-                for leaf in self.table.keys():
-                    for ng, entries in self.table[leaf].items():
-                        for entry in entries:
-                            entry_score = entry.get_metric()
-                            if entry_score < best_score:
-                                best_entry = entry
-                                best_entry_neighbour = ng
+                for ng, entries in self.table[node_id].items():
+                    for entry in entries:
+                        entry_score = entry.get_metric()
+                        if entry_score < best_score:
+                            best_entry = entry
+                            best_entry_neighbour = ng
 
                 with self.tree_lock:
                     self.tree[node_id] = (best_entry_neighbour, best_entry)
@@ -114,9 +151,63 @@ class ForwardingTable:
             with self.tree_lock:
                 self.tree[node_id] = (neighbour, best_entry)
 
+    def update_metrics_rp(self, rp_ip, neighbour, next_hop, delay, loss):
+        is_first_entry, _ = self.add_entry_rp(rp_ip, neighbour, next_hop, delay, loss)
+        if is_first_entry:
+            return
+
+        with self.table_lock:
+            current_entry = self.get_entry_rp(rp_ip, neighbour, next_hop)
+
+            # Find the best entry
+            with self.tree_lock:
+                if self.rp_entry is not None:
+                    best_entry = self.rp_entry[2]
+                    best_entry_neighbour = self.rp_entry[1]
+                    best_entry_ip = self.rp_entry[0]
+                else:
+                    self.rp_entry = (rp_ip, neighbour, current_entry)
+                    return
+
+            # The entry to update is the best entry
+            if best_entry_ip == rp_ip and best_entry_neighbour == neighbour and best_entry.next_hop == next_hop:
+                best_entry.delay = delay
+                best_entry.loss = loss
+
+                # Obtain the best entry
+                best_score = sys.maxsize
+                for rp in self.rp_table.keys():
+                    for ng, entries in self.rp_table[rp].items():
+                        for entry in entries:
+                            entry_score = entry.get_metric()
+                            if entry_score < best_score:
+                                best_entry = entry
+                                best_entry_neighbour = ng
+                                best_entry_ip = rp
+
+                with self.tree_lock:
+                    self.rp_entry = (best_entry_ip, best_entry_neighbour, best_entry)
+
+                return
+
+            current_entry.delay = delay
+            current_entry.loss = loss
+
+            if best_entry.get_metric() > current_entry.get_metric():
+                best_entry = current_entry
+                best_entry_neighbour = neighbour
+                best_entry_ip = rp_ip
+
+            with self.tree_lock:
+                self.rp_entry = (best_entry_ip, best_entry_neighbour, best_entry)
+
     def get_table(self):
         with self.table_lock:
             return copy.deepcopy(self.table)
+
+    def get_table_rp(self):
+        with self.table_lock:
+            return copy.deepcopy(self.rp_table)
 
     def __str__(self) -> str:
         with self.table_lock:

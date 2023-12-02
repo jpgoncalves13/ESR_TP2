@@ -7,7 +7,7 @@ import threading
 
 class EP:
 
-    def __init__(self, debug: bool, bootstrapper: Bootstrapper, rendezvous: bool, port, neighbours: [str], node_id: int):
+    def __init__(self, debug: bool, bootstrapper: Bootstrapper, rendezvous: bool, port, neighbours: [str]):
         self.debug = debug
         self.bootstrapper = bootstrapper
         self.rendezvous = rendezvous
@@ -17,9 +17,6 @@ class EP:
         self.num_neighbours = len(neighbours) if neighbours is not None else 0
         self.neighbours_lock = threading.Lock()
         self.port = port
-        self.node_id = node_id
-        self.clients_info = {}  # Node_id -> [Clients]  Stream_id : ([SERVERS], [NODE_IDS])
-        self.clients_lock = threading.Lock()
 
     # NEIGHBOURS
 
@@ -59,8 +56,14 @@ class EP:
     def get_best_entries(self):
         return self.table.get_best_entries()
 
+    def get_best_entry_rp(self):
+        return self.table.get_best_entry_rp()
+
     def get_neighbour_to_rp(self):
         return self.table.get_neighbour_to_rp()
+
+    def update_metrics_rp(self, leaf, neighbour, next_hop, delay, loss):
+        self.table.update_metrics_rp(leaf, neighbour, next_hop, delay, loss)
 
     def update_metrics(self, leaf, neighbour, next_hop, delay, loss):
         self.table.update_metrics(leaf, neighbour, next_hop, delay, loss)
@@ -68,20 +71,34 @@ class EP:
     def get_table(self):
         return self.table.get_table()
 
-    # CLIENTS
+    def get_table_rp(self):
+        return self.table.get_table_rp()
 
-    def add_client(self, node_id, client):
-        with self.clients_lock:
-            if node_id not in self.clients_info:
-                self.clients_info[node_id] = []
-            if client not in self.clients_info[node_id]:
-                self.clients_info[node_id].append(client)
-                return False
-            return True
+    def get_neighbour_to_client(self, client):
+        return self.table.get_neighbour_to_client(client)
 
-    def im_requesting(self):
-        with self.clients_lock:
-            if self.node_id in self.clients_info:
-                return True
-            return False
+    # STREAM TABLE
 
+    def add_client_to_stream(self, stream_id, node_id):
+        self.stream_table.add_client_to_stream(stream_id, node_id)
+
+    def add_server_to_stream(self, stream_id, server_ip):
+        self.stream_table.add_server_to_stream(stream_id, server_ip)
+
+    def get_servers(self):
+        return self.stream_table.get_servers()
+
+    def its_best_server(self, stream_id, server_ip):
+        return self.stream_table.its_best_server(stream_id, server_ip)
+
+    def get_stream_clients(self, stream_id):
+        return self.stream_table.get_stream_clients(stream_id)
+
+    def get_stream_table_info(self):
+        return self.stream_table.get_clients()
+
+    def update_metrics_server(self, server, delay, loss):
+        self.stream_table.update_metrics_server(server, delay, loss)
+
+    def get_stream_table(self):
+        return self.stream_table.get_stream_table()
