@@ -150,3 +150,4 @@ class ServerWorker:
         if self.ep.debug:
             print("TABLE" + str(self.ep.get_table()))
             print("RP" + str(self.ep.get_table_rp()))
+            print("SERVERS" + str(self.ep.get_stream_table()))
