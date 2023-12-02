@@ -19,6 +19,7 @@ def main():
 Node Options:
  -r, --rendezvous Rendezvous point.
  -d, --debug      Debug mode.
+ --tag            Tag 
 """
         print(info)
         return
@@ -26,7 +27,7 @@ Node Options:
     # Standard port
     port = 5000
     # Parse the arguments
-    bootstrapper, bootstrapper_address, is_rendezvous_point, debug = read_args()
+    bootstrapper, bootstrapper_address, is_rendezvous_point, debug, tag = read_args()
 
     # Request the neighbors if is a node and not the bootstrapper
     if bootstrapper is None:
@@ -46,7 +47,7 @@ Node Options:
     if debug:
         print(f"DEBUG: Neighbors -> {neighbours.keys()}")
 
-    ep = EP(debug, bootstrapper, is_rendezvous_point, port, neighbours)
+    ep = EP(debug, bootstrapper, is_rendezvous_point, port, neighbours, tag)
 
     # Start the server
     server = Server(port)
@@ -108,6 +109,7 @@ def read_args():
     i = 1
     bootstrapper = None
     debug = False
+    tag = None
     is_rendezvous_point = False
 
     if sys.argv[i] == '--bootstrapper':
@@ -134,6 +136,10 @@ def read_args():
         elif sys.argv[i] == '--debug':
             # for the debug mode
             debug = True
+        elif sys.argv[i] == '--tag':
+            tag = sys.argv[i+1]
+            print(tag)
+            i+=1
         else:
             print(f"Invalid argument: {sys.argv[i]}")
         i += 1
@@ -141,7 +147,7 @@ def read_args():
     if bootstrapper is not None and debug:
         bootstrapper.set_debug(debug)
 
-    return bootstrapper, bootstrapper_address, is_rendezvous_point, debug
+    return bootstrapper, bootstrapper_address, is_rendezvous_point, debug, tag
 
 
 if __name__ == '__main__':
