@@ -14,8 +14,12 @@ class ServerWorker:
     @staticmethod
     def send_packet(packet, address):
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        udp_socket.sendto(packet.serialize(), address)
-        udp_socket.close()
+        try:
+            udp_socket.sendto(packet.serialize(), address)
+        except (socket.error, OSError) as e:
+            print(f"Error sending the data: {e}")
+        finally:
+            udp_socket.close()
 
     def handle_setup(self, address):
         """Bootstrapper response"""
