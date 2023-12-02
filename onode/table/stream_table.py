@@ -21,6 +21,11 @@ class StreamTable:
                 self.table[stream_id] = ([], [])
             if client not in self.table[stream_id][1]:
                 self.table[stream_id][1].append(client)
+                
+    def remove_client_from_stream(self, client):
+        with self.lock:
+            for stream_id in self.table:
+                self.table[stream_id][1].remove(client)
 
     def add_server_to_stream(self, stream_id, server_ip):
         with self.lock:
@@ -66,10 +71,6 @@ class StreamTable:
                 clients, servers = self.table[stream_id]
                 stream_clients.append((stream_id, clients))
             return stream_clients
-
-    def remove_client_from_stream(self, stream_id, client):
-        with self.lock:
-            self.table[stream_id][1].remove(client)
 
     def remove_server_from_stream(self, stream_id, server_ip):
         with self.lock:

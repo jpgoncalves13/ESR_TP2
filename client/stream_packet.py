@@ -12,7 +12,7 @@ class PacketType(Enum):
     STREAMREQ = 9
     STREAM = 10
     HELLO = 11
-
+    LEAVE = 12
 
 class Packet:
 

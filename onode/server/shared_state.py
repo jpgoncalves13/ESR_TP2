@@ -52,6 +52,9 @@ class EP:
 
     def add_entry(self, leaf, neighbour, next_hop):  # For join
         return self.table.add_entry(leaf, neighbour, next_hop)
+    
+    def remove_client_from_forwarding_table(self, leaf):
+        self.table.remove_client(leaf)
 
     def get_best_entries(self):
         return self.table.get_best_entries()
@@ -81,6 +84,9 @@ class EP:
 
     def add_client_to_stream(self, stream_id, node_id):
         self.stream_table.add_client_to_stream(stream_id, node_id)
+        
+    def remove_client_from_stream(self, node_id):
+        self.stream_table.remove_client_from_stream(node_id)
 
     def add_server_to_stream(self, stream_id, server_ip):
         self.stream_table.add_server_to_stream(stream_id, server_ip)
