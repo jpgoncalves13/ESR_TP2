@@ -55,12 +55,13 @@ class ServerWorker:
 
         for client in stream_clients:
             neighbour = self.ep.get_neighbour_to_client(client)
-            if client == neighbour:
-                if client not in clients_to_send:
-                    clients_to_send.append(client)
-            else:
-                if neighbour not in neighbours_to_send:
-                    neighbours_to_send.append(neighbour)
+            if neighbour is not None:
+                if client == neighbour:
+                    if client not in clients_to_send:
+                        clients_to_send.append(client)
+                else:
+                    if neighbour not in neighbours_to_send:
+                        neighbours_to_send.append(neighbour)
 
         if self.ep.debug:
             print("DEBUG: Packet sent to: " + str(neighbours_to_send))
