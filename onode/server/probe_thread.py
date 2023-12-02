@@ -36,8 +36,8 @@ class ProbeThread(threading.Thread):
 
     def handle_servers(self, server, last_packet, delay_measured, loss_measured):
         list_metrics, rp_entry, stream_clients = last_packet.payload
-        for leaf, next_hop, delay, loss in list_metrics:
-            self.ep.update_metrics_server(leaf, server, delay_measured, int(loss_measured / 2))
+        for _ in list_metrics:
+            self.ep.update_metrics_server(server, delay_measured, int(loss_measured / 2))
 
     def measure(self, udp_socket, neighbour):
         packets_sent = 0
