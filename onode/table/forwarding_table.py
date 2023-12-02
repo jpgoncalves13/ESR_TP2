@@ -28,14 +28,17 @@ class ForwardingTable:
                 self.rp_table[rp_ip] = {}
 
             if neighbour not in self.rp_table[rp_ip]:
-                self.rp_table[rp_ip][neighbour] = []
+                self.rp_table[rp_ip][neighbour] = None
 
-            already_exists = any(en.next_hop == next_hop for en in self.rp_table[rp_ip][neighbour])
+            if self.rp_table[rp_ip][neighbour] is None:
+                new_entry_metric = entry.get_metric()
+                old_entry_metric = self.table[rp_ip][neighbour].get_metric()
+                if new_entry_metric < old_entry_metric:
+                    self.table[rp_ip][neighbour] = entry
+            else:
+                self.table[rp_ip][neighbour] = entry
 
-            if not already_exists:
-                self.rp_table[rp_ip][neighbour].append(entry)
-
-            return is_first_entry, already_exists
+            return is_first_entry
 
     def get_neighbour_to_rp(self):
         with self.tree_lock:
@@ -55,20 +58,22 @@ class ForwardingTable:
                     self.tree[node_id] = (neighbour, entry)
 
             if neighbour not in self.table[node_id]:
-                self.table[node_id][neighbour] = []
+                self.table[node_id][neighbour] = None
 
-            already_exists = any(en.next_hop == next_hop for en in self.table[node_id][neighbour])
+            if self.table[node_id][neighbour] is not None:
+                new_entry_metric = entry.get_metric()
+                old_entry_metric = self.table[node_id][neighbour].get_metric()
+                if new_entry_metric < old_entry_metric:
+                    self.table[node_id][neighbour] = entry
+            else:
+                self.table[node_id][neighbour] = entry
 
-            if not already_exists:
-                self.table[node_id][neighbour].append(entry)
-
-            return is_first_entry, already_exists
+            return is_first_entry
         
     def remove_client(self, node_id):
         with self.table_lock:
             if node_id in self.table:
                 del self.table[node_id]
-            
 
     def get_best_entries(self):
         best_entries = []
@@ -113,7 +118,7 @@ class ForwardingTable:
 
     def update_metrics(self, node_id, neighbour, next_hop, delay, loss):
 
-        is_first_entry, _ = self.add_entry(node_id, neighbour, next_hop, delay, loss)
+        is_first_entry = self.add_entry(node_id, neighbour, next_hop, delay, loss)
         if is_first_entry:
             return
 
@@ -123,7 +128,7 @@ class ForwardingTable:
             best_entry = None
             best_entry_neighbour = None
 
-            # Find the best entry
+            # Get the best entry
             with self.tree_lock:
                 if node_id in self.tree:
                     best_entry = self.tree[node_id][1]
@@ -136,12 +141,11 @@ class ForwardingTable:
 
                 # Obtain the best entry
                 best_score = sys.maxsize
-                for ng, entries in self.table[node_id].items():
-                    for entry in entries:
-                        entry_score = entry.get_metric()
-                        if entry_score < best_score:
-                            best_entry = entry
-                            best_entry_neighbour = ng
+                for ng, entry in self.table[node_id].items():
+                    entry_score = entry.get_metric()
+                    if entry_score < best_score:
+                        best_entry = entry
+                        best_entry_neighbour = ng
 
                 with self.tree_lock:
                     self.tree[node_id] = (best_entry_neighbour, best_entry)
@@ -158,7 +162,7 @@ class ForwardingTable:
                 self.tree[node_id] = (neighbour, best_entry)
 
     def update_metrics_rp(self, rp_ip, neighbour, next_hop, delay, loss):
-        is_first_entry, _ = self.add_entry_rp(rp_ip, neighbour, next_hop, delay, loss)
+        is_first_entry = self.add_entry_rp(rp_ip, neighbour, next_hop, delay, loss)
         if is_first_entry:
             return
 
@@ -183,13 +187,12 @@ class ForwardingTable:
                 # Obtain the best entry
                 best_score = sys.maxsize
                 for rp in self.rp_table.keys():
-                    for ng, entries in self.rp_table[rp].items():
-                        for entry in entries:
-                            entry_score = entry.get_metric()
-                            if entry_score < best_score:
-                                best_entry = entry
-                                best_entry_neighbour = ng
-                                best_entry_ip = rp
+                    for ng, entry in self.rp_table[rp].items():
+                        entry_score = entry.get_metric()
+                        if entry_score < best_score:
+                            best_entry = entry
+                            best_entry_neighbour = ng
+                            best_entry_ip = rp
 
                 with self.tree_lock:
                     self.rp_entry = (best_entry_ip, best_entry_neighbour, best_entry)
