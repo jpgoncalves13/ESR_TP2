@@ -102,12 +102,12 @@ class ServerWorker:
             ServerWorker.send_packet(packet, address)
             return
 
-        best_entries_list = self.ep.get_best_entries()
-        best_entries_list = [tup for tup in best_entries_list if tup[1] != address[0]]
-
         if self.ep.rendezvous:
+            best_entries_list = []
             rp_entry = ('0.0.0.0', '0.0.0.0', 0, 0)
         else:
+            best_entries_list = self.ep.get_best_entries()
+            best_entries_list = [tup for tup in best_entries_list if tup[1] != address[0]]
             rp_entry = self.ep.get_best_entry_rp()
             if rp_entry is not None and rp_entry[1] == address[0]:
                 rp_entry = None
