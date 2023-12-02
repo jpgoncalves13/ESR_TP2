@@ -88,7 +88,7 @@ class ServerWorker:
         is_first_entry, _ = self.ep.add_entry(packet.leaf, ip, packet.last_hop)
         packet.last_hop = ip
 
-        if not self.ep.rendezvous:
+        if not self.ep.rendezvous and is_first_entry:
             neighbour = self.ep.get_neighbour_to_rp()
             if neighbour is not None:
                 ServerWorker.send_packet(packet, (neighbour, self.ep.port))
@@ -104,8 +104,9 @@ class ServerWorker:
         if not self.ep.rendezvous:
             neighbour = self.ep.get_neighbour_to_rp()
             ServerWorker.send_packet(packet, (neighbour, self.ep.port))
-        else:
-            self.ep.remove_client_from_stream(packet.leaf)
+        
+        self.ep.remove_client_from_stream(packet.leaf)
+        self.ep.remove_client_from_forwarding_table(packet.leaf)
 
     def handle_measure(self, address):
         """Handle the packets requesting the metrics"""
@@ -163,6 +164,6 @@ class ServerWorker:
             self.handle_setup(address)
 
         if self.ep.debug:
-            print("TABLE" + str(self.ep.get_table()))
-            print("RP" + str(self.ep.get_table_rp()))
-            print("SERVERS" + str(self.ep.get_stream_table()))
+            print("CLIENTS_TABLE" + str(self.ep.get_table()) + "\n")
+            print("RP_TABLE" + str(self.ep.get_table_rp()) + "\n")
+            print("STREAM_TABLE" + str(self.ep.get_stream_table()) + "\n")

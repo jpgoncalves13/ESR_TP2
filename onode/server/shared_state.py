@@ -52,6 +52,9 @@ class EP:
 
     def add_entry(self, leaf, neighbour, next_hop):  # For join
         return self.table.add_entry(leaf, neighbour, next_hop)
+    
+    def remove_client_from_forwarding_table(self, leaf):
+        self.table.remove_client(leaf)
 
     def get_best_entries(self):
         return self.table.get_best_entries()

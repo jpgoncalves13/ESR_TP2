@@ -63,6 +63,12 @@ class ForwardingTable:
                 self.table[node_id][neighbour].append(entry)
 
             return is_first_entry, already_exists
+        
+    def remove_client(self, node_id):
+        with self.table_lock:
+            if node_id in self.table:
+                del self.table[node_id]
+            
 
     def get_best_entries(self):
         best_entries = []
