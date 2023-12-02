@@ -165,6 +165,6 @@ class ServerWorker:
             self.handle_setup(address)
 
         if self.ep.debug:
-            print(self.ep.tag if self.ep.tag is not None else "" + " CLIENTS_TABLE" + str(self.ep.get_table()) + "\n")
+            print((self.ep.tag if self.ep.tag is not None else "") + " CLIENTS_TABLE" + str(self.ep.get_table()) + "\n")
             print("RP_TABLE" + str(self.ep.get_table_rp()) + "\n")
             print("STREAM_TABLE" + str(self.ep.get_stream_table()) + "\n")
