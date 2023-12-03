@@ -57,7 +57,11 @@ class ServerWorker:
         clients_to_send = []
 
         for client in stream_clients:
-            neighbour = self.ep.get_neighbour_to_client(client)
+            entry = self.ep.get_best_entry(client)
+            if entry.loss == 100:
+                neighbour = entry.next_hop
+            else:
+                neighbour = self.ep.get_neighbour_to_client(client)
             if neighbour is not None:
                 if client == neighbour:
                     if client not in clients_to_send:

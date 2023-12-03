@@ -81,6 +81,9 @@ class EP:
     def get_neighbour_to_client(self, client):
         return self.table.get_neighbour_to_client(client)
 
+    def get_best_entry(self, client):
+        return  self.table.get_best_entry(client)
+
     # STREAM TABLE
 
     def add_client_to_stream(self, stream_id, node_id):
