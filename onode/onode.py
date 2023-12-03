@@ -138,8 +138,7 @@ def read_args():
             debug = True
         elif sys.argv[i] == '--tag':
             tag = sys.argv[i+1]
-            print(tag)
-            i+=1
+            i += 1
         else:
             print(f"Invalid argument: {sys.argv[i]}")
         i += 1

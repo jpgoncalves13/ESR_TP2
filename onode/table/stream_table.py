@@ -68,7 +68,7 @@ class StreamTable:
         with self.lock:
             stream_clients = []
             for stream_id in self.table.keys():
-                clients, servers = self.table[stream_id]
+                servers, clients = self.table[stream_id]
                 stream_clients.append((stream_id, clients))
             return stream_clients
 

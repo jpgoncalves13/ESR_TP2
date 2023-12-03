@@ -1,7 +1,9 @@
 import os
 import socket
 import threading
+import time
 import tkinter.messagebox as messagebox
+from datetime import datetime
 from tkinter import *
 
 from PIL import Image, ImageTk, ImageFile
@@ -139,7 +141,8 @@ class Client:
 
     def writeFrame(self, data):
         """Write the received frame to a temp image file. Return the image file."""
-        cachename = CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT
+        timestamp = int(time.time())
+        cachename = f"{CACHE_FILE_NAME}{self.sessionId}_{timestamp}{CACHE_FILE_EXT}"
         file = open(cachename, "wb")
         file.write(data)
         file.close()
@@ -151,6 +154,7 @@ class Client:
         photo = ImageTk.PhotoImage(Image.open(imageFile))
         self.label.configure(image=photo, height=288)
         self.label.image = photo
+        os.remove(imageFile)
 
     def connectToServer(self):
         """Connect to the Server. Start a new RTSP/TCP session."""

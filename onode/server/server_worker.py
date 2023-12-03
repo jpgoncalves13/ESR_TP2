@@ -1,7 +1,6 @@
 from threading import Thread
 from server.stream_packet import Packet, PacketType
 from server.shared_state import EP
-from server.probe_thread import ProbeThread
 import socket
 
 
@@ -15,8 +14,12 @@ class ServerWorker:
     @staticmethod
     def send_packet(packet, address):
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        udp_socket.sendto(packet.serialize(), address)
-        udp_socket.close()
+        try:
+            udp_socket.sendto(packet.serialize(), address)
+        except (socket.error, OSError) as e:
+            print(f"Error sending the data: {e}")
+        finally:
+            udp_socket.close()
 
     def handle_setup(self, address):
         """Bootstrapper response"""
@@ -86,7 +89,7 @@ class ServerWorker:
             packet.leaf = ip
 
         self.ep.add_client_to_stream(packet.stream_id, packet.leaf)
-        is_first_entry, _ = self.ep.add_entry(packet.leaf, ip, packet.last_hop)
+        is_first_entry = self.ep.add_entry(packet.leaf, ip, packet.last_hop)
         packet.last_hop = ip
 
         if not self.ep.rendezvous and is_first_entry:
@@ -95,6 +98,7 @@ class ServerWorker:
                 ServerWorker.send_packet(packet, (neighbour, self.ep.port))
             else:
                 self.flood_packet(ip, packet.serialize())
+
     def handle_leave(self, packet, ip):
         """Handle the client leave message to the tree"""
         
@@ -165,6 +169,6 @@ class ServerWorker:
             self.handle_setup(address)
 
         if self.ep.debug:
-            print(self.ep.tag + " CLIENTS_TABLE" + str(self.ep.get_table()) + "\n")
+            print((self.ep.tag if self.ep.tag is not None else "") + " CLIENTS_TABLE" + str(self.ep.get_table()) + "\n")
             print("RP_TABLE" + str(self.ep.get_table_rp()) + "\n")
             print("STREAM_TABLE" + str(self.ep.get_stream_table()) + "\n")
