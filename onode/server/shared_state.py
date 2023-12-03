@@ -112,3 +112,6 @@ class EP:
 
     def get_stream_table(self):
         return self.stream_table.get_stream_table()
+    
+    def update_neighbour_death(self, neighbour):
+        return self.table.update_neighbour_death(neighbour)
