@@ -1,3 +1,4 @@
+import io
 import os
 import socket
 import threading
@@ -141,20 +142,9 @@ class Client:
     #					self.rtpSocket.close()
     #					break
 
-    def writeFrame(self, data):
-        """Write the received frame to a temp image file. Return the image file."""
-        random_number = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-        cachename = f"{CACHE_FILE_NAME}{self.sessionId}_{random_number}{CACHE_FILE_EXT}"
-        file = open(cachename, "wb")
-        file.write(data)
-        file.close()
-
-        return cachename
-
     def updateMovie(self, image_data):
         """Update the image file as video frame in the GUI."""
-        image = Image.open(image_data)
-        photo = ImageTk.PhotoImage(image)
+        photo = ImageTk.PhotoImage(io.BytesIO(image_data))
         self.label.configure(image=photo, height=288)
         self.label.image = photo
 
