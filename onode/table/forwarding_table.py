@@ -206,6 +206,14 @@ class ForwardingTable:
             with self.tree_lock:
                 self.rp_entry = (best_entry_ip, best_entry_neighbour, best_entry)
 
+    def update_neighbour_death(self, neighbour):
+        with self.table_lock:
+            for client_ip in self.table:
+                if neighbour in self.table[client_ip]:
+                    self.table[client_ip][neighbour].loss = 100
+                    self.table[client_ip][neighbour].delay = sys.maxsize
+
+
     def get_table(self):
         with self.table_lock:
             return copy.deepcopy(self.table)

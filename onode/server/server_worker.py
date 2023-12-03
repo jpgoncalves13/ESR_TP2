@@ -51,13 +51,18 @@ class ServerWorker:
         if self.ep.rendezvous and not self.ep.its_best_server(packet.stream_id, ip):
             return
 
+        print("Server chosen: " + str(ip))
         packet = Packet(PacketType.STREAM, '0.0.0.0', packet.stream_id, '0.0.0.0', packet.payload)
         stream_clients = self.ep.get_stream_clients(packet.stream_id)
         neighbours_to_send = []
         clients_to_send = []
 
         for client in stream_clients:
-            neighbour = self.ep.get_neighbour_to_client(client)
+            entry = self.ep.get_best_entry(client)
+            if entry.loss == 100:
+                neighbour = entry.next_hop
+            else:
+                neighbour = self.ep.get_neighbour_to_client(client)
             if neighbour is not None:
                 if client == neighbour:
                     if client not in clients_to_send:
