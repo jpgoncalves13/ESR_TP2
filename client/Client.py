@@ -123,7 +123,7 @@ class Client:
 
                     #if currFrameNbr > self.frameNbr:  # Discard the late packet
                     self.frameNbr = currFrameNbr
-                    self.updateMovie(self.writeFrame(rtp.getPayload()))
+                    self.updateMovie(rtp.getPayload())
 
             except Exception as exc:
                 print(type(exc))
@@ -151,12 +151,12 @@ class Client:
 
         return cachename
 
-    def updateMovie(self, imageFile):
+    def updateMovie(self, image_data):
         """Update the image file as video frame in the GUI."""
-        photo = ImageTk.PhotoImage(Image.open(imageFile))
+        image = Image.open(image_data)
+        photo = ImageTk.PhotoImage(image)
         self.label.configure(image=photo, height=288)
         self.label.image = photo
-        os.remove(imageFile)
 
     def connectToServer(self):
         """Connect to the Server. Start a new RTSP/TCP session."""
