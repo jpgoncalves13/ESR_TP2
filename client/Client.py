@@ -4,6 +4,8 @@ import threading
 import time
 import tkinter.messagebox as messagebox
 from datetime import datetime
+import string
+import random
 from tkinter import *
 
 from PIL import Image, ImageTk, ImageFile
@@ -141,8 +143,8 @@ class Client:
 
     def writeFrame(self, data):
         """Write the received frame to a temp image file. Return the image file."""
-        timestamp = int(time.time())
-        cachename = f"{CACHE_FILE_NAME}{self.sessionId}_{timestamp}{CACHE_FILE_EXT}"
+        random_number = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+        cachename = f"{CACHE_FILE_NAME}{self.sessionId}_{random_number}{CACHE_FILE_EXT}"
         file = open(cachename, "wb")
         file.write(data)
         file.close()
