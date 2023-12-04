@@ -19,7 +19,7 @@ class ProbeThread(threading.Thread):
     def handle_neighbours(self, neighbour, last_packet, delay_measured, loss_measured):
         list_metrics, rp_entry, stream_clients = last_packet.payload
         for leaf, next_hop, delay, loss in list_metrics:
-            self.ep.update_metrics(leaf, neighbour, next_hop,
+            self.ep.update_metrics(neighbour if leaf == "0.0.0.0" else leaf, neighbour, next_hop,
                                    delay + delay_measured, int((loss + loss_measured) / 2))
 
         if rp_entry is not None and not self.ep.rendezvous:

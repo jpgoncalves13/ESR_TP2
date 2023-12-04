@@ -37,7 +37,7 @@ def main():
             i += 1
             try:
                 rtp_packet = makeRtp(data, frameNumber)
-                sock.sendto(Packet(PacketType.STREAM, '0.0.0.0', int(stream_id), '0.0.0.0', rtp_packet).serialize(),
+                sock.sendto(Packet(PacketType.STREAM, '0.0.0.0', int(stream_id), '0.0.0.0', ([], rtp_packet)).serialize(),
                                 (rp_ip, rp_port))
             except Exception as e:
                 print(e)

@@ -116,7 +116,8 @@ class Packet:
         last_hop = '.'.join(map(str, last_hop_ip_parts))
         offset += 4
 
-        clients = None
+        clients = []
+        payload = None
         if message_type == PacketType.STREAM:           
             num_clients = int.from_bytes(byte_array[offset: offset + 1], 'big')
             offset += 1

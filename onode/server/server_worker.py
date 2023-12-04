@@ -47,10 +47,15 @@ class ServerWorker:
         if self.ep.rendezvous and not self.ep.its_best_server(packet.stream_id, ip):
             return
 
-        packet = Packet(PacketType.STREAM, '0.0.0.0', packet.stream_id, '0.0.0.0', packet.payload)
-        stream_clients = self.ep.get_stream_clients(packet.stream_id)
-        neighbours_to_send = []
+        stream_clients, data = packet.payload
+        
+        if self.ep.rendezvous:
+            stream_clients = self.ep.get_stream_clients(packet.stream_id)
+        # stream_clients = self.ep.get_stream_clients(packet.stream_id)
+        #neighbours_to_send = []
+        neighbours_to_send = {}
         clients_to_send = []
+
 
         for client in stream_clients:
             neighbour = self.ep.get_neighbour_to_client(client)
@@ -58,9 +63,11 @@ class ServerWorker:
                 if client == neighbour:
                     if client not in clients_to_send:
                         clients_to_send.append(client)
+                elif neighbour not in neighbours_to_send:
+                    #neighbours_to_send.append(neighbour)
+                    neighbours_to_send[neighbour] = [client]
                 else:
-                    if neighbour not in neighbours_to_send:
-                        neighbours_to_send.append(neighbour)
+                    neighbours_to_send[neighbour].append(client)
 
         if self.ep.debug:
             print("DEBUG: Packet sent to: " + str(neighbours_to_send))
@@ -69,11 +76,13 @@ class ServerWorker:
 
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         for neighbour in neighbours_to_send:
+            packet.payload = (neighbours_to_send[neighbour], data)
             udp_socket.sendto(packet.serialize(), (neighbour, self.ep.port))
         udp_socket.close()
 
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         for client in clients_to_send:
+            packet.payload = ([], data)
             udp_socket.sendto(packet.serialize(), (client, 5001))
         udp_socket.close()
 
@@ -112,7 +121,7 @@ class ServerWorker:
     def handle_measure(self, address):
         """Handle the packets requesting the metrics"""
         if self.ep.get_num_neighbours() == 1 and not self.ep.rendezvous:
-            packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, '0.0.0.0', ([], None, []))
+            packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, '0.0.0.0', ([('0.0.0.0', '0.0.0.0', 0, 0)], None, []))
             ServerWorker.send_packet(packet, address)
             return
 
@@ -140,6 +149,10 @@ class ServerWorker:
 
         if self.ep.debug:
             print(f"DEBUG: Processing response to packet: {packet.type}")
+            if packet.type is not PacketType.STREAM:
+                print(f"DEBUG: Packet: {packet}")
+            else:
+                print(f"DEBUG: Packet: {packet.payload[0]}")
 
         # Normal node
         if packet.type == PacketType.HELLO:

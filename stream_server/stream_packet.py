@@ -12,7 +12,7 @@ class PacketType(Enum):
     STREAMREQ = 9
     STREAM = 10
     HELLO = 11
-
+    LEAVE = 12
 
 class Packet:
 
@@ -46,8 +46,13 @@ class Packet:
                 byte_array += b''.join([int(part).to_bytes(1, 'big') for part in neighbour_parts])
 
         elif self.type == PacketType.STREAM:  # Payload in bytes
-            byte_array += len(self.payload).to_bytes(4, byteorder='big')
-            byte_array += self.payload
+            clients, stream_data = self.payload
+            byte_array += len(clients).to_bytes(1, byteorder='big')
+            for client in clients:
+                parts = client.split('.')
+                byte_array += b''.join([int(part).to_bytes(1, 'big') for part in parts])
+            byte_array += len(stream_data).to_bytes(4, byteorder='big')
+            byte_array += stream_data
 
         elif self.type == PacketType.RMEASURE:  # Delay and Loss in a list of tuples
 
@@ -111,11 +116,19 @@ class Packet:
         last_hop = '.'.join(map(str, last_hop_ip_parts))
         offset += 4
 
+        clients = None
         payload = None
-        if message_type == PacketType.STREAM:
+        if message_type == PacketType.STREAM:           
+            num_clients = int.from_bytes(byte_array[offset: offset + 1], 'big')
+            offset += 1
+            for _ in range(num_clients):
+                client_ip_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
+                clients.append('.'.join(map(str, client_ip_parts)))
+                offset += 4
             num_bytes = int.from_bytes(byte_array[offset: offset + 4], 'big')
             offset += 4
-            payload = byte_array[offset:offset + num_bytes]
+            data = byte_array[offset:offset + num_bytes]
+            payload = (clients, data)
 
         elif message_type == PacketType.RSETUP:
             num_neighbours = int.from_bytes(byte_array[offset: offset + 4], 'big')

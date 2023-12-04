@@ -41,8 +41,9 @@ class Server:
         Thread(target=lambda: self.send_hello(ep, 5)).start()
 
         # Start the proof thread only for the nodes not in tree leaves
-        probe_thread = ProbeThread(ep, 5, 2, 2, ep.port)
-        probe_thread.start()
+        if ep.get_num_neighbours() > 1:
+            probe_thread = ProbeThread(ep, 5, 2, 2, ep.port)
+            probe_thread.start()
 
         while True:
             response, address = server_socket.recvfrom(self.buffer_size)
