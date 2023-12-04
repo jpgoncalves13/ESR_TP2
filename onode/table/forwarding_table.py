@@ -211,8 +211,20 @@ class ForwardingTable:
             for client_ip in self.table:
                 if neighbour in self.table[client_ip]:
                     self.table[client_ip][neighbour].loss = 100
-                    self.table[client_ip][neighbour].delay = sys.maxsize
+                    self.table[client_ip][neighbour].delay = 1000000
 
+            best_score = sys.maxsize
+            best_entry = None
+            best_entry_neighbour = None
+            for client_ip in self.table:
+                for ng, entry in self.table[client_ip].items():
+                    entry_score = entry.get_metric()
+                    if entry_score < best_score:
+                        best_entry = entry
+                        best_entry_neighbour = ng
+
+                with self.tree_lock:
+                    self.tree[client_ip] = (best_entry_neighbour, best_entry)
 
     def get_table(self):
         with self.table_lock:
