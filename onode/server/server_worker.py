@@ -129,7 +129,7 @@ class ServerWorker:
         """Handle the packets requesting the metrics"""
         if self.ep.get_num_neighbours() == 1 and not self.ep.rendezvous:
             packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, '0.0.0.0',
-                            ([('0.0.0.0', '0.0.0.0', 0, 0)] if self.ep.get_client_state() else [], None, []))
+                            ([('0.0.0.0', '0.0.0.0', 0, 0)] if self.ep.get_client_state() else [], None))
             ServerWorker.send_packet(packet, address)
             return
 
@@ -144,7 +144,7 @@ class ServerWorker:
                 rp_entry = None
 
         packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, '0.0.0.0',
-                        (best_entries_list, rp_entry, self.ep.get_stream_table_info()))
+                        (best_entries_list, rp_entry))
         ServerWorker.send_packet(packet, address)
 
     def handle_stream_request(self, packet):

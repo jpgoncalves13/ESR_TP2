@@ -17,11 +17,11 @@ class ProbeThread(threading.Thread):
         self.timeout = timeout
 
     def handle_neighbours(self, neighbour, last_packet, delay_measured, loss_measured):
-        list_metrics, rp_entry, stream_clients = last_packet.payload
+        list_metrics, rp_entry = last_packet.payload
         print("LOSS: " + str(loss_measured))
         for leaf, next_hop, delay, loss in list_metrics:
             self.ep.update_metrics(neighbour if leaf == "0.0.0.0" else leaf, neighbour, next_hop,
-                                   delay + delay_measured, int((loss + loss_measured) / 2))
+                                   delay + delay_measured, max(loss, loss_measured))
 
         if rp_entry is not None and not self.ep.rendezvous:
             rp_ip = rp_entry[0]
@@ -31,18 +31,12 @@ class ProbeThread(threading.Thread):
             self.ep.update_metrics_rp(rp_ip, neighbour, rp_entry[1], rp_entry[2]
                                       + delay_measured, max(rp_entry[3], loss_measured))
 
-        for stream_id, clients in stream_clients:
-            for client in clients:
-                self.ep.add_client_to_stream(stream_id, client)
-
     def handle_neighbours_total_loss(self, neighbour):
         print(str(neighbour) + " is dead")
         self.ep.update_neighbour_death(neighbour)
-    
-    # Para todos os clientes, se tiver uma entrada com o vizinho X, essas entrada ficam com o loss a 100
 
     def handle_servers(self, server, last_packet, delay_measured, loss_measured):
-        list_metrics, rp_entry, stream_clients = last_packet.payload
+        list_metrics, rp_entry = last_packet.payload
         for _ in list_metrics:
             self.ep.update_metrics_server(server, delay_measured, int(loss_measured / 2))
 
@@ -68,7 +62,7 @@ class ProbeThread(threading.Thread):
             except socket.timeout:
                 pass
 
-        loss_measured = 100 * (packets_sent - packets_received) / packets_sent if packets_sent > 0 else 0
+        loss_measured = int(100 * (packets_sent - packets_received) / packets_sent) if packets_sent > 0 else 0
         delay_measured = int(total_delay / packets_received) if packets_received > 0 else 0
 
         last_packet = list_packets_received[-1] if len(list_packets_received) > 0 else None

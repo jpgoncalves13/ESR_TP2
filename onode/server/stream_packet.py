@@ -14,6 +14,7 @@ class PacketType(Enum):
     HELLO = 11
     LEAVE = 12
 
+
 class Packet:
 
     def __init__(self, packet_type, leaf, stream_id, last_hop, payload=None):
@@ -56,7 +57,7 @@ class Packet:
 
         elif self.type == PacketType.RMEASURE:  # Delay and Loss in a list of tuples
 
-            best_entries, rp_entry, stream_clients = self.payload
+            best_entries, rp_entry = self.payload
 
             byte_array += len(best_entries).to_bytes(4, byteorder='big')
             for leaf, next_hop, delay, loss in best_entries:
@@ -85,16 +86,6 @@ class Packet:
                 byte_array += rp_entry[3].to_bytes(4, byteorder='big')
             else:
                 byte_array += int(0).to_bytes(1, byteorder='big')
-
-            byte_array += len(stream_clients).to_bytes(4, byteorder='big')
-            for stream_id, client_list in stream_clients:
-                # stream id
-                byte_array += stream_id.to_bytes(1, byteorder='big')
-                # client
-                byte_array += len(client_list).to_bytes(1, byteorder='big')
-                for client in client_list:
-                    client_parts = client.split('.')
-                    byte_array += b''.join([int(part).to_bytes(1, 'big') for part in client_parts])
 
         return byte_array
 
@@ -181,26 +172,7 @@ class Packet:
             else:
                 rp_entry = None
 
-            num_stream_clients = int.from_bytes(byte_array[offset: offset + 4], 'big')
-            offset += 4
-            stream_clients = []
-            for _ in range(num_stream_clients):
-                # stream_id (1 byte)
-                stream_id = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
-                offset += 1
-                num_clients = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
-                clients_list = []
-                offset += 1
-                for _ in range(num_clients):
-                    # client (4 bytes)
-                    client_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
-                    client = '.'.join(map(str, client_parts))
-                    offset += 4
-                    clients_list.append(client)
-
-                stream_clients.append((stream_id, clients_list))
-
-            payload = (best_entries, rp_entry, stream_clients)
+            payload = (best_entries, rp_entry)
 
         return Packet(message_type, leaf, stream_id, last_hop, payload)
 
