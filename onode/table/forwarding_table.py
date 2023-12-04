@@ -247,7 +247,10 @@ class ForwardingTable:
                             best_entry_neighbour = ng
 
                     with self.tree_lock:
-                        self.tree[leaf] = (best_entry_neighbour, best_entry)
+                        if best_entry is not None:
+                            self.tree[leaf] = (best_entry_neighbour, best_entry)
+                        else:
+                            del self.tree[leaf]
 
     def get_table(self):
         with self.table_lock:

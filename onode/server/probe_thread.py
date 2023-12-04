@@ -18,9 +18,8 @@ class ProbeThread(threading.Thread):
 
     def handle_neighbours(self, neighbour, last_packet, delay_measured, loss_measured):
         list_metrics, rp_entry = last_packet.payload
-        leafs_received = [tup[0] for tup in list_metrics]
+        leafs_received = [(tup[0] if tup[0] != "0.0.0.0" else neighbour) for tup in list_metrics]
         if len(leafs_received) > 0:
-            print(leafs_received)
             self.ep.remove_clients_neighbour_from_forwarding_table(leafs_received, neighbour)
         for leaf, next_hop, delay, loss in list_metrics:
             self.ep.update_metrics(neighbour if leaf == "0.0.0.0" else leaf, neighbour, next_hop,
