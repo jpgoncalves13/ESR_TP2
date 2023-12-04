@@ -51,7 +51,7 @@ Node Options:
     ep = EP(debug, bootstrapper, is_rendezvous_point, port, neighbours, tag, client)
 
     if ep.get_num_neighbours() == 1 and client > 0:
-        client_launcher = ClientLauncher(ep.get_neighbours()[0], client)
+        client_launcher = ClientLauncher(ep.get_neighbours()[0], client, ep)
         client_launcher.run()
     elif ep.get_num_neighbours() > 1 and client > 0:
         print("This is not a leaf node to put a client on it")
