@@ -38,7 +38,10 @@ class ProbeThread(threading.Thread):
         for _ in list_metrics:
             self.ep.update_metrics_server(server, delay_measured, int(loss_measured / 2))
 
-    def measure(self, udp_socket, neighbour):
+    def measure(self, neighbour):
+        udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        udp_socket.settimeout(self.timeout)
+
         packets_sent = 0
         packets_received = 0
         total_delay = 0
@@ -60,6 +63,8 @@ class ProbeThread(threading.Thread):
             except socket.timeout:
                 pass
 
+        udp_socket.close()
+
         loss_measured = int(100 * (packets_sent - packets_received) / packets_sent) if packets_sent > 0 else 0
         delay_measured = int(total_delay / packets_received) if packets_received > 0 else 0
 
@@ -69,34 +74,29 @@ class ProbeThread(threading.Thread):
 
     def run(self):
         self.running = True
-        udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-        udp_socket.settimeout(self.timeout)
 
-        try:
-            while self.running:
-                neighbours = self.ep.get_listening_neighbours()
+        while self.running:
+            neighbours = self.ep.get_listening_neighbours()
 
-                for neighbour in neighbours:
-                    loss_measured, delay_measured, last_packet = self.measure(udp_socket, neighbour)
+            for neighbour in neighbours:
+                loss_measured, delay_measured, last_packet = self.measure(neighbour)
+                if last_packet is not None and last_packet.type == PacketType.RMEASURE:
+                    print(neighbour + " SENT THE PACKET DE MEASURE: " + str(last_packet))
+                    self.handle_neighbours(neighbour, last_packet, delay_measured, loss_measured)
+                else:
+                    self.handle_neighbours_total_loss(neighbour)
+
+            if self.ep.rendezvous:
+                servers = self.ep.get_servers()
+                if self.ep.debug:
+                    print(f"DEBUG: Sending the probe message to servers {servers}")
+
+                for server in servers:
+                    loss_measured, delay_measured, last_packet = self.measure(server)
                     if last_packet is not None and last_packet.type == PacketType.RMEASURE:
-                        print(neighbour + " SENT THE PACKET DE MEASURE: " + str(last_packet))
-                        self.handle_neighbours(neighbour, last_packet, delay_measured, loss_measured)
-                    else:
-                        self.handle_neighbours_total_loss(neighbour)
+                        self.handle_servers(server, last_packet, delay_measured, loss_measured)
 
-                if self.ep.rendezvous:
-                    servers = self.ep.get_servers()
-                    if self.ep.debug:
-                        print(f"DEBUG: Sending the probe message to servers {servers}")
-
-                    for server in servers:
-                        loss_measured, delay_measured, last_packet = self.measure(udp_socket, server)
-                        if last_packet is not None and last_packet.type == PacketType.RMEASURE:
-                            self.handle_servers(server, last_packet, delay_measured, loss_measured)
-
-                time.sleep(self.interval)
-        finally:
-            udp_socket.close()
+            time.sleep(self.interval)
 
     def stop(self):
         self.running = False
