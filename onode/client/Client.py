@@ -115,7 +115,7 @@ class Client:
                 data = self.rtpSocket.recv(20480)
                 if data:
                     rtp = RtpPacket()
-                    rtp.decode(Packet.deserialize(data).payload)
+                    rtp.decode(Packet.deserialize(data).payload[1])
 
                     currFrameNbr = rtp.seqNum()
                     print("Current Seq Num: " + str(currFrameNbr))
