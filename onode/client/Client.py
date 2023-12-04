@@ -100,8 +100,19 @@ class Client:
         # if self.state == self.READY:
         # Create a new thread to listen for RTP packets
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.settimeout(5)
         packet = Packet(PacketType.JOIN, '0.0.0.0', self.stream_id, '0.0.0.0')
-        sock.sendto(packet.serialize(), (self.serverAddr, self.serverPort))
+        response = False
+        while not response:
+            sock.sendto(packet.serialize(), (self.serverAddr, self.serverPort))
+            try:
+                resp, _ = sock.recvfrom(4096)
+                packet = Packet.deserialize(resp)
+                if packet.type == PacketType.ACK:
+                    response = True
+            except socket.timeout:
+                pass
+
         print('Sending the JOIN ' + str(self.serverAddr) + ':' + str(self.serverPort))
         self.ep.update_client_state(True)
         threading.Thread(target=self.listenRtp).start()

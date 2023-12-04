@@ -100,17 +100,42 @@ class ServerWorker:
         if packet.leaf == '0.0.0.0':
             packet.leaf = ip
 
-        print("AQUIIIIIIIIIIII -> CLIENT ON STREAM")
         self.ep.add_client_to_stream(packet.stream_id, packet.leaf)
         is_first_entry = self.ep.add_entry(packet.leaf, ip, packet.last_hop)
         packet.last_hop = ip
 
         if not self.ep.rendezvous and is_first_entry:
             neighbour = self.ep.get_neighbour_to_rp()
+            udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            udp_socket.settimeout(5)
+
             if neighbour is not None:
-                ServerWorker.send_packet(packet, (neighbour, self.ep.port))
+                response = False
+                while not response:
+                    udp_socket.sendto(packet.serialize(), (neighbour, self.ep.port))
+                    try:
+                        resp, _ = udp_socket.recvfrom(4096)
+                        resp_packet = Packet.deserialize(resp)
+                        if resp_packet.type == PacketType.ACK:
+                            response = True
+                    except socket.timeout:
+                        pass
             else:
-                self.flood_packet(ip, packet.serialize())
+                neighbours = self.ep.get_listening_neighbours()
+                if ip in neighbours:
+                    neighbours.remove(ip)
+                for neighbour in neighbours:
+                    response = False
+                    while not response:
+                        udp_socket.sendto(packet.serialize(), (neighbour, self.ep.port))
+                        try:
+                            resp, _ = udp_socket.recvfrom(4096)
+                            resp_packet = Packet.deserialize(resp)
+                            if resp_packet.type == PacketType.ACK:
+                                response = True
+                        except socket.timeout:
+                            pass
+            udp_socket.close()
 
     def handle_leave(self, packet, ip):
         """Handle the client leave message to the tree"""
@@ -148,11 +173,6 @@ class ServerWorker:
                         (best_entries_list, rp_entry))
         ServerWorker.send_packet(packet, address)
 
-    def handle_stream_request(self, packet):
-        if self.ep.get_num_neighbours() == 1:
-            packet = Packet(PacketType.JOIN, '0.0.0.0', packet.stream_id, '0.0.0.0')
-            ServerWorker.send_packet(packet, (self.ep.get_neighbours()[0], self.ep.port))
-
     def handle_request(self, response, address):
         packet = Packet.deserialize(response)
 
@@ -168,6 +188,8 @@ class ServerWorker:
             self.handle_hello(address)
 
         elif packet.type == PacketType.JOIN:
+            packet = Packet(PacketType.ACK, '0.0.0.0', 0, '0.0.0.0')
+            ServerWorker.send_packet(packet, address)
             self.handle_join(packet, address[0])
 
         elif packet.type == PacketType.MEASURE:
@@ -176,9 +198,6 @@ class ServerWorker:
         elif packet.type == PacketType.STREAM:
             self.handle_stream(packet, address[0])
 
-        elif packet.type == PacketType.STREAMREQ:
-            self.handle_stream_request(packet)
-        
         elif packet.type == PacketType.LEAVE:
             self.handle_leave(packet, address[0])
 
