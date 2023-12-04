@@ -100,6 +100,7 @@ class ServerWorker:
         if packet.leaf == '0.0.0.0':
             packet.leaf = ip
 
+        print("AQUIIIIIIIIIIII -> CLIENT ON STREAM")
         self.ep.add_client_to_stream(packet.stream_id, packet.leaf)
         is_first_entry = self.ep.add_entry(packet.leaf, ip, packet.last_hop)
         packet.last_hop = ip
