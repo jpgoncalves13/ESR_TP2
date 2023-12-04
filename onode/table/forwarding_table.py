@@ -74,6 +74,8 @@ class ForwardingTable:
         with self.table_lock:
             if node_id in self.table:
                 del self.table[node_id]
+                with self.tree_lock:
+                    del self.tree[node_id]
 
     def get_best_entries(self):
         best_entries = []
@@ -227,6 +229,24 @@ class ForwardingTable:
 
                 with self.tree_lock:
                     self.tree[client_ip] = (best_entry_neighbour, best_entry)
+
+    def remove_clients_neighbour_from_forwarding_table(self, leafs, neighbour):
+        with self.table_lock:
+            for leaf in self.table:
+                if leaf not in leafs and neighbour in self.table[leaf]:
+                    del self.table[leaf][neighbour]
+
+                    best_score = sys.maxsize
+                    best_entry = None
+                    best_entry_neighbour = None
+                    for ng, entry in self.table[leaf].items():
+                        entry_score = entry.get_metric()
+                        if entry_score < best_score:
+                            best_entry = entry
+                            best_entry_neighbour = ng
+
+                    with self.tree_lock:
+                        self.tree[leaf] = (best_entry_neighbour, best_entry)
 
     def get_table(self):
         with self.table_lock:

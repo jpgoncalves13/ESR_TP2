@@ -126,3 +126,6 @@ class EP:
     
     def update_neighbour_death(self, neighbour):
         return self.table.update_neighbour_death(neighbour)
+
+    def remove_clients_neighbour_from_forwarding_table(self, leafs, neighbour):
+        self.table.remove_client_neighbour_from_forwarding_table(leafs, neighbour)
