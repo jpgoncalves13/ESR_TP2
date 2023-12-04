@@ -18,7 +18,6 @@ class ProbeThread(threading.Thread):
 
     def handle_neighbours(self, neighbour, last_packet, delay_measured, loss_measured):
         list_metrics, rp_entry = last_packet.payload
-        print("LOSS: " + str(loss_measured))
         for leaf, next_hop, delay, loss in list_metrics:
             self.ep.update_metrics(neighbour if leaf == "0.0.0.0" else leaf, neighbour, next_hop,
                                    delay + delay_measured, max(loss, loss_measured))
@@ -32,7 +31,6 @@ class ProbeThread(threading.Thread):
                                       + delay_measured, max(rp_entry[3], loss_measured))
 
     def handle_neighbours_total_loss(self, neighbour):
-        print(str(neighbour) + " is dead")
         self.ep.update_neighbour_death(neighbour)
 
     def handle_servers(self, server, last_packet, delay_measured, loss_measured):

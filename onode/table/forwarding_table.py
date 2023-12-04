@@ -131,7 +131,7 @@ class ForwardingTable:
                     best_entry_neighbour = self.tree[node_id][0]
 
             # The entry to update is the best entry
-            if best_entry_neighbour == neighbour and best_entry.next_hop == next_hop:
+            if best_entry_neighbour == neighbour:
                 best_entry.delay = delay
                 best_entry.loss = loss
 
@@ -176,9 +176,10 @@ class ForwardingTable:
                     return
 
             # The entry to update is the best entry
-            if best_entry_ip == rp_ip and best_entry_neighbour == neighbour and best_entry.next_hop == next_hop:
+            if best_entry_ip == rp_ip and best_entry_neighbour == neighbour:
                 best_entry.delay = delay
                 best_entry.loss = loss
+                best_entry.next_hop = next_hop
 
                 # Obtain the best entry
                 best_score = sys.maxsize
@@ -197,6 +198,7 @@ class ForwardingTable:
 
             current_entry.delay = delay
             current_entry.loss = loss
+            current_entry.nex_hop = next_hop
 
             if best_entry.get_metric() > current_entry.get_metric():
                 best_entry = current_entry
