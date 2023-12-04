@@ -115,7 +115,7 @@ class ForwardingTable:
         return None
 
     def update_metrics(self, node_id, neighbour, next_hop, delay, loss):
-
+        print(f"UPDATE METRICS NODE ID: {node_id} NEIGHBOUR: {neighbour}")
         is_first_entry = self.add_entry(node_id, neighbour, next_hop, delay, loss)
         if is_first_entry:
             return
