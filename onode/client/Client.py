@@ -7,7 +7,7 @@ from tkinter import *
 
 from PIL import Image, ImageTk, ImageFile
 
-from RtpPacket import RtpPacket
+from client.RtpPacket import RtpPacket
 from server.stream_packet import Packet, PacketType
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
