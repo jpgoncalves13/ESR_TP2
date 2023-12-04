@@ -92,6 +92,7 @@ class Client:
         """Pause button handler."""
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         packet = Packet(PacketType.LEAVE,'0.0.0.0',0,'0.0.0.0')
+        self.ep.update_client_state(False)
         sock.sendto(packet.serialize(), (self.serverAddr, self.serverPort))
 
     def playMovie(self):
