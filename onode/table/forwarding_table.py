@@ -127,6 +127,8 @@ class ForwardingTable:
 
             # Get the best entry
             with self.tree_lock:
+                print(self.tree)
+                print(node_id)
                 if node_id in self.tree:
                     best_entry = self.tree[node_id][1]
                     best_entry_neighbour = self.tree[node_id][0]
