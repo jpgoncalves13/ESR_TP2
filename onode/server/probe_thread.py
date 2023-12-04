@@ -80,6 +80,8 @@ class ProbeThread(threading.Thread):
 
         while self.running:
             neighbours = self.ep.get_listening_neighbours()
+            if self.ep.debug:
+                print(f"DEBUG: Sending the probe message to neighbours {neighbours}")
 
             for neighbour in neighbours:
                 loss_measured, delay_measured, last_packet = self.measure(neighbour)
