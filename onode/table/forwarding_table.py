@@ -115,13 +115,13 @@ class ForwardingTable:
         return None
 
     def update_metrics(self, node_id, neighbour, next_hop, delay, loss):
-        print(f"UPDATE METRICS NODE ID: {node_id} NEIGHBOUR: {neighbour}")
         is_first_entry = self.add_entry(node_id, neighbour, next_hop, delay, loss)
         if is_first_entry:
             return
 
         with self.table_lock:
             current_entry = self.get_entry(node_id, neighbour)
+            print(f"UPDATE METRICS CURRENT ENTRY: {current_entry}")
 
             best_entry = None
             best_entry_neighbour = None
@@ -131,6 +131,8 @@ class ForwardingTable:
                 if node_id in self.tree:
                     best_entry = self.tree[node_id][1]
                     best_entry_neighbour = self.tree[node_id][0]
+
+            print(f"UPDATE METRICS BEST ENTRY: {best_entry}")
 
             # The entry to update is the best entry
             if best_entry_neighbour == neighbour:
