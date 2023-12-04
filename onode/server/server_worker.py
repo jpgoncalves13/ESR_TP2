@@ -188,8 +188,7 @@ class ServerWorker:
             self.handle_hello(address)
 
         elif packet.type == PacketType.JOIN:
-            packet = Packet(PacketType.ACK, '0.0.0.0', 0, '0.0.0.0')
-            ServerWorker.send_packet(packet, address)
+            ServerWorker.send_packet(Packet(PacketType.ACK, '0.0.0.0', 0, '0.0.0.0'), address)
             self.handle_join(packet, address[0])
 
         elif packet.type == PacketType.MEASURE:
