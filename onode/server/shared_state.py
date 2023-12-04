@@ -81,6 +81,9 @@ class EP:
     def get_neighbour_to_client(self, client):
         return self.table.get_neighbour_to_client(client)
 
+    def get_best_entry(self, client):
+        return  self.table.get_best_entry(client)
+
     # STREAM TABLE
 
     def add_client_to_stream(self, stream_id, node_id):
@@ -109,3 +112,6 @@ class EP:
 
     def get_stream_table(self):
         return self.stream_table.get_stream_table()
+    
+    def update_neighbour_death(self, neighbour):
+        return self.table.update_neighbour_death(neighbour)

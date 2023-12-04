@@ -1,9 +1,12 @@
+import io
 import os
 import socket
 import threading
 import time
 import tkinter.messagebox as messagebox
 from datetime import datetime
+import string
+import random
 from tkinter import *
 
 from PIL import Image, ImageTk, ImageFile
@@ -121,7 +124,7 @@ class Client:
 
                     #if currFrameNbr > self.frameNbr:  # Discard the late packet
                     self.frameNbr = currFrameNbr
-                    self.updateMovie(self.writeFrame(rtp.getPayload()))
+                    self.updateMovie(rtp.getPayload())
 
             except Exception as exc:
                 print(type(exc))
@@ -139,22 +142,12 @@ class Client:
     #					self.rtpSocket.close()
     #					break
 
-    def writeFrame(self, data):
-        """Write the received frame to a temp image file. Return the image file."""
-        timestamp = int(time.time())
-        cachename = f"{CACHE_FILE_NAME}{self.sessionId}_{timestamp}{CACHE_FILE_EXT}"
-        file = open(cachename, "wb")
-        file.write(data)
-        file.close()
-
-        return cachename
-
-    def updateMovie(self, imageFile):
+    def updateMovie(self, image_data):
         """Update the image file as video frame in the GUI."""
-        photo = ImageTk.PhotoImage(Image.open(imageFile))
+        image = Image.open(io.BytesIO(image_data))
+        photo = ImageTk.PhotoImage(image)
         self.label.configure(image=photo, height=288)
         self.label.image = photo
-        os.remove(imageFile)
 
     def connectToServer(self):
         """Connect to the Server. Start a new RTSP/TCP session."""

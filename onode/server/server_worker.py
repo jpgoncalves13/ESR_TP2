@@ -14,8 +14,12 @@ class ServerWorker:
     @staticmethod
     def send_packet(packet, address):
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        udp_socket.sendto(packet.serialize(), address)
-        udp_socket.close()
+        try:
+            udp_socket.sendto(packet.serialize(), address)
+        except (socket.error, OSError) as e:
+            print(f"Error sending the data: {e}")
+        finally:
+            udp_socket.close()
 
     def handle_setup(self, address):
         """Bootstrapper response"""
@@ -58,7 +62,11 @@ class ServerWorker:
 
 
         for client in stream_clients:
-            neighbour = self.ep.get_neighbour_to_client(client)
+            entry = self.ep.get_best_entry(client)
+            if entry.loss == 100:
+                neighbour = entry.next_hop
+            else:
+                neighbour = self.ep.get_neighbour_to_client(client)
             if neighbour is not None:
                 if client == neighbour:
                     if client not in clients_to_send:
