@@ -7,7 +7,7 @@ import threading
 
 class EP:
 
-    def __init__(self, debug: bool, bootstrapper: Bootstrapper, rendezvous: bool, port, neighbours: [str], tag):
+    def __init__(self, debug: bool, bootstrapper: Bootstrapper, rendezvous: bool, port, neighbours: [str], tag, client):
         self.debug = debug
         self.bootstrapper = bootstrapper
         self.rendezvous = rendezvous
@@ -18,6 +18,17 @@ class EP:
         self.neighbours_lock = threading.Lock()
         self.port = port
         self.tag = tag
+        self.client = client
+        self.client_lock = threading.Lock()
+        self.client_on = False
+
+    def update_client_state(self, state):
+        with self.client_lock:
+            self.client_on = state
+
+    def get_client_state(self):
+        with self.client_lock:
+            return self.client_on
 
     # NEIGHBOURS
 

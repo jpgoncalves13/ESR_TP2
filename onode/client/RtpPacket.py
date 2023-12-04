@@ -2,6 +2,7 @@ import sys
 from time import time
 HEADER_SIZE = 12
 
+
 class RtpPacket:	
 	header = bytearray(HEADER_SIZE)
 	

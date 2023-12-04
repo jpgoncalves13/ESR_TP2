@@ -56,10 +56,9 @@ class ServerWorker:
         if self.ep.rendezvous:
             stream_clients = self.ep.get_stream_clients(packet.stream_id)
         # stream_clients = self.ep.get_stream_clients(packet.stream_id)
-        #neighbours_to_send = []
+        # neighbours_to_send = []
         neighbours_to_send = {}
         clients_to_send = []
-
 
         for client in stream_clients:
             entry = self.ep.get_best_entry(client)
@@ -72,7 +71,7 @@ class ServerWorker:
                     if client not in clients_to_send:
                         clients_to_send.append(client)
                 elif neighbour not in neighbours_to_send:
-                    #neighbours_to_send.append(neighbour)
+                    # neighbours_to_send.append(neighbour)
                     neighbours_to_send[neighbour] = [client]
                 else:
                     neighbours_to_send[neighbour].append(client)
@@ -129,7 +128,8 @@ class ServerWorker:
     def handle_measure(self, address):
         """Handle the packets requesting the metrics"""
         if self.ep.get_num_neighbours() == 1 and not self.ep.rendezvous:
-            packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, '0.0.0.0', ([('0.0.0.0', '0.0.0.0', 0, 0)], None, []))
+            packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, '0.0.0.0',
+                            ([('0.0.0.0', '0.0.0.0', 0, 0)] if self.ep.get_client_state() else [], None, []))
             ServerWorker.send_packet(packet, address)
             return
 
