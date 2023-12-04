@@ -15,7 +15,7 @@ class ClientLauncher(threading.Thread):
 		root = Tk()
 
 		# Create a new client
-		app = Client(root, self.neighbour, 5000, 5001, self.stream_id, ep)
+		app = Client(root, self.neighbour, 5000, 5001, self.stream_id, self.ep)
 		app.master.title("RTPClient")
 		root.mainloop()
 
