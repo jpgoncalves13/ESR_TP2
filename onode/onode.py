@@ -52,7 +52,7 @@ Node Options:
 
     if ep.get_num_neighbours() == 1 and client > 0:
         client_launcher = ClientLauncher(ep.get_neighbours()[0], client, ep)
-        client_launcher.run()
+        client_launcher.start()
     elif ep.get_num_neighbours() > 1 and client > 0:
         print("This is not a leaf node to put a client on it")
         print("Starting only the overlay node")
