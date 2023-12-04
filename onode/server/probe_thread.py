@@ -79,7 +79,7 @@ class ProbeThread(threading.Thread):
                 for neighbour in neighbours:
                     loss_measured, delay_measured, last_packet = self.measure(udp_socket, neighbour)
                     if last_packet is not None and last_packet.type == PacketType.RMEASURE:
-                        print("PACKET DE MEASURE" + str(last_packet))
+                        print(neighbour + " SENT THE PACKET DE MEASURE: " + str(last_packet))
                         self.handle_neighbours(neighbour, last_packet, delay_measured, loss_measured)
                     else:
                         self.handle_neighbours_total_loss(neighbour)
