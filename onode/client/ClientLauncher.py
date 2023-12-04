@@ -1,5 +1,5 @@
 from tkinter import Tk
-from Client import Client
+from client.Client import Client
 import threading
 
 
