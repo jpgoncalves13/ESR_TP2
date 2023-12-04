@@ -100,7 +100,8 @@ class ServerWorker:
         if packet.leaf == '0.0.0.0':
             packet.leaf = ip
 
-        self.ep.add_client_to_stream(packet.stream_id, packet.leaf)
+        if self.ep.rendezvous:
+            self.ep.add_client_to_stream(packet.stream_id, packet.leaf)
         is_first_entry = self.ep.add_entry(packet.leaf, ip, packet.last_hop)
         packet.last_hop = ip
 
@@ -207,4 +208,5 @@ class ServerWorker:
         if self.ep.debug:
             print((self.ep.tag if self.ep.tag is not None else "") + " CLIENTS_TABLE" + str(self.ep.get_table()) + "\n")
             print("RP_TABLE" + str(self.ep.get_table_rp()) + "\n")
-            print("STREAM_TABLE" + str(self.ep.get_stream_table()) + "\n")
+            if self.ep.rendezvous:
+                print("STREAM_TABLE" + str(self.ep.get_stream_table()) + "\n")
