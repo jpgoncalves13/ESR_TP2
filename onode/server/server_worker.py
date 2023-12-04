@@ -217,5 +217,6 @@ class ServerWorker:
         if self.ep.debug:
             print((self.ep.tag if self.ep.tag is not None else "") + " CLIENTS_TABLE" + str(self.ep.get_table()) + "\n")
             print("RP_TABLE" + str(self.ep.get_table_rp()) + "\n")
+            print("TREE" + str(self.ep.get_tree()) + "\n")
             if self.ep.rendezvous:
                 print("STREAM_TABLE" + str(self.ep.get_stream_table()) + "\n")

@@ -86,6 +86,9 @@ class EP:
     def get_table(self):
         return self.table.get_table()
 
+    def get_tree(self):
+        return self.table.get_tree()
+
     def get_table_rp(self):
         return self.table.get_table_rp()
 
@@ -93,7 +96,7 @@ class EP:
         return self.table.get_neighbour_to_client(client)
 
     def get_best_entry(self, client):
-        return  self.table.get_best_entry(client)
+        return self.table.get_best_entry(client)
 
     # STREAM TABLE
 
