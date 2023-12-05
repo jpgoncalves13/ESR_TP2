@@ -4,6 +4,7 @@ from server.server import Server
 from server.stream_packet import Packet, PacketType
 from bootstrapper.bootstrapper import Bootstrapper
 from server.shared_state import EP
+from client.ClientLauncher import ClientLauncher
 import re
 
 
@@ -27,7 +28,7 @@ Node Options:
     # Standard port
     port = 5000
     # Parse the arguments
-    bootstrapper, bootstrapper_address, is_rendezvous_point, debug, tag = read_args()
+    bootstrapper, bootstrapper_address, is_rendezvous_point, debug, tag, client = read_args()
 
     # Request the neighbors if is a node and not the bootstrapper
     if bootstrapper is None:
@@ -47,7 +48,14 @@ Node Options:
     if debug:
         print(f"DEBUG: Neighbors -> {neighbours.keys()}")
 
-    ep = EP(debug, bootstrapper, is_rendezvous_point, port, neighbours, tag)
+    ep = EP(debug, bootstrapper, is_rendezvous_point, port, neighbours, tag, client)
+
+    if ep.get_num_neighbours() == 1 and client > 0:
+        client_launcher = ClientLauncher(ep.get_neighbours()[0], client, ep)
+        client_launcher.start()
+    elif ep.get_num_neighbours() > 1 and client > 0:
+        print("This is not a leaf node to put a client on it")
+        print("Starting only the overlay node")
 
     # Start the server
     server = Server(port)
@@ -111,6 +119,7 @@ def read_args():
     debug = False
     tag = None
     is_rendezvous_point = False
+    client = 0
 
     if sys.argv[i] == '--bootstrapper':
         # --bootstrapper <file>
@@ -137,7 +146,14 @@ def read_args():
             # for the debug mode
             debug = True
         elif sys.argv[i] == '--tag':
-            tag = sys.argv[i+1]
+            tag = sys.argv[i + 1]
+            i += 1
+        elif sys.argv[i] == '--client':
+            if sys.argv[i + 1].isdigit():
+                client = int(sys.argv[i + 1])
+            else:
+                print(f"Invalid argument: {sys.argv[i + 1]}. I need a stream id")
+                exit(1)
             i += 1
         else:
             print(f"Invalid argument: {sys.argv[i]}")
@@ -146,7 +162,7 @@ def read_args():
     if bootstrapper is not None and debug:
         bootstrapper.set_debug(debug)
 
-    return bootstrapper, bootstrapper_address, is_rendezvous_point, debug, tag
+    return bootstrapper, bootstrapper_address, is_rendezvous_point, debug, tag, client
 
 
 if __name__ == '__main__':

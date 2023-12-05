@@ -7,7 +7,7 @@ import threading
 
 class EP:
 
-    def __init__(self, debug: bool, bootstrapper: Bootstrapper, rendezvous: bool, port, neighbours: [str], tag):
+    def __init__(self, debug: bool, bootstrapper: Bootstrapper, rendezvous: bool, port, neighbours: [str], tag, client):
         self.debug = debug
         self.bootstrapper = bootstrapper
         self.rendezvous = rendezvous
@@ -18,6 +18,17 @@ class EP:
         self.neighbours_lock = threading.Lock()
         self.port = port
         self.tag = tag
+        self.client = client
+        self.client_lock = threading.Lock()
+        self.client_on = False
+
+    def update_client_state(self, state):
+        with self.client_lock:
+            self.client_on = state
+
+    def get_client_state(self):
+        with self.client_lock:
+            return self.client_on
 
     # NEIGHBOURS
 
@@ -75,6 +86,9 @@ class EP:
     def get_table(self):
         return self.table.get_table()
 
+    def get_tree(self):
+        return self.table.get_tree()
+
     def get_table_rp(self):
         return self.table.get_table_rp()
 
@@ -82,7 +96,7 @@ class EP:
         return self.table.get_neighbour_to_client(client)
 
     def get_best_entry(self, client):
-        return  self.table.get_best_entry(client)
+        return self.table.get_best_entry(client)
 
     # STREAM TABLE
 
@@ -115,3 +129,6 @@ class EP:
     
     def update_neighbour_death(self, neighbour):
         return self.table.update_neighbour_death(neighbour)
+
+    def remove_clients_neighbour_from_forwarding_table(self, leafs, neighbour):
+        self.table.remove_clients_neighbour_from_forwarding_table(leafs, neighbour)

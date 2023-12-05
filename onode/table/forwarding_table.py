@@ -74,6 +74,8 @@ class ForwardingTable:
         with self.table_lock:
             if node_id in self.table:
                 del self.table[node_id]
+                with self.tree_lock:
+                    del self.tree[node_id]
 
     def get_best_entries(self):
         best_entries = []
@@ -113,7 +115,6 @@ class ForwardingTable:
         return None
 
     def update_metrics(self, node_id, neighbour, next_hop, delay, loss):
-
         is_first_entry = self.add_entry(node_id, neighbour, next_hop, delay, loss)
         if is_first_entry:
             return
@@ -126,12 +127,14 @@ class ForwardingTable:
 
             # Get the best entry
             with self.tree_lock:
+                print(self.tree)
+                print(node_id)
                 if node_id in self.tree:
                     best_entry = self.tree[node_id][1]
                     best_entry_neighbour = self.tree[node_id][0]
 
             # The entry to update is the best entry
-            if best_entry_neighbour == neighbour and best_entry.next_hop == next_hop:
+            if best_entry_neighbour == neighbour:
                 best_entry.delay = delay
                 best_entry.loss = loss
 
@@ -176,9 +179,10 @@ class ForwardingTable:
                     return
 
             # The entry to update is the best entry
-            if best_entry_ip == rp_ip and best_entry_neighbour == neighbour and best_entry.next_hop == next_hop:
+            if best_entry_ip == rp_ip and best_entry_neighbour == neighbour:
                 best_entry.delay = delay
                 best_entry.loss = loss
+                best_entry.next_hop = next_hop
 
                 # Obtain the best entry
                 best_score = sys.maxsize
@@ -197,6 +201,7 @@ class ForwardingTable:
 
             current_entry.delay = delay
             current_entry.loss = loss
+            current_entry.nex_hop = next_hop
 
             if best_entry.get_metric() > current_entry.get_metric():
                 best_entry = current_entry
@@ -211,12 +216,49 @@ class ForwardingTable:
             for client_ip in self.table:
                 if neighbour in self.table[client_ip]:
                     self.table[client_ip][neighbour].loss = 100
-                    self.table[client_ip][neighbour].delay = sys.maxsize
+                    self.table[client_ip][neighbour].delay = 1000000
 
+            best_score = sys.maxsize
+            best_entry = None
+            best_entry_neighbour = None
+            for client_ip in self.table:
+                for ng, entry in self.table[client_ip].items():
+                    entry_score = entry.get_metric()
+                    if entry_score < best_score:
+                        best_entry = entry
+                        best_entry_neighbour = ng
+
+                with self.tree_lock:
+                    self.tree[client_ip] = (best_entry_neighbour, best_entry)
+
+    def remove_clients_neighbour_from_forwarding_table(self, leafs, neighbour):
+        with self.table_lock:
+            for leaf in self.table:
+                if leaf not in leafs and neighbour in self.table[leaf]:
+                    del self.table[leaf][neighbour]
+
+                    best_score = sys.maxsize
+                    best_entry = None
+                    best_entry_neighbour = None
+                    for ng, entry in self.table[leaf].items():
+                        entry_score = entry.get_metric()
+                        if entry_score < best_score:
+                            best_entry = entry
+                            best_entry_neighbour = ng
+
+                    with self.tree_lock:
+                        if best_entry is not None:
+                            self.tree[leaf] = (best_entry_neighbour, best_entry)
+                        else:
+                            del self.tree[leaf]
 
     def get_table(self):
         with self.table_lock:
             return copy.deepcopy(self.table)
+
+    def get_tree(self):
+        with self.tree_lock:
+            return copy.deepcopy(self.tree)
 
     def get_table_rp(self):
         with self.table_lock:

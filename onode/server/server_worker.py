@@ -21,6 +21,21 @@ class ServerWorker:
         finally:
             udp_socket.close()
 
+    @staticmethod
+    def send_packet_with_confirmation(udp_socket, packet_serialized, address):
+        response = False
+        retries = 0
+        num_retries = 4
+        while not response and retries < num_retries:
+            udp_socket.sendto(packet_serialized, address)
+            try:
+                resp, _ = udp_socket.recvfrom(4096)
+                resp_packet = Packet.deserialize(resp)
+                if resp_packet.type == PacketType.ACK:
+                    response = True
+            except socket.timeout:
+                retries += 1
+
     def handle_setup(self, address):
         """Bootstrapper response"""
         request_neighbours = self.ep.get_node_info(address[0])
@@ -56,26 +71,33 @@ class ServerWorker:
         if self.ep.rendezvous:
             stream_clients = self.ep.get_stream_clients(packet.stream_id)
         # stream_clients = self.ep.get_stream_clients(packet.stream_id)
-        #neighbours_to_send = []
+        # neighbours_to_send = []
         neighbours_to_send = {}
         clients_to_send = []
 
-
         for client in stream_clients:
             entry = self.ep.get_best_entry(client)
-            if entry.loss == 100:
-                neighbour = entry.next_hop
-            else:
-                neighbour = self.ep.get_neighbour_to_client(client)
+            neighbour = self.ep.get_neighbour_to_client(client)
             if neighbour is not None:
                 if client == neighbour:
-                    if client not in clients_to_send:
+                    if entry.loss == 100:
+                        # Send leave  because client is dead
+                        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                        leave_packet = Packet(PacketType.LEAVE, client, 0, '0.0.0.0')
+                        self.ep.remove_client_from_forwarding_table(client)
+                        ServerWorker.send_packet_with_confirmation(udp_socket, leave_packet.serialize(),
+                                                                   (self.ep.get_neighbour_to_rp(), self.ep.port))
+                    elif client not in clients_to_send:
                         clients_to_send.append(client)
-                elif neighbour not in neighbours_to_send:
-                    #neighbours_to_send.append(neighbour)
-                    neighbours_to_send[neighbour] = [client]
+
                 else:
-                    neighbours_to_send[neighbour].append(client)
+                    if entry.loss == 100:
+                        neighbour = entry.next_hop
+                    if neighbour not in neighbours_to_send:
+                        # neighbours_to_send.append(neighbour)
+                        neighbours_to_send[neighbour] = [client]
+                    else:
+                        neighbours_to_send[neighbour].append(client)
 
         if self.ep.debug:
             print("DEBUG: Packet sent to: " + str(neighbours_to_send))
@@ -101,16 +123,26 @@ class ServerWorker:
         if packet.leaf == '0.0.0.0':
             packet.leaf = ip
 
-        self.ep.add_client_to_stream(packet.stream_id, packet.leaf)
+        if self.ep.rendezvous:
+            self.ep.add_client_to_stream(packet.stream_id, packet.leaf)
         is_first_entry = self.ep.add_entry(packet.leaf, ip, packet.last_hop)
         packet.last_hop = ip
 
         if not self.ep.rendezvous and is_first_entry:
             neighbour = self.ep.get_neighbour_to_rp()
+            udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            udp_socket.settimeout(5)
+
             if neighbour is not None:
-                ServerWorker.send_packet(packet, (neighbour, self.ep.port))
+                ServerWorker.send_packet_with_confirmation(udp_socket, packet.serialize(), (neighbour, self.ep.port))
             else:
-                self.flood_packet(ip, packet.serialize())
+                neighbours = self.ep.get_listening_neighbours()
+                if ip in neighbours:
+                    neighbours.remove(ip)
+                for neighbour in neighbours:
+                    ServerWorker.send_packet_with_confirmation(udp_socket, packet.serialize(),
+                                                               (neighbour, self.ep.port))
+            udp_socket.close()
 
     def handle_leave(self, packet, ip):
         """Handle the client leave message to the tree"""
@@ -122,14 +154,17 @@ class ServerWorker:
         if not self.ep.rendezvous:
             neighbour = self.ep.get_neighbour_to_rp()
             ServerWorker.send_packet(packet, (neighbour, self.ep.port))
-        
-        self.ep.remove_client_from_stream(packet.leaf)
+
+        if self.ep.rendezvous:
+            self.ep.remove_client_from_stream(packet.leaf)
+
         self.ep.remove_client_from_forwarding_table(packet.leaf)
 
     def handle_measure(self, address):
         """Handle the packets requesting the metrics"""
         if self.ep.get_num_neighbours() == 1 and not self.ep.rendezvous:
-            packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, '0.0.0.0', ([('0.0.0.0', '0.0.0.0', 0, 0)], None, []))
+            packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, '0.0.0.0',
+                            ([('0.0.0.0', '0.0.0.0', 0, 0)] if self.ep.get_client_state() else [], None))
             ServerWorker.send_packet(packet, address)
             return
 
@@ -144,13 +179,8 @@ class ServerWorker:
                 rp_entry = None
 
         packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, '0.0.0.0',
-                        (best_entries_list, rp_entry, self.ep.get_stream_table_info()))
+                        (best_entries_list, rp_entry))
         ServerWorker.send_packet(packet, address)
-
-    def handle_stream_request(self, packet):
-        if self.ep.get_num_neighbours() == 1:
-            packet = Packet(PacketType.JOIN, '0.0.0.0', packet.stream_id, '0.0.0.0')
-            ServerWorker.send_packet(packet, (self.ep.get_neighbours()[0], self.ep.port))
 
     def handle_request(self, response, address):
         packet = Packet.deserialize(response)
@@ -167,6 +197,7 @@ class ServerWorker:
             self.handle_hello(address)
 
         elif packet.type == PacketType.JOIN:
+            ServerWorker.send_packet(Packet(PacketType.ACK, '0.0.0.0', 0, '0.0.0.0'), address)
             self.handle_join(packet, address[0])
 
         elif packet.type == PacketType.MEASURE:
@@ -175,10 +206,8 @@ class ServerWorker:
         elif packet.type == PacketType.STREAM:
             self.handle_stream(packet, address[0])
 
-        elif packet.type == PacketType.STREAMREQ:
-            self.handle_stream_request(packet)
-        
         elif packet.type == PacketType.LEAVE:
+            ServerWorker.send_packet(Packet(PacketType.ACK, '0.0.0.0', 0, '0.0.0.0'), address)
             self.handle_leave(packet, address[0])
 
         # Bootstrapper
@@ -188,4 +217,6 @@ class ServerWorker:
         if self.ep.debug:
             print((self.ep.tag if self.ep.tag is not None else "") + " CLIENTS_TABLE" + str(self.ep.get_table()) + "\n")
             print("RP_TABLE" + str(self.ep.get_table_rp()) + "\n")
-            print("STREAM_TABLE" + str(self.ep.get_stream_table()) + "\n")
+            print("TREE" + str(self.ep.get_tree()) + "\n")
+            if self.ep.rendezvous:
+                print("STREAM_TABLE" + str(self.ep.get_stream_table()) + "\n")
