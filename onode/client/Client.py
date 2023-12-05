@@ -72,11 +72,11 @@ class Client:
         # Create a new thread to listen for RTP packets
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(5)
-        packet = Packet(PacketType.JOIN, '0.0.0.0', self.ep.client_stream_id, '0.0.0.0')
+        packet = Packet(PacketType.JOIN, '0.0.0.0', self.ep.client_stream_id, '0.0.0.0').serialize()
         response = False
-        address = (self.ep.get_neighbours_to_rp(), self.ep.port)
+        address = (self.ep.get_neighbour_to_rp(), self.ep.port)
         while not response:
-            sock.sendto(packet.serialize(), address)
+            sock.sendto(packet, address)
             try:
                 resp, _ = sock.recvfrom(4096)
                 packet = Packet.deserialize(resp)

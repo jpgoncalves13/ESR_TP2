@@ -35,7 +35,7 @@ class ProbeThread(threading.Thread):
         self.state.update_neighbour_death(neighbour)"""
 
     def handle_servers(self, server, packet, delay, loss):
-        list_metrics, rp_entry = packet.payload
+        _, list_metrics = packet.payload
         for _ in list_metrics:
             self.state.update_metrics_server(server, delay, loss)
 

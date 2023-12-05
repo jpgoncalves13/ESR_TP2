@@ -13,7 +13,7 @@ class MetricsThread(threading.Thread):
     @staticmethod
     def handle_measure(address):
         packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, '0.0.0.0',
-                        ([('0.0.0.0', '0.0.0.0', 0, 0)], None))
+                        (None, [('0.0.0.0', '0.0.0.0', 0, 0)]))
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         udp_socket.sendto(packet.serialize(), address)
         udp_socket.close()
