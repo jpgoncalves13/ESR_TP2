@@ -136,7 +136,7 @@ class ServerWorker:
                 rp_entry = None
 
         packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, '0.0.0.0',
-                        (rp_entry, neighbours))
+                        ((rp_entry[0], rp_entry[2], rp_entry[3]), neighbours))
         ServerWorker.send_packet(packet, address)
 
     """

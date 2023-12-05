@@ -25,8 +25,6 @@ class ProbeThread(threading.Thread):
                 rp_ip = neighbour
 
             # Change function because this is rp only
-            print("RP_ENTRY: ", rp_entry)
-            print("LOSS: ", loss)
             self.state.update_metrics_rp(rp_ip, neighbour, rp_entry[1] + delay, max(rp_entry[2], loss))
             self.state.add_next_steps(neighbour, neighbours)
 
@@ -82,9 +80,7 @@ class ProbeThread(threading.Thread):
                 print(f"DEBUG: Sending the probe message to: {neighbours}")
 
             for neighbour in neighbours:
-                print("ola")
                 loss_measured, delay_measured, last_packet = self.measure(neighbour)
-                print("ole")
                 if last_packet is not None and last_packet.type == PacketType.RMEASURE:
                     self.handle_neighbour_response(neighbour, last_packet, delay_measured, loss_measured)
                 else:
@@ -92,7 +88,6 @@ class ProbeThread(threading.Thread):
                     # Send join to the neighbours of the neighbour if i do not have other option
                     #self.handle_neighbour_death(neighbour)
 
-            print("fim")
             if self.state.rendezvous:
                 servers = self.state.get_servers()
                 if self.state.debug:
