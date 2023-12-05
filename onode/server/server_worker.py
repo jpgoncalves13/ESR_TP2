@@ -64,7 +64,7 @@ class ServerWorker:
         if self.ep.debug:
             print(f"DEBUG: Stream packet sent to: {neighbours}")
 
-        if self.ep.client_on:
+        if self.ep.client_on and packet.stream_id == self.ep.client:
             self.ep.add_packet_to_buffer(packet.payload)
 
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
