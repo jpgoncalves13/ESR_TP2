@@ -61,12 +61,23 @@ class EP:
             return self.num_neighbours
 
     """
+    Add a neighbour 
+    """
+    def add_neighbours(self, neighbours):
+        with self.neighbours_lock:
+            for neighbour in neighbours:
+                if neighbour not in self.neighbours:
+                    self.neighbours.append(neighbour)
+                    self.num_neighbours += 1
+
+    """
     Remove a neighbour 
     """
     def delete_neighbour(self, neighbour):
         with self.neighbours_lock:
             if neighbour in self.neighbours:
                 self.neighbours.remove(neighbour)
+                self.num_neighbours -= 1
 
     # BOOTSTRAPPER
     """

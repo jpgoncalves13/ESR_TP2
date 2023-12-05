@@ -156,8 +156,11 @@ class ForwardingTable:
                         best_entry_neighbour = ng
                         best_entry_ip = rp_ip
 
-                with self.tree_lock:
+            with self.tree_lock:
+                if best_entry is not None:
                     self.rp_entry = (best_entry_ip, best_entry_neighbour, best_entry)
+                else:
+                    self.rp_entry = None
 
     """
         Only for debug
