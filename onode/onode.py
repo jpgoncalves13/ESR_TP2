@@ -28,7 +28,7 @@ Node Options:
     # Standard port
     port = 5000
     # Parse the arguments
-    bootstrapper, bootstrapper_address, is_rendezvous_point, debug, tag, client = read_args()
+    bootstrapper, bootstrapper_address, is_rendezvous_point, debug, tag, stream_id = read_args()
 
     # Request the neighbors if is a node and not the bootstrapper
     if bootstrapper is None:
@@ -48,14 +48,10 @@ Node Options:
     if debug:
         print(f"DEBUG: Neighbors -> {neighbours.keys()}")
 
-    ep = EP(debug, bootstrapper, is_rendezvous_point, port, neighbours, tag, client)
+    ep = EP(debug, bootstrapper, is_rendezvous_point, port, neighbours, tag, stream_id)
 
-    if ep.get_num_neighbours() == 1 and client > 0:
-        client_launcher = ClientLauncher(ep.get_neighbours()[0], client, ep)
-        client_launcher.start()
-    elif ep.get_num_neighbours() > 1 and client > 0:
-        print("This is not a leaf node to put a client on it")
-        print("Starting only the overlay node")
+    client_launcher = ClientLauncher(ep.get_neighbour_to_rp(), port, stream_id, ep)
+    client_launcher.start()
 
     # Start the server
     server = Server(port)

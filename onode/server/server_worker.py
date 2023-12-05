@@ -65,8 +65,7 @@ class ServerWorker:
             print(f"DEBUG: Stream packet sent to: {neighbours}")
 
         if self.ep.client_on:
-            # Update the client video
-            pass
+            self.ep.add_packet_to_buffer(packet.payload)
 
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         for neighbour in neighbours:

@@ -3,11 +3,12 @@ from table.forwarding_table import ForwardingTable
 from table.stream_table import StreamTable
 import copy
 import threading
+import queue
 
 
 class EP:
 
-    def __init__(self, debug: bool, bootstrapper: Bootstrapper, rendezvous: bool, port, neighbours: [str], tag, client):
+    def __init__(self, debug: bool, bootstrapper: Bootstrapper, rendezvous: bool, port, neighbours: [str], tag, stream_id):
         self.debug = debug
         self.bootstrapper = bootstrapper
         self.rendezvous = rendezvous
@@ -18,9 +19,19 @@ class EP:
         self.neighbours_lock = threading.Lock()
         self.port = port
         self.tag = tag
-        self.client = client # When the client is together with the node
+        self.client = stream_id  # When the client is together with the node
         self.client_lock = threading.Lock()
-        self.client_on = False 
+        self.client_on = False
+        self.buffer = queue.Queue(maxsize=10) if self.client > 0 else None
+
+    def add_packet_to_buffer(self, rtp_packet):
+        if self.client > 0:
+            self.buffer.put(rtp_packet)
+
+    def get_packet_from_buffer(self):
+        data = self.buffer.get()
+        self.buffer.task_done()
+        return data
 
     # TODO
     def update_client_state(self, state):

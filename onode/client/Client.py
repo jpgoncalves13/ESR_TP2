@@ -28,13 +28,12 @@ class Client:
     TEARDOWN = 3
 
     # Initiation..
-    def __init__(self, master, serveraddr, serverport, rtpport, stream_id, ep):
+    def __init__(self, master, serveraddr, serverport, stream_id, ep):
         self.master = master
         self.master.protocol("WM_DELETE_WINDOW", self.handler)
         self.createWidgets()
         self.serverAddr = serveraddr
         self.serverPort = int(serverport)
-        self.rtpPort = int(rtpport)
         self.stream_id = stream_id
         self.rtspSeq = 0
         self.sessionId = 0
@@ -118,22 +117,21 @@ class Client:
         threading.Thread(target=self.listenRtp).start()
         self.playEvent = threading.Event()
         self.playEvent.clear()
-        #self.sendRtspRequest(self.PLAY)
 
     def listenRtp(self):
         """Listen for RTP packets."""
         while True:
             try:
-                data = self.rtpSocket.recv(20480)
+                data = self.ep.get_packet_from_buffer()
                 if data:
                     rtp = RtpPacket()
-                    rtp.decode(Packet.deserialize(data).payload[1])
+                    rtp.decode(data)
 
-                    currFrameNbr = rtp.seqNum()
-                    print("Current Seq Num: " + str(currFrameNbr))
+                    curr_frame_nbr = rtp.seqNum()
+                    print("Current Seq Num: " + str(curr_frame_nbr))
 
                     #if currFrameNbr > self.frameNbr:  # Discard the late packet
-                    self.frameNbr = currFrameNbr
+                    self.frameNbr = curr_frame_nbr
                     self.updateMovie(rtp.getPayload())
 
             except Exception as exc:
