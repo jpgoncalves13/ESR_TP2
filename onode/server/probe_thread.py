@@ -7,39 +7,37 @@ import threading
 
 class ProbeThread(threading.Thread):
 
-    def __init__(self, ep, interval, timeout, block, port):
+    def __init__(self, state, interval, timeout, block, port):
         super().__init__()
-        self.ep = ep
+        self.state = state
         self.interval = interval
         self.running = False
         self.port = port
         self.block = block
         self.timeout = timeout
 
-    def handle_neighbours(self, neighbour, last_packet, delay_measured, loss_measured):
-        list_metrics, rp_entry = last_packet.payload
-        leafs_received = [(tup[0] if tup[0] != "0.0.0.0" else neighbour) for tup in list_metrics]
-        if len(leafs_received) > 0:
-            self.ep.remove_clients_neighbour_from_forwarding_table(leafs_received, neighbour)
-        for leaf, next_hop, delay, loss in list_metrics:
-            self.ep.update_metrics(neighbour if leaf == "0.0.0.0" else leaf, neighbour, next_hop,
-                                   delay + delay_measured, max(loss, loss_measured))
+    def handle_neighbour_response(self, neighbour, packet, delay, loss):
+        rp_entry, neighbours = packet.payload
 
-        if rp_entry is not None and not self.ep.rendezvous:
+        if rp_entry is not None and not self.state.rendezvous:
             rp_ip = rp_entry[0]
-            if rp_ip == "0.0.0.0":
+            if rp_ip == '0.0.0.0':
                 rp_ip = neighbour
 
-            self.ep.update_metrics_rp(rp_ip, neighbour, rp_entry[1], rp_entry[2]
-                                      + delay_measured, max(rp_entry[3], loss_measured))
+            # Change function because this is rp only
+            self.state.update_metrics(rp_ip, neighbour, rp_entry[1], rp_entry[2] + delay, max(rp_entry[3], loss))
 
-    def handle_neighbours_total_loss(self, neighbour):
-        self.ep.update_neighbour_death(neighbour)
+            for neighbours in neighbours:
+                # Update next steps from this neighbour
+                pass
 
-    def handle_servers(self, server, last_packet, delay_measured, loss_measured):
-        list_metrics, rp_entry = last_packet.payload
+    def handle_neighbour_death(self, neighbour):
+        self.state.update_neighbour_death(neighbour)
+
+    def handle_servers(self, server, packet, delay, loss):
+        list_metrics, rp_entry = packet.payload
         for _ in list_metrics:
-            self.ep.update_metrics_server(server, delay_measured, int(loss_measured / 2))
+            self.state.update_metrics_server(server, delay, loss)
 
     def measure(self, neighbour):
         udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
@@ -79,29 +77,32 @@ class ProbeThread(threading.Thread):
         self.running = True
 
         while self.running:
-            neighbours = self.ep.get_listening_neighbours()
-            if self.ep.debug:
-                print(f"DEBUG: Sending the probe message to neighbours {neighbours}")
+            neighbours = self.state.get_neighbours()
+
+            if self.state.debug:
+                print(f"DEBUG: Sending the probe message to: {neighbours}")
 
             for neighbour in neighbours:
                 loss_measured, delay_measured, last_packet = self.measure(neighbour)
                 if last_packet is not None and last_packet.type == PacketType.RMEASURE:
-                    self.handle_neighbours(neighbour, last_packet, delay_measured, loss_measured)
+                    self.handle_neighbour_response(neighbour, last_packet, delay_measured, loss_measured)
                 else:
-                    self.handle_neighbours_total_loss(neighbour)
+                    self.handle_neighbour_death(neighbour)
 
-            if self.ep.rendezvous:
-                servers = self.ep.get_servers()
-                if self.ep.debug:
+            if self.state.rendezvous:
+                servers = self.state.get_servers()
+                if self.state.debug:
                     print(f"DEBUG: Sending the probe message to servers {servers}")
 
                 for server in servers:
                     loss_measured, delay_measured, last_packet = self.measure(server)
                     if last_packet is not None and last_packet.type == PacketType.RMEASURE:
                         self.handle_servers(server, last_packet, delay_measured, loss_measured)
+                    else:
+                        # Remove server
+                        pass
 
             time.sleep(self.interval)
 
     def stop(self):
         self.running = False
-
