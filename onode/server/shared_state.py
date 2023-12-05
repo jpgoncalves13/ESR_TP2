@@ -19,19 +19,22 @@ class EP:
         self.neighbours_lock = threading.Lock()
         self.port = port
         self.tag = tag
-        self.client = stream_id  # When the client is together with the node
+        self.client_stream_id = stream_id  # When the client is together with the node
         self.client_lock = threading.Lock()
         self.client_on = False
-        self.buffer = queue.Queue(maxsize=10) if self.client > 0 else None
+        self.buffer = queue.Queue(maxsize=10) if self.client_stream_id > 0 else None
 
     def add_packet_to_buffer(self, rtp_packet):
-        if self.client > 0:
+        if self.client_stream_id > 0:
             self.buffer.put(rtp_packet)
 
     def get_packet_from_buffer(self):
         data = self.buffer.get()
         self.buffer.task_done()
         return data
+
+    def get_neighbours_to_rp(self):
+        return self.table.get_neighbours_to_rp()
 
     # TODO
     def update_client_state(self, state):

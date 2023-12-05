@@ -12,12 +12,10 @@ class ForwardingTable:
     Each node knows the best neighbour to reach the RP
     """
     def __init__(self):
-        #self.table = {}  # Node_Id -> Neighbour -> Entry
-        #self.table_lock = threading.Lock()  # Add a lock for thread safety
-        #self.tree = {}  # Node_Id -> (Neighbour, Entry)
-        #self.tree_lock = threading.Lock()
-        self.rp_table = {}
-        self.rp_entry = None  # (rp_IP, Neighbour, entry)
+        self.table_lock = threading.Lock()
+        self.tree_lock = threading.Lock()
+        self.rp_table = {}    # RP IP -> Neighbour -> Entry
+        self.rp_entry = None  # (RP IP, Neighbour, Entry)
     
     """
     Adds a new entry to the rp table
@@ -57,7 +55,17 @@ class ForwardingTable:
             if self.rp_entry is not None:
                 return self.rp_entry[1]
             return None
-    
+
+    """
+        Get all the neighbour that can connect to the rp
+    """
+    def get_neighbours_to_rp(self):
+        neighbours = []
+        with self.table_lock:
+            for rp_ip in self.rp_table:
+                neighbours.append(self.rp_table[rp_ip][0])
+            return neighbours
+
     """
     Get the best entry to the rp table
     """

@@ -36,23 +36,23 @@ class ServerWorker:
             except socket.timeout:
                 retries += 1
 
+    """
+        Handle a setup message
+        Receives the setup packet, and the ip of the sender (a overlay node)
+        Returns the neighbours of this overlay node
+    """
     def handle_setup(self, address):
         """Bootstrapper response"""
         request_neighbours = self.ep.get_node_info(address[0])
         packet = Packet(PacketType.RSETUP, '0.0.0.0', 0, '0.0.0.0',
                         request_neighbours if request_neighbours is not None else [])
         ServerWorker.send_packet(packet, address)
-    """
-    def flood_packet(self, sender_ip, packet_serialized):
-        neighbours = self.ep.get_listening_neighbours()
-        if sender_ip in neighbours:
-            neighbours.remove(sender_ip)
-        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        for neighbour in neighbours:
-            udp_socket.sendto(packet_serialized, (neighbour, self.ep.port))
-        udp_socket.close()
-    """
 
+    """
+        Handle a stream message
+        Receives the stream packet, and the ip of the sender (a neighbour)
+        Redirects to all the neighbours requesting that stream_id
+    """
     def handle_stream(self, packet, ip):
         if self.ep.rendezvous:
             self.ep.add_server_to_stream(packet.stream_id, ip)
@@ -64,7 +64,7 @@ class ServerWorker:
         if self.ep.debug:
             print(f"DEBUG: Stream packet sent to: {neighbours}")
 
-        if self.ep.client_on and packet.stream_id == self.ep.client:
+        if self.ep.client_on and packet.stream_id == self.ep.client_stream_id:
             self.ep.add_packet_to_buffer(packet.payload)
 
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -74,40 +74,12 @@ class ServerWorker:
 
     """
     Handle a join message
-    Receives the join packet, and the ip of the sender (a neighbour)
+    Receives the join packet, and the ip of the sender (a neighbour) 
     """
     def handle_join(self, packet, ip):
-        """# Handling logic for leaf neighbours nodes
-        if packet.leaf = '0.0.0.0':
-            packet.leaf = ip"""
-        """
-        if self.ep.rendezvous:
-            self.ep.add_client_to_stream(packet.stream_id, packet.leaf)
-        
-        is_first_entry = self.ep.add_entry(packet.leaf, ip, packet.last_hop)
-        packet.last_hop = ip
-
-        if not self.ep.rendezvous and is_first_entry:
-            neighbour = self.ep.get_neighbour_to_rp()
-            udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            udp_socket.settimeout(5)
-
-            if neighbour is not None:
-                ServerWorker.send_packet_with_confirmation(udp_socket, packet.serialize(), (neighbour, self.ep.port))
-            else:
-                neighbours = self.ep.get_listening_neighbours()
-                if ip in neighbours:
-                    neighbours.remove(ip)
-                for neighbour in neighbours:
-                    ServerWorker.send_packet_with_confirmation(udp_socket, packet.serialize(),
-                                                               (neighbour, self.ep.port))
-            udp_socket.close()"""
-        
         stream_id = packet.stream_id
         
-        if self.ep.check_if_stream_exists(stream_id):
-            pass
-        else:
+        if not self.ep.check_if_stream_exists(stream_id):
             # Add the stream and the neighbour to the state
             self.ep.add_neighbour_to_stream(stream_id, ip)
             
@@ -118,30 +90,16 @@ class ServerWorker:
             udp_socket.settimeout(5)
 
             if neighbour_to_rp is not None:
-                ServerWorker.send_packet_with_confirmation(udp_socket, packet.serialize(), (neighbour_to_rp, self.ep.port))
-            else:
-                # Flood or wait??
-                pass
+                ServerWorker.send_packet_with_confirmation(udp_socket, packet.serialize(),
+                                                           (neighbour_to_rp, self.ep.port))
+
+            udp_socket.close()
             
     """
     Handle a leave message
     Receives the leave packet, and the ip of the sender (a neighbour)
     """
     def handle_leave(self, packet, ip):
-        """Handle the client leave message to the tree"""
-        
-        """# Handling logic for leaf neighbours nodes
-        if packet.leaf == '0.0.0.0':
-            packet.leaf = ip
-            
-        if not self.ep.rendezvous:
-            neighbour = self.ep.get_neighbour_to_rp()
-            ServerWorker.send_packet(packet, (neighbour, self.ep.port))
-
-        if self.ep.rendezvous:
-            self.ep.remove_client_from_stream(packet.leaf)
-
-        self.ep.remove_client_from_forwarding_table(packet.leaf)"""
         stream_id = packet.stream_id
         
         if self.ep.check_if_stream_exists(stream_id):
@@ -156,17 +114,14 @@ class ServerWorker:
                 udp_socket.settimeout(5)
 
                 if neighbour_to_rp is not None:
-                    ServerWorker.send_packet_with_confirmation(udp_socket, packet.serialize(), (neighbour_to_rp, self.ep.port))
-                else:
-                    # Flood or wait??
-                    pass
-            else:
-                # Nothing
-                pass        
-        else:
-            # Error?
-            pass
+                    ServerWorker.send_packet_with_confirmation(udp_socket, packet.serialize(),
+                                                               (neighbour_to_rp, self.ep.port))
 
+                udp_socket.close()
+
+    """
+        Handle a measure message
+    """
     def handle_measure(self, address):
         """Handle the packets requesting the metrics"""
 
@@ -175,8 +130,7 @@ class ServerWorker:
             rp_entry = ('0.0.0.0', '0.0.0.0', 0, 0)
         else:
             rp_entry = self.ep.get_best_entry_rp()
-            # UPDATE THIS
-            neighbours = []
+            neighbours = self.ep.get_neighbours_to_rp()
             if rp_entry is not None and rp_entry[1] == address[0]:
                 rp_entry = None
 
@@ -225,6 +179,4 @@ class ServerWorker:
             self.handle_setup(address)
 
         if self.ep.debug:
-            print((self.ep.tag if self.ep.tag is not None else "") + " CLIENTS_TABLE" + str(self.ep.get_table()) + "\n")
-            print("RP_TABLE" + str(self.ep.get_table_rp()) + "\n")
             print("STREAM_TABLE" + str(self.ep.get_stream_table()) + "\n")
