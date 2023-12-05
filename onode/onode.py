@@ -51,7 +51,7 @@ Node Options:
     ep = EP(debug, bootstrapper, is_rendezvous_point, port, neighbours, tag, stream_id)
 
     if ep.client_stream_id > 0:
-        client_launcher = ClientLauncher(ep.get_neighbour_to_rp(), port, stream_id, ep)
+        client_launcher = ClientLauncher(ep)
         client_launcher.start()
 
     # Start the server

@@ -28,13 +28,10 @@ class Client:
     TEARDOWN = 3
 
     # Initiation..
-    def __init__(self, master, serveraddr, serverport, stream_id, ep):
+    def __init__(self, master, ep):
         self.master = master
         self.master.protocol("WM_DELETE_WINDOW", self.handler)
         self.createWidgets()
-        self.serverAddr = serveraddr
-        self.serverPort = int(serverport)
-        self.stream_id = stream_id
         self.rtspSeq = 0
         self.sessionId = 0
         self.requestSent = -1
@@ -90,9 +87,9 @@ class Client:
     def pauseMovie(self):
         """Pause button handler."""
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        packet = Packet(PacketType.LEAVE,'0.0.0.0',0,'0.0.0.0')
+        packet = Packet(PacketType.LEAVE, '0.0.0.0', self.ep.client_stream_id, '0.0.0.0')
         self.ep.update_client_state(False)
-        sock.sendto(packet.serialize(), (self.serverAddr, self.serverPort))
+        sock.sendto(packet.serialize(), (self.ep.get_neighbours_to_rp(), self.ep.port))
 
     def playMovie(self):
         """Play button handler."""
@@ -100,10 +97,11 @@ class Client:
         # Create a new thread to listen for RTP packets
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(5)
-        packet = Packet(PacketType.JOIN, '0.0.0.0', self.stream_id, '0.0.0.0')
+        packet = Packet(PacketType.JOIN, '0.0.0.0', self.ep.client_stream_id, '0.0.0.0')
         response = False
+        address = (self.ep.get_neighbours_to_rp(), self.ep.port)
         while not response:
-            sock.sendto(packet.serialize(), (self.serverAddr, self.serverPort))
+            sock.sendto(packet.serialize(), address)
             try:
                 resp, _ = sock.recvfrom(4096)
                 packet = Packet.deserialize(resp)
@@ -112,7 +110,7 @@ class Client:
             except socket.timeout:
                 pass
 
-        print('Sending the JOIN ' + str(self.serverAddr) + ':' + str(self.serverPort))
+        print(f'Sending the JOIN {address}')
         self.ep.update_client_state(True)
         threading.Thread(target=self.listenRtp).start()
         self.playEvent = threading.Event()
