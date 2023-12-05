@@ -63,7 +63,7 @@ class StreamTable:
         with self.lock:
             return list(self.servers_entries.keys())
         
-        """
+    """
     Get the neighbours for a given stream
     """
     def get_stream_neighbours(self, stream_id):
@@ -79,6 +79,7 @@ class StreamTable:
         with self.lock:
             self.servers_entries[server] = TableEntry('0.0.0.0', delay, loss)
 
+    # TODO
     def its_best_server(self, stream_id, server_ip):
         with self.lock:
             servers, clients = self.table[stream_id]
