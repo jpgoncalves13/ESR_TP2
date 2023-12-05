@@ -153,13 +153,8 @@ class ServerWorker:
         # Debug information
         if self.ep.debug:
             print(f"DEBUG: Processing response to packet: {packet.type}")
-            if packet.type is not PacketType.STREAM:
-                print(f"DEBUG: Packet: {packet}")
-            else:
-                print(f"DEBUG: Packet: {packet.payload[0]}")
 
         # Join Message (directly from a client or a node)
-        # Normal node
         if packet.type == PacketType.JOIN:
             ServerWorker.send_packet(Packet(PacketType.ACK, '0.0.0.0', 0, '0.0.0.0'), address)
             self.handle_join(packet, address[0])
@@ -180,3 +175,4 @@ class ServerWorker:
 
         if self.ep.debug:
             print("STREAM_TABLE" + str(self.ep.get_stream_table()) + "\n")
+            print("RP_TABLE" + str(self.ep.get_table_rp()) + "\n")

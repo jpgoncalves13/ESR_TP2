@@ -25,14 +25,14 @@ class ProbeThread(threading.Thread):
                 rp_ip = neighbour
 
             # Change function because this is rp only
-            self.state.update_metrics(rp_ip, neighbour, rp_entry[1], rp_entry[2] + delay, max(rp_entry[3], loss))
+            self.state.update_metrics_rp(rp_ip, neighbour, rp_entry[1], rp_entry[2] + delay, max(rp_entry[3], loss))
 
             for neighbours in neighbours:
                 # Update next steps from this neighbour
                 pass
 
-    def handle_neighbour_death(self, neighbour):
-        self.state.update_neighbour_death(neighbour)
+    """def handle_neighbour_death(self, neighbour):
+        self.state.update_neighbour_death(neighbour)"""
 
     def handle_servers(self, server, packet, delay, loss):
         list_metrics, rp_entry = packet.payload
@@ -87,7 +87,8 @@ class ProbeThread(threading.Thread):
                 if last_packet is not None and last_packet.type == PacketType.RMEASURE:
                     self.handle_neighbour_response(neighbour, last_packet, delay_measured, loss_measured)
                 else:
-                    self.handle_neighbour_death(neighbour)
+                    pass
+                    #self.handle_neighbour_death(neighbour)
 
             if self.state.rendezvous:
                 servers = self.state.get_servers()

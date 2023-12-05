@@ -116,8 +116,8 @@ class EP:
         self.table.update_metrics_rp(leaf, neighbour, next_hop, delay, loss)
         
     # TODO
-    def update_neighbour_death(self, neighbour):
-        return self.table.update_neighbour_death(neighbour)
+    """def update_neighbour_death(self, neighbour):
+        return self.table.update_neighbour_death(neighbour)"""
 
     """def update_metrics(self, leaf, neighbour, next_hop, delay, loss):
         self.table.update_metrics(leaf, neighbour, next_hop, delay, loss)"""
@@ -128,8 +128,8 @@ class EP:
     """def get_tree(self):
         return self.table.get_tree()"""
 
-    """def get_table_rp(self):
-        return self.table.get_table_rp()"""
+    def get_table_rp(self):
+        return self.table.get_table_rp()
 
     """def get_neighbour_to_client(self, client):
         return self.table.get_neighbour_to_client(client)"""

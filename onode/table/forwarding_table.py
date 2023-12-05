@@ -63,7 +63,8 @@ class ForwardingTable:
         neighbours = []
         with self.table_lock:
             for rp_ip in self.rp_table:
-                neighbours.append(self.rp_table[rp_ip][0])
+                for neighbour in self.rp_table[rp_ip]:
+                    neighbours.append(neighbour)
             return neighbours
 
     """
@@ -250,7 +251,7 @@ class ForwardingTable:
     """
 
     # TODO
-    def update_neighbour_death(self, neighbour):
+    """def update_neighbour_death(self, neighbour):
         with self.table_lock:
             for client_ip in self.table:
                 if neighbour in self.table[client_ip]:
@@ -270,6 +271,7 @@ class ForwardingTable:
                 with self.tree_lock:
                     self.tree[client_ip] = (best_entry_neighbour, best_entry)
 
+    """
     """
     def remove_clients_neighbour_from_forwarding_table(self, leafs, neighbour):
         with self.table_lock:
