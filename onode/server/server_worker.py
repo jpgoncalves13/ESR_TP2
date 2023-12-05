@@ -134,6 +134,8 @@ class ServerWorker:
             neighbours = [neighbour for neighbour in neighbours if neighbour != address[0]]
             if rp_entry is not None and rp_entry[1] == address[0]:
                 rp_entry = None
+            elif rp_entry is not None:
+                rp_entry = (rp_entry[0], rp_entry[2], rp_entry[3])
 
         packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, '0.0.0.0',
                         (rp_entry, neighbours))

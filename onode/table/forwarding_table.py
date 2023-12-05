@@ -67,7 +67,6 @@ class ForwardingTable:
     def get_neighbours_to_rp(self):      
         with self.steps_lock:
             return self.next_steps.keys()
-                
 
     """
     Get the best entry to the rp table
@@ -75,7 +74,7 @@ class ForwardingTable:
     def get_best_entry_rp(self):
         with self.tree_lock:
             if self.rp_entry is not None:
-                return self.rp_entry[0], self.rp_entry[2].delay, self.rp_entry[2].loss
+                return self.rp_entry[0], self.rp_entry[1], self.rp_entry[2].delay, self.rp_entry[2].loss
             return None
     
     """

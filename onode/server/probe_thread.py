@@ -25,8 +25,6 @@ class ProbeThread(threading.Thread):
                 rp_ip = neighbour
 
             # Change function because this is rp only
-            print("RP_ENTRY: ", rp_entry)
-            print("LOSS: ", loss)
             self.state.update_metrics_rp(rp_ip, neighbour, rp_entry[1] + delay, max(rp_entry[2], loss))
             self.state.add_next_steps(neighbour, neighbours)
 
