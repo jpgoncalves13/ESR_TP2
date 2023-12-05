@@ -112,13 +112,25 @@ class ServerWorker:
             self.ep.add_neighbour_to_stream(stream_id, ip)
             
             # Update the information to the top of the tree
-            rp_neighbour = self.ep.get_neighbour_to_rp()
+            neighbour_to_rp = self.ep.get_neighbour_to_rp()
             
+            udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            udp_socket.settimeout(5)
 
+            if neighbour_to_rp is not None:
+                ServerWorker.send_packet_with_confirmation(udp_socket, packet.serialize(), (neighbour_to_rp, self.ep.port))
+            else:
+                # Flood or wait??
+                pass
+            
+    """
+    Handle a leave message
+    Receives the leave packet, and the ip of the sender (a neighbour)
+    """
     def handle_leave(self, packet, ip):
         """Handle the client leave message to the tree"""
         
-        # Handling logic for leaf neighbours nodes
+        """# Handling logic for leaf neighbours nodes
         if packet.leaf == '0.0.0.0':
             packet.leaf = ip
             
@@ -129,7 +141,31 @@ class ServerWorker:
         if self.ep.rendezvous:
             self.ep.remove_client_from_stream(packet.leaf)
 
-        self.ep.remove_client_from_forwarding_table(packet.leaf)
+        self.ep.remove_client_from_forwarding_table(packet.leaf)"""
+        stream_id = packet.stream_id
+        
+        if self.ep.check_if_stream_exists(stream_id):
+            # Remove the neighbour from the set of neighbours of that stream
+            is_last_neighbour_from_stream = self.ep.remove_neighbour_from_stream(stream_id, ip)
+            
+            if is_last_neighbour_from_stream:
+                # Update the information to the top of the tree
+                neighbour_to_rp = self.ep.get_neighbour_to_rp()
+                
+                udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                udp_socket.settimeout(5)
+
+                if neighbour_to_rp is not None:
+                    ServerWorker.send_packet_with_confirmation(udp_socket, packet.serialize(), (neighbour_to_rp, self.ep.port))
+                else:
+                    # Flood or wait??
+                    pass
+            else:
+                # Nothing
+                pass        
+        else:
+            # Error?
+            pass
 
     def handle_measure(self, address):
         """Handle the packets requesting the metrics"""
