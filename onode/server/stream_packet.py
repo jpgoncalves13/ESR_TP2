@@ -128,7 +128,8 @@ class Packet:
                 rp_entry = None
 
             neighbours = []
-            num_neighbours = int.from_bytes(byte_array[offset: offset + 4], 'big')
+            num_neighbours = int.from_bytes(byte_array[offset: offset + 1], 'big')
+            offset += 1
             for _ in range(num_neighbours):
                 neighbour_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
                 neighbour = '.'.join(map(str, neighbour_parts))

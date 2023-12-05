@@ -124,7 +124,7 @@ class ServerWorker:
     """
     def handle_measure(self, address):
         """Handle the packets requesting the metrics"""
-
+        print("inicio " + str(address))
         if self.ep.rendezvous:
             neighbours = []
             rp_entry = ('0.0.0.0', 0, 0)
@@ -137,6 +137,7 @@ class ServerWorker:
 
         packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, '0.0.0.0',
                         (rp_entry, neighbours))
+        print("fim")
         ServerWorker.send_packet(packet, address)
 
     """
@@ -153,7 +154,7 @@ class ServerWorker:
 
         # Debug information
         if self.ep.debug:
-            print(f"DEBUG: Processing response to packet: {packet.type}")
+            print(f"DEBUG: Processing response to packet: {packet.type} from {str(address)}")
 
         # Join Message (directly from a client or a node)
         if packet.type == PacketType.JOIN:
@@ -174,6 +175,7 @@ class ServerWorker:
         elif packet.type == PacketType.SETUP and self.ep.bootstrapper is not None:
             self.handle_setup(address)
 
-        if self.ep.debug:
-            print("STREAM_TABLE" + str(self.ep.get_stream_table()) + "\n")
-            print("RP_TABLE" + str(self.ep.get_table_rp()) + "\n")
+        #if self.ep.debug:
+            #print("STREAM_TABLE" + str(self.ep.get_stream_table()) + "\n")
+            #print("RP_TABLE" + str(self.ep.get_table_rp()) + "\n")
+        print('finished')
