@@ -28,7 +28,38 @@ class ProbeThread(threading.Thread):
             self.state.update_metrics_rp(rp_ip, neighbour, rp_entry[1] + delay, max(rp_entry[2], loss))
             self.state.add_next_steps(neighbour, neighbours)
 
+    @staticmethod
+    def send_packet_with_confirmation(udp_socket, packet_serialized, address):
+        response = False
+        retries = 0
+        num_retries = 4
+        while not response and retries < num_retries:
+            udp_socket.sendto(packet_serialized, address)
+            try:
+                resp, _ = udp_socket.recvfrom(4096)
+                resp_packet = Packet.deserialize(resp)
+                if resp_packet.type == PacketType.ACK:
+                    response = True
+            except socket.timeout:
+                retries += 1
+
     def handle_neighbour_death(self, neighbour):
+        # Send join to the neighbours of the neighbour if I do not have other option
+        neighbour_to_rp = self.state.get_neighbour_to_rp()
+        if neighbour_to_rp is None:
+            # Add to neighbours the next steps of the neighbour (which is dead)
+            self.state.delete_neighbour(neighbour)
+            next_steps = self.state.get_next_steps(neighbour)
+            self.state.add_neighbours(next_steps)
+
+            time.sleep(12)
+            packet = Packet(PacketType.JOIN, '0.0.0.0', self.state.client_stream_id, '0.0.0.0').serialize()
+            udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            udp_socket.settimeout(5)
+            ProbeThread.send_packet_with_confirmation(udp_socket, packet,
+                                                      (self.state.get_neighbour_to_rp(), self.state.port))
+            udp_socket.close()
+
         self.state.update_neighbour_death(neighbour)
 
     def handle_servers(self, server, packet, delay, loss):
@@ -84,7 +115,6 @@ class ProbeThread(threading.Thread):
                 if last_packet is not None and last_packet.type == PacketType.RMEASURE:
                     self.handle_neighbour_response(neighbour, last_packet, delay_measured, loss_measured)
                 else:
-                    # Send join to the neighbours of the neighbour if i do not have other option
                     self.handle_neighbour_death(neighbour)
 
             if self.state.rendezvous:
