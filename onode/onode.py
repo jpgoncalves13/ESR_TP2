@@ -36,17 +36,15 @@ Node Options:
             print(f"DEBUG: Requesting the Neighbors")
         neighbours = request_neighbors(bootstrapper_address)
     else:
-        neighbours = {}
-        neighbours_list = bootstrapper.get_neighbors(bootstrapper_address[0])
-        for neighbour in neighbours_list:
-            neighbours[neighbour] = False
+        neighbours = bootstrapper.get_neighbors(bootstrapper_address[0])
+        
 
-    if len(neighbours.keys()) == 0:
+    if len(neighbours) == 0:
         print("This is not a overlay node")
         exit(1)
 
     if debug:
-        print(f"DEBUG: Neighbors -> {neighbours.keys()}")
+        print(f"DEBUG: Neighbors -> {neighbours}")
 
     ep = EP(debug, bootstrapper, is_rendezvous_point, port, neighbours, tag, stream_id)
 
@@ -63,7 +61,7 @@ def request_neighbors(bootstrapper_address, timeout=5, max_retries=3):
     retries = 0
     udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
     udp_socket.settimeout(timeout)
-    neighbours = {}
+    neighbours = []
 
     try:
         while retries < max_retries:
@@ -71,9 +69,7 @@ def request_neighbors(bootstrapper_address, timeout=5, max_retries=3):
                 packet_serialized = Packet(PacketType.SETUP, '0.0.0.0', 0, '0.0.0.0').serialize()
                 udp_socket.sendto(packet_serialized, bootstrapper_address)
                 response, _ = udp_socket.recvfrom(4096)
-                response_packet = Packet.deserialize(bytearray(response))
-                for neighbour in response_packet.payload:
-                    neighbours[neighbour] = False
+                neighbours = Packet.deserialize(bytearray(response)).payload
                 break
             except socket.timeout:
                 retries += 1

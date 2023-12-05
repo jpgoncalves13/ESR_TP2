@@ -115,3 +115,12 @@ class StreamTable:
     def get_stream_table(self):
         with self.table_lock:
             return copy.deepcopy(self.table)
+
+    def get_streams(self):
+        streams = set()
+        with self.table_lock:
+            for stream_id in self.table:
+                if len(self.table[stream_id][1]) >= 1:
+                    streams.add(stream_id)
+        return streams
+        
