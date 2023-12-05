@@ -33,12 +33,12 @@ class ForwardingTable:
     Store the neighbour, the next_hop, the delay and the loss in that path
     """
     def add_entry_rp(self, rp_ip, neighbour, delay=0, loss=0):
-        with self.table_lock:
-            # Create the new entry
-            entry = TableEntry(delay, loss)
-            is_first_entry = False
+        # Create the new entry
+        entry = TableEntry(delay, loss)
+        is_first_entry = False
 
-            # First entry to rp is the best entry
+        with self.table_lock:
+            # First entry to rp is the best entry            
             if len(self.rp_table.keys()) == 0:
                 is_first_entry = True
                 with self.tree_lock:
@@ -64,13 +64,10 @@ class ForwardingTable:
     """
     Get all the neighbours that can connect to the rp
     """
-    def get_neighbours_to_rp(self):
-        neighbours = []
-        with self.table_lock:
-            for rp_ip in self.rp_table:
-                for neighbour in self.rp_table[rp_ip]:
-                    neighbours.append(neighbour)
-            return neighbours
+    def get_neighbours_to_rp(self):      
+        with self.steps_lock:
+            return self.next_steps.keys()
+                
 
     """
     Get the best entry to the rp table
@@ -78,7 +75,7 @@ class ForwardingTable:
     def get_best_entry_rp(self):
         with self.tree_lock:
             if self.rp_entry is not None:
-                return self.rp_entry[0], self.rp_entry[1], self.rp_entry[2].delay, self.rp_entry[2].loss
+                return self.rp_entry[0], self.rp_entry[2].delay, self.rp_entry[2].loss
             return None
     
     """

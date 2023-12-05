@@ -57,13 +57,10 @@ class Packet:
                 # rp_ip
                 leaf_parts = rp_entry[0].split('.')
                 byte_array += b''.join([int(part).to_bytes(1, 'big') for part in leaf_parts])
-                # neighbour
-                neighbour_parts = rp_entry[1].split('.')
-                byte_array += b''.join([int(part).to_bytes(1, 'big') for part in neighbour_parts])
                 # delay
-                byte_array += rp_entry[2].to_bytes(4, byteorder='big')
+                byte_array += rp_entry[1].to_bytes(4, byteorder='big')
                 # loss
-                byte_array += rp_entry[3].to_bytes(1, byteorder='big')
+                byte_array += rp_entry[2].to_bytes(1, byteorder='big')
             else:
                 byte_array += int(0).to_bytes(1, byteorder='big')
 
@@ -120,17 +117,13 @@ class Packet:
                 rp_ip_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
                 rp_ip = '.'.join(map(str, rp_ip_parts))
                 offset += 4
-                # neighbour (4 bytes)
-                neighbour_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
-                neighbour1 = '.'.join(map(str, neighbour_parts))
-                offset += 4
                 # delay (4 bytes)
                 delay = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
                 offset += 4
                 # loss (4 bytes)
-                loss = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
-                offset += 4
-                rp_entry = (rp_ip, neighbour1, delay, loss)
+                loss = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
+                offset += 1
+                rp_entry = (rp_ip, delay, loss)
             else:
                 rp_entry = None
 

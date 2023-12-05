@@ -127,7 +127,7 @@ class ServerWorker:
 
         if self.ep.rendezvous:
             neighbours = []
-            rp_entry = ('0.0.0.0', '0.0.0.0', 0, 0)
+            rp_entry = ('0.0.0.0', 0, 0)
         else:
             rp_entry = self.ep.get_best_entry_rp()
             neighbours = self.ep.get_neighbours_to_rp()

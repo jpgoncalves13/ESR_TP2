@@ -55,6 +55,7 @@ class Client:
         # SEND LEAVE MESSAGE
 
         self.master.destroy()  # Close the gui window
+        exit(0)
 
     def pause_movie(self):
         """Pause button handler."""
