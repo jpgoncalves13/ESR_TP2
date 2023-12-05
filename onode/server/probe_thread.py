@@ -48,7 +48,10 @@ class ProbeThread(threading.Thread):
 
         for _ in range(self.block):
             start_time = time.time()
-            udp_socket.sendto(packet_serialized, (neighbour, self.port))
+            try:
+                udp_socket.sendto(packet_serialized, (neighbour, self.port))
+            except:
+                pass
             packets_sent += 1
 
             try:
@@ -56,7 +59,7 @@ class ProbeThread(threading.Thread):
                 end_time = time.time()
                 packets_received += 1
                 list_packets_received.append(Packet.deserialize(response))
-                total_delay += (end_time - start_time) * 1000  # ms
+                total_delay += (end_time - start_time) * 10000  # ms
 
             except socket.timeout:
                 pass

@@ -154,7 +154,7 @@ class ServerWorker:
 
         # Debug information
         if self.ep.debug:
-            print(f"DEBUG: Processing response to packet: {packet.type} from {str(address)}")
+            print("## " +(str(self.ep.tag)) + " ## " + f" DEBUG: Processing response to packet: {packet.type} from {str(address)}")
 
         # Join Message (directly from a client or a node)
         if packet.type == PacketType.JOIN:
@@ -176,6 +176,6 @@ class ServerWorker:
             self.handle_setup(address)
 
         if self.ep.debug:
-            print("STREAM_TABLE" + str(self.ep.get_stream_table()) + "\n")
+            print(" STREAM_TABLE" + str(self.ep.get_stream_table()) + "\n")
             print("RP_TABLE" + str(self.ep.get_table_rp()) + "\n")
 
