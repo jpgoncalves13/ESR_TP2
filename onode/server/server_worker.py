@@ -116,15 +116,18 @@ class ServerWorker:
             udp_socket.sendto(packet.serialize(), (client, 5001))
         udp_socket.close()
 
+    """
+    Handle a join message
+    Receives the join packet, and the ip of the sender (a neighbour)
+    """
     def handle_join(self, packet, ip):
-        """Handle the join messages to the tree"""
-
-        # Handling logic for leaf neighbours nodes
-        if packet.leaf == '0.0.0.0':
-            packet.leaf = ip
-
+        """# Handling logic for leaf neighbours nodes
+        if packet.leaf = '0.0.0.0':
+            packet.leaf = ip"""
+        """
         if self.ep.rendezvous:
             self.ep.add_client_to_stream(packet.stream_id, packet.leaf)
+        
         is_first_entry = self.ep.add_entry(packet.leaf, ip, packet.last_hop)
         packet.last_hop = ip
 
@@ -142,7 +145,19 @@ class ServerWorker:
                 for neighbour in neighbours:
                     ServerWorker.send_packet_with_confirmation(udp_socket, packet.serialize(),
                                                                (neighbour, self.ep.port))
-            udp_socket.close()
+            udp_socket.close()"""
+        
+        stream_id = packet.stream_id
+        
+        if self.ep.check_if_stream_exists(stream_id):
+            pass
+        else:
+            # Add the stream and the neighbour to the state
+            self.ep.add_neighbour_to_stream(stream_id, ip)
+            
+            # Update the information to the top of the tree
+            rp_neighbour = self.ep.get_neighbour_to_rp()
+            
 
     def handle_leave(self, packet, ip):
         """Handle the client leave message to the tree"""
@@ -182,9 +197,19 @@ class ServerWorker:
                         (best_entries_list, rp_entry))
         ServerWorker.send_packet(packet, address)
 
+    """
+    Handles the processing of a request
+    A request can be of types:
+    - Measure;
+    - Join;
+    - Leave;
+    - Stream;
+    """
     def handle_request(self, response, address):
+        # Deserialize the packet
         packet = Packet.deserialize(response)
 
+        # Debug information
         if self.ep.debug:
             print(f"DEBUG: Processing response to packet: {packet.type}")
             if packet.type is not PacketType.STREAM:
@@ -192,10 +217,11 @@ class ServerWorker:
             else:
                 print(f"DEBUG: Packet: {packet.payload[0]}")
 
-        # Normal node
+        # Normal node TODO
         if packet.type == PacketType.HELLO:
             self.handle_hello(address)
 
+        # Join Message (directly from a client or a node)
         elif packet.type == PacketType.JOIN:
             ServerWorker.send_packet(Packet(PacketType.ACK, '0.0.0.0', 0, '0.0.0.0'), address)
             self.handle_join(packet, address[0])

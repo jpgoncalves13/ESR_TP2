@@ -22,9 +22,8 @@ class StreamTable:
     def add_neighbour_to_stream(self, stream_id, neighbour):
         with self.lock:
             if stream_id not in self.table:
-                self.table[stream_id] = ([], [])
-            if neighbour not in self.table[stream_id][1]:
-                self.table[stream_id][1].append(neighbour)
+                self.table[stream_id] = (set(), set())
+            self.table[stream_id][1].add(neighbour)
     
     """
     Removes a neighbour from a stream
@@ -41,9 +40,8 @@ class StreamTable:
     def add_server_to_stream(self, stream_id, server_ip):
         with self.lock:
             if stream_id not in self.table:
-                self.table[stream_id] = ([], [])
-            if server_ip not in self.table[stream_id][0]:
-                self.table[stream_id][0].append(server_ip)
+                self.table[stream_id] = (set()), set()
+            self.table[stream_id][0].add(server_ip)
             
             # Add the server to the server measure list 
             if server_ip not in self.servers_entries:
@@ -55,6 +53,13 @@ class StreamTable:
     def remove_server_from_stream(self, stream_id, server_ip):
         with self.lock:
             self.table[stream_id][0].remove(server_ip)
+            
+    """
+    Check if a stream is already in the stream list
+    """
+    def check_if_stream_exists(self, stream_id):
+        with self.lock:
+            return stream_id in self.table
 
     """
     Get all the servers currently streaming
