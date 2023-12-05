@@ -48,20 +48,18 @@ class ProbeThread(threading.Thread):
 
         for _ in range(self.block):
             start_time = time.time()
-            print("Sent")
             udp_socket.sendto(packet_serialized, (neighbour, self.port))
             packets_sent += 1
 
             try:
                 response, _ = udp_socket.recvfrom(4096)
-                print("received")
                 end_time = time.time()
                 packets_received += 1
                 list_packets_received.append(Packet.deserialize(response))
                 total_delay += (end_time - start_time) * 1000  # ms
 
             except socket.timeout:
-                print("timeout")
+                pass
 
         udp_socket.close()
 
@@ -86,9 +84,8 @@ class ProbeThread(threading.Thread):
                 if last_packet is not None and last_packet.type == PacketType.RMEASURE:
                     self.handle_neighbour_response(neighbour, last_packet, delay_measured, loss_measured)
                 else:
-                    pass
                     # Send join to the neighbours of the neighbour if i do not have other option
-                    #self.handle_neighbour_death(neighbour)
+                    self.handle_neighbour_death(neighbour)
 
             if self.state.rendezvous:
                 servers = self.state.get_servers()
