@@ -1,6 +1,5 @@
 import sys
 import threading
-import json
 import copy
 from table.table_entry import TableEntry
 
@@ -11,7 +10,7 @@ class StreamTable:
     For each possible stream (identified by a number, store the list of neighbours requesting that stream)
     """
     def __init__(self):
-        self.table = {} # Table of servers and neighbours for each stream 
+        self.table = {}  # Table of servers and neighbours for each stream, stream_id : (servers, neighbours)
         self.servers_entries = {}
         self.lock = threading.Lock()
 
@@ -30,16 +29,10 @@ class StreamTable:
     Returns if it was the last neighbour from that stream 
     """         
     def remove_neighbour_from_stream(self, stream_id, neighbour_ip):
-        r = False
         with self.lock:
-            # If the neighbour was the last one requesting that stream
-            if self.table[stream_id][1] == set([neighbour_ip]):
-                r = True
-                    
-            self.table[stream_id][1].remove(neighbour_ip)
-        
-        return r
-                
+            self.table[stream_id][1].discard(neighbour_ip)
+            return len(self.table[stream_id][1]) == 0
+
     """
     Add a server to a stream
     If the stream does not exist, add a new entry in the map with a new neighbour
@@ -47,19 +40,25 @@ class StreamTable:
     def add_server_to_stream(self, stream_id, server_ip):
         with self.lock:
             if stream_id not in self.table:
-                self.table[stream_id] = (set()), set()
+                self.table[stream_id] = (set(), set())
             self.table[stream_id][0].add(server_ip)
             
             # Add the server to the server measure list 
             if server_ip not in self.servers_entries:
-                self.servers_entries[server_ip] = TableEntry('0.0.0.0', 0, 0)
+                self.servers_entries[server_ip] = TableEntry(0, 0)
                 
     """
     Remove a server from a stream
     """
-    def remove_server_from_stream(self, stream_id, server_ip):
+    def remove_server_from_stream(self, server_ip):
         with self.lock:
-            self.table[stream_id][0].remove(server_ip)
+            for stream_id in self.servers_entries:
+                servers, _ = self.servers_entries[stream_id]
+                servers.discard(server_ip)
+                break
+
+            if server_ip in self.servers_entries:
+                del self.servers_entries[server_ip]
             
     """
     Check if a stream is already in the stream list
@@ -89,9 +88,11 @@ class StreamTable:
     """
     def update_metrics_server(self, server, delay, loss):
         with self.lock:
-            self.servers_entries[server] = TableEntry('0.0.0.0', delay, loss)
+            self.servers_entries[server] = TableEntry(delay, loss)
 
-    # TODO
+    """
+    Return a true if it's the server with the best metric for a specific stream_id
+    """
     def its_best_server(self, stream_id, server_ip):
         with self.lock:
             servers, clients = self.table[stream_id]
@@ -106,29 +107,6 @@ class StreamTable:
 
             return best_server == server_ip
 
-    """
-    Get all the neighbours
-    """
-    """
-    def get_clients(self):
-        with self.lock:
-            stream_clients = []
-            for stream_id in self.table.keys():
-                servers, clients = self.table[stream_id]
-                stream_clients.append((stream_id, clients))
-            return stream_clients"""
-
     def get_stream_table(self):
         with self.lock:
             return copy.deepcopy(self.table)
-
-    def __str__(self) -> str:
-        return self.__repr__()
-    
-    def __repr__(self) -> str:
-        string = "------- Table: -------\n"
-
-        for entry in self.table:
-            string += str(entry) + "->>>>>>>>>>>>>\n" + str(self.table[entry]) + "\n"
-
-        return string

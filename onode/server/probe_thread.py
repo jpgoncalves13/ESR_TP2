@@ -31,8 +31,8 @@ class ProbeThread(threading.Thread):
                 # Update next steps from this neighbour
                 pass
 
-    """def handle_neighbour_death(self, neighbour):
-        self.state.update_neighbour_death(neighbour)"""
+    def handle_neighbour_death(self, neighbour):
+        self.state.update_neighbour_death(neighbour)
 
     def handle_servers(self, server, packet, delay, loss):
         _, list_metrics = packet.payload
@@ -87,8 +87,8 @@ class ProbeThread(threading.Thread):
                 if last_packet is not None and last_packet.type == PacketType.RMEASURE:
                     self.handle_neighbour_response(neighbour, last_packet, delay_measured, loss_measured)
                 else:
-                    pass
-                    #self.handle_neighbour_death(neighbour)
+                    # Send join to the neighbours of the neighbour if i do not have other option
+                    self.handle_neighbour_death(neighbour)
 
             if self.state.rendezvous:
                 servers = self.state.get_servers()
@@ -100,8 +100,7 @@ class ProbeThread(threading.Thread):
                     if last_packet is not None and last_packet.type == PacketType.RMEASURE:
                         self.handle_servers(server, last_packet, delay_measured, loss_measured)
                     else:
-                        # Remove server
-                        pass
+                        self.state.remove_server_from_stream(server)
 
             time.sleep(self.interval)
 

@@ -64,7 +64,7 @@ class ServerWorker:
         if self.ep.debug:
             print(f"DEBUG: Stream packet sent to: {neighbours}")
 
-        if self.ep.client_on and packet.stream_id == self.ep.client_stream_id:
+        if self.ep.get_client_state() and packet.stream_id == self.ep.client_stream_id:
             self.ep.add_packet_to_buffer(packet.payload)
 
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -131,6 +131,7 @@ class ServerWorker:
         else:
             rp_entry = self.ep.get_best_entry_rp()
             neighbours = self.ep.get_neighbours_to_rp()
+            neighbours = [neighbour for neighbour in neighbours if neighbour != address[0]]
             if rp_entry is not None and rp_entry[1] == address[0]:
                 rp_entry = None
 
