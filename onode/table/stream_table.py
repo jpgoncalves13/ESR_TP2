@@ -27,11 +27,18 @@ class StreamTable:
     
     """
     Removes a neighbour from a stream
+    Returns if it was the last neighbour from that stream 
     """         
-    def remove_neighbour_from_stream(self, neighbour):
+    def remove_neighbour_from_stream(self, stream_id, neighbour_ip):
+        r = False
         with self.lock:
-            for stream_id in self.table:
-                self.table[stream_id][1].remove(neighbour)
+            # If the neighbour was the last one requesting that stream
+            if self.table[stream_id][1] == set([neighbour_ip]):
+                r = True
+                    
+            self.table[stream_id][1].remove(neighbour_ip)
+        
+        return r
                 
     """
     Add a server to a stream

@@ -134,9 +134,10 @@ class EP:
         
     """
     Removes a neighbour from a stream
-    """    
-    def remove_neighbour_from_stream(self, node_id):
-        self.stream_table.remove_client_from_stream(node_id)
+    Returns if it was the last neighbour from that stream 
+    """      
+    def remove_neighbour_from_stream(self, stream_id, neighbour_ip):
+        return self.stream_table.remove_client_from_stream(stream_id, neighbour_ip)
         
     """
     Check if a stream is already in the stream list
