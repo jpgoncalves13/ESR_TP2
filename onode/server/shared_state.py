@@ -51,7 +51,7 @@ class EP:
     """
     def get_neighbours(self):
         with self.neighbours_lock:
-            return list(self.neighbours.keys())
+            return list(self.neighbours)
 
     """
     Get the number of neighbours
@@ -181,3 +181,6 @@ class EP:
 
     def get_stream_table(self):
         return self.stream_table.get_stream_table()
+    
+    def get_streams(self):
+        return self.stream_table.get_streams()

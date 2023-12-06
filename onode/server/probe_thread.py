@@ -25,7 +25,23 @@ class ProbeThread(threading.Thread):
                 rp_ip = neighbour
 
             # Change function because this is rp only
+            current_best_route_to_rp = self.state.get_neighbour_to_rp()
             self.state.update_metrics_rp(rp_ip, neighbour, rp_entry[1] + delay, max(rp_entry[2], loss))
+            new_best_route_to_rp = self.state.get_neighbour_to_rp()
+            
+            if current_best_route_to_rp != new_best_route_to_rp:
+                # JOIN -> new_best_route
+                # LEAVE -> current_best_route
+                for stream_id in self.state.get_streams():
+                    packet_join = Packet(PacketType.JOIN, '0.0.0.0', stream_id, '0.0.0.0').serialize()
+                    packet_leave = Packet(PacketType.LEAVE, '0.0.0.0', stream_id, '0.0.0.0').serialize()
+                    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    udp_socket.settimeout(5)
+                    ProbeThread.send_packet_with_confirmation(udp_socket, packet_leave,
+                                                        (current_best_route_to_rp, self.state.port))
+                    ProbeThread.send_packet_with_confirmation(udp_socket, packet_join,
+                                                        (new_best_route_to_rp, self.state.port))
+            
             self.state.add_next_steps(neighbour, neighbours)
 
     @staticmethod
@@ -44,23 +60,23 @@ class ProbeThread(threading.Thread):
                 retries += 1
 
     def handle_neighbour_death(self, neighbour):
+        next_steps = self.state.get_next_steps(neighbour)
+        self.state.update_neighbour_death(neighbour)
         # Send join to the neighbours of the neighbour if I do not have other option
         neighbour_to_rp = self.state.get_neighbour_to_rp()
         if neighbour_to_rp is None:
             # Add to neighbours the next steps of the neighbour (which is dead)
             self.state.delete_neighbour(neighbour)
-            next_steps = self.state.get_next_steps(neighbour)
             self.state.add_neighbours(next_steps)
 
-            time.sleep(12)
-            packet = Packet(PacketType.JOIN, '0.0.0.0', self.state.client_stream_id, '0.0.0.0').serialize()
+            time.sleep(12) # TODO IMPORTANTE
             udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             udp_socket.settimeout(5)
-            ProbeThread.send_packet_with_confirmation(udp_socket, packet,
+            for stream_id in self.state.get_streams():
+                packet = Packet(PacketType.JOIN, '0.0.0.0', stream_id, '0.0.0.0').serialize()
+                ProbeThread.send_packet_with_confirmation(udp_socket, packet,
                                                       (self.state.get_neighbour_to_rp(), self.state.port))
             udp_socket.close()
-
-        self.state.update_neighbour_death(neighbour)
 
     def handle_servers(self, server, packet, delay, loss):
         _, list_metrics = packet.payload
@@ -79,7 +95,10 @@ class ProbeThread(threading.Thread):
 
         for _ in range(self.block):
             start_time = time.time()
-            udp_socket.sendto(packet_serialized, (neighbour, self.port))
+            try:
+                udp_socket.sendto(packet_serialized, (neighbour, self.port))
+            except:
+                pass
             packets_sent += 1
 
             try:
@@ -87,7 +106,7 @@ class ProbeThread(threading.Thread):
                 end_time = time.time()
                 packets_received += 1
                 list_packets_received.append(Packet.deserialize(response))
-                total_delay += (end_time - start_time) * 1000  # ms
+                total_delay += (end_time - start_time) * 10000  # ms
 
             except socket.timeout:
                 pass
