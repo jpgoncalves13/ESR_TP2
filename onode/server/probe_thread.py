@@ -75,7 +75,7 @@ class ProbeThread(threading.Thread):
         self.state.update_neighbour_death(neighbour)
         # Send join to the neighbours of the neighbour if I do not have other option
         neighbour_to_rp = self.state.get_neighbour_to_rp()
-        if neighbour_to_rp is None:
+        if neighbour_to_rp is None and not self.state.rendezvous:
             # Add to neighbours the next steps of the neighbour (which is dead)
             self.state.delete_neighbour(neighbour)
             self.state.add_neighbours(next_steps)
