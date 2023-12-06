@@ -17,6 +17,7 @@ class ForwardingTable:
         self.next_steps = {}  # Neighbour : Neighbours of neighbour
         self.rp_table = {}    # RP IP : Neighbour : Entry
         self.rp_entry = None  # (RP IP, Neighbour, Entry)
+        self.threshold = 10
 
     def add_next_steps(self, neighbour, next_steps):
         with self.steps_lock:
@@ -105,8 +106,13 @@ class ForwardingTable:
 
             # The entry to update is the best entry
             if best_entry_ip == rp_ip and best_entry_neighbour == neighbour:
+                old_metric = best_entry.get_metric()
                 best_entry.delay = delay
                 best_entry.loss = loss
+                new_metric = best_entry.get_metric()
+
+                if old_metric < new_metric + self.threshold:
+                    return
 
                 # Obtain the best entry
                 best_score = sys.maxsize
@@ -123,7 +129,7 @@ class ForwardingTable:
 
                 return
 
-            if best_entry.get_metric() > current_entry.get_metric():
+            if best_entry.get_metric() > current_entry.get_metric() + self.threshold:
                 best_entry_ip = rp_ip
                 best_entry_neighbour = neighbour
                 best_entry = current_entry
@@ -144,8 +150,14 @@ class ForwardingTable:
                 if neighbour in self.next_steps:
                     del self.next_steps[neighbour]
 
+            # Get the best entry
+            with self.tree_lock:
+                best_entry_neighbour = self.rp_entry[1]
+
+            if best_entry_neighbour != neighbour:
+                return
+
             best_score = sys.maxsize
-            best_entry = None
             best_entry_neighbour = None
             best_entry_ip = None
             for rp_ip in self.rp_table:

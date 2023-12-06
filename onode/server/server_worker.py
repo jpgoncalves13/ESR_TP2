@@ -85,8 +85,7 @@ class ServerWorker:
             
             # Update the information to the top of the tree
             neighbour_to_rp = self.ep.get_neighbour_to_rp()
-            print("TO RP: " + str(neighbour_to_rp))
-            
+
             udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             udp_socket.settimeout(5)
 
@@ -102,11 +101,11 @@ class ServerWorker:
     """
     def handle_leave(self, packet, ip):
         stream_id = packet.stream_id
-        
+
         if self.ep.check_if_stream_exists(stream_id):
             # Remove the neighbour from the set of neighbours of that stream
             is_last_neighbour_from_stream = self.ep.remove_neighbour_from_stream(stream_id, ip)
-            
+
             if is_last_neighbour_from_stream:
                 # Update the information to the top of the tree
                 neighbour_to_rp = self.ep.get_neighbour_to_rp()
@@ -162,7 +161,6 @@ class ServerWorker:
 
         # Join Message (directly from a client or a node)
         if packet.type == PacketType.JOIN:
-            print("## " + (str(self.ep.tag)) + " ## " + f" DEBUG: Processing response to packet: {packet.type} from {str(address)}")
             ServerWorker.send_packet(Packet(PacketType.ACK, '0.0.0.0', 0, '0.0.0.0'), address)
             self.handle_join(packet, address[0])
 
@@ -173,7 +171,6 @@ class ServerWorker:
             self.handle_stream(packet, address[0])
 
         elif packet.type == PacketType.LEAVE:
-            print("## " + (str(self.ep.tag)) + " ## " + f" DEBUG: Processing response to packet: {packet.type} from {str(address)}")
             ServerWorker.send_packet(Packet(PacketType.ACK, '0.0.0.0', 0, '0.0.0.0'), address)
             self.handle_leave(packet, address[0])
 
