@@ -35,6 +35,11 @@ class StreamTable:
             self.table[stream_id][1].discard(neighbour_ip)
             return len(self.table[stream_id][1]) == 0
 
+    def remove_stream(self, stream_id):
+        with self.table_lock:
+            if stream_id in self.table:
+                del self.table[stream_id]
+
     """
     Add a server to a stream
     If the stream does not exist, add a new entry in the map with a new neighbour
