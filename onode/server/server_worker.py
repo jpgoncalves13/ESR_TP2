@@ -87,7 +87,7 @@ class ServerWorker:
             
             # Update the information to the top of the tree
             neighbour_to_rp = self.ep.get_neighbour_to_rp()
-            print(f"STREAM ID: {stream_id}")
+            print(f"STREAM ID: {neighbour_to_rp}")
 
             udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             udp_socket.settimeout(5)
