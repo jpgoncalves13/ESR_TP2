@@ -56,26 +56,27 @@ class Client:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         packet = Packet(PacketType.LEAVE, self.ep.client_stream_id).serialize()
         self.ep.update_client_state(False)
-        neighbour_to_rp = self.ep.get_neighbour_to_rp()
-        while neighbour_to_rp is None:
+        if len(self.ep.get_streams()) > 0:
             neighbour_to_rp = self.ep.get_neighbour_to_rp()
-            time.sleep(1)
-        address = (neighbour_to_rp, self.ep.port)
-        ServerWorker.send_packet_with_confirmation(sock, packet, address)
+            while neighbour_to_rp is None:
+                neighbour_to_rp = self.ep.get_neighbour_to_rp()
+                time.sleep(1)
+            address = (neighbour_to_rp, self.ep.port)
+            ServerWorker.send_packet_with_confirmation(sock, packet, address)
         self.master.destroy()  # Close the gui window
-        sys.exit(1)
-
+        
     def pause_movie(self):
         """Pause button handler."""
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         packet = Packet(PacketType.LEAVE, self.ep.client_stream_id).serialize()
         self.ep.update_client_state(False)
-        neighbour_to_rp = self.ep.get_neighbour_to_rp()
-        while neighbour_to_rp is None:
+        if len(self.ep.get_streams()) > 0:
             neighbour_to_rp = self.ep.get_neighbour_to_rp()
-            time.sleep(1)
-        address = (neighbour_to_rp, self.ep.port)
-        ServerWorker.send_packet_with_confirmation(sock, packet, address)
+            while neighbour_to_rp is None:
+                neighbour_to_rp = self.ep.get_neighbour_to_rp()
+                time.sleep(1)
+            address = (neighbour_to_rp, self.ep.port)
+            ServerWorker.send_packet_with_confirmation(sock, packet, address)
 
     def play_movie(self):
         """Play button handler."""
@@ -85,7 +86,6 @@ class Client:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.settimeout(5)
             packet = Packet(PacketType.JOIN, self.ep.client_stream_id).serialize()
-            response = False
             neighbour_to_rp = self.ep.get_neighbour_to_rp()
             while neighbour_to_rp is None:
                 neighbour_to_rp = self.ep.get_neighbour_to_rp()
