@@ -63,6 +63,15 @@ class EP:
     """
     Add a neighbour 
     """
+    def add_neighbour(self, neighbour):
+        with self.neighbours_lock:
+            if neighbour not in self.neighbours:
+                self.neighbours.append(neighbour)
+                self.num_neighbours += 1
+
+    """
+    Add a list of neighbour 
+    """
     def add_neighbours(self, neighbours):
         with self.neighbours_lock:
             for neighbour in neighbours:

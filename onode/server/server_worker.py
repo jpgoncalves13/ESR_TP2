@@ -124,6 +124,9 @@ class ServerWorker:
     """
     def handle_measure(self, address):
         """Handle the packets requesting the metrics"""
+
+        self.ep.add_neighbour(address[0])
+
         if self.ep.rendezvous:
             neighbours = []
             rp_entry = ('0.0.0.0', 0, 0)

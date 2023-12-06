@@ -51,9 +51,10 @@ class Client:
 
     def exit_client(self):
         """Teardown button handler."""
-
-        # SEND LEAVE MESSAGE
-
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        packet = Packet(PacketType.LEAVE, '0.0.0.0', self.ep.client_stream_id, '0.0.0.0')
+        self.ep.update_client_state(False)
+        sock.sendto(packet.serialize(), (self.ep.get_neighbours_to_rp(), self.ep.port))
         self.master.destroy()  # Close the gui window
 
     def pause_movie(self):
@@ -61,9 +62,6 @@ class Client:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         packet = Packet(PacketType.LEAVE, '0.0.0.0', self.ep.client_stream_id, '0.0.0.0')
         self.ep.update_client_state(False)
-
-        # UPDATE THIS
-
         sock.sendto(packet.serialize(), (self.ep.get_neighbours_to_rp(), self.ep.port))
 
     def play_movie(self):
