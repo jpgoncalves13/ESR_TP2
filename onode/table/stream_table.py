@@ -62,8 +62,9 @@ class StreamTable:
         with self.table_lock:
             for stream_id in self.servers_entries:
                 servers, _ = self.servers_entries[stream_id]
-                servers.discard(server_ip)
-                break
+                if server_ip in servers:
+                    servers.discard(server_ip)
+                    break
 
         with self.entries_lock:
             if server_ip in self.servers_entries:
@@ -110,14 +111,14 @@ class StreamTable:
         with self.table_lock:
             servers, clients = self.table[stream_id]
 
-        score = sys.maxsize
-        best_server = None
-        for server in servers:
-            with self.entries_lock:
-                entry = self.servers_entries[server]
-            if entry.get_metric() < score:
-                score = entry.get_metric()
-                best_server = server
+            score = sys.maxsize
+            best_server = None
+            for server in servers:
+                with self.entries_lock:
+                    entry = self.servers_entries[server]
+                if entry.get_metric() < score:
+                    score = entry.get_metric()
+                    best_server = server
 
         return best_server == server_ip
 
