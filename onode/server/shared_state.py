@@ -151,6 +151,9 @@ class EP:
     def check_if_stream_exists(self, stream_id):
         return self.stream_table.check_if_stream_exists(stream_id)
 
+    def check_if_server_exists(self, stream_id):
+        return self.stream_table.check_if_server_exists(stream_id)
+
     """
     Add a server to a stream
     If the stream does not exist, add a new entry in the map with a new neighbour

@@ -76,6 +76,10 @@ class StreamTable:
         with self.table_lock:
             return stream_id in self.table
 
+    def check_if_server_exists(self, stream_id):
+        with self.table_lock:
+            return len(self.table[stream_id][0]) > 0
+
     """
     Get all the servers currently streaming
     """

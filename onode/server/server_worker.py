@@ -78,16 +78,17 @@ class ServerWorker:
     """
     def handle_join(self, packet, ip):
         stream_id = packet.stream_id
-        print(f"STREAM ID: {stream_id}")
-        if not self.ep.check_if_stream_exists(stream_id):
 
-            print(f"STREAM ID: {stream_id}")
+        if self.ep.rendezvous:
+            self.ep.add_neighbour_to_stream(stream_id, ip)
+            return
+
+        if not self.ep.check_if_stream_exists(stream_id):
             # Add the stream and the neighbour to the state
             self.ep.add_neighbour_to_stream(stream_id, ip)
-            
+
             # Update the information to the top of the tree
             neighbour_to_rp = self.ep.get_neighbour_to_rp()
-            print(f"STREAM ID: {neighbour_to_rp}")
 
             udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             udp_socket.settimeout(5)
@@ -97,7 +98,10 @@ class ServerWorker:
                                                            (neighbour_to_rp, self.ep.port))
 
             udp_socket.close()
-            
+        else:
+            # Add the stream and the neighbour to the state
+            self.ep.add_neighbour_to_stream(stream_id, ip)
+
     """
     Handle a leave message
     Receives the leave packet, and the ip of the sender (a neighbour)
@@ -105,11 +109,17 @@ class ServerWorker:
     def handle_leave(self, packet, ip):
         stream_id = packet.stream_id
 
+        if self.ep.check_if_stream_exists(stream_id) and self.ep.rendezvous:
+            is_last_neighbour_from_stream = self.ep.remove_neighbour_from_stream(stream_id, ip)
+            if is_last_neighbour_from_stream and not self.ep.check_if_server_exists(stream_id):
+                self.ep.remove_stream(stream_id)
+            return
+
         if self.ep.check_if_stream_exists(stream_id):
             # Remove the neighbour from the set of neighbours of that stream
             is_last_neighbour_from_stream = self.ep.remove_neighbour_from_stream(stream_id, ip)
 
-            if is_last_neighbour_from_stream and not self.ep.rendezvous:
+            if is_last_neighbour_from_stream:
                 self.ep.remove_stream(stream_id)
                 # Update the information to the top of the tree
                 neighbour_to_rp = self.ep.get_neighbour_to_rp()
