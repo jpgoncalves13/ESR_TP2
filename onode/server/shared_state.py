@@ -17,6 +17,7 @@ class EP:
         self.table = ForwardingTable()
         self.stream_table = StreamTable()
 
+        self.initial_neighbours = neighbours
         self.neighbours_lock = threading.Lock()
         self.neighbours = neighbours
         self.num_neighbours = len(neighbours) if neighbours is not None else 0
@@ -62,22 +63,15 @@ class EP:
             return self.num_neighbours
 
     """
-    Add a neighbour 
-    
-    def add_neighbour(self, neighbour):
-        with self.neighbours_lock:
-            if neighbour not in self.neighbours:
-                self.neighbours.append(neighbour)
-                self.num_neighbours += 1
-
-    Remove a neighbour 
-    
-    def delete_neighbour(self, neighbour):
-        with self.neighbours_lock:
-            if neighbour in self.neighbours:
-                self.neighbours.remove(neighbour)
-                self.num_neighbours -= 1
+    Remove neighbours of neighbours
     """
+    def delete_neighbours(self, neighbour):
+        with self.neighbours_lock:
+            nex_steps = self.get_next_steps(neighbour)
+            for step in nex_steps:
+                if step in self.neighbours and step not in self.initial_neighbours:
+                    self.neighbours.remove(neighbour)
+                    self.num_neighbours -= 1
 
     # BOOTSTRAPPER
     """
