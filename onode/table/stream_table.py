@@ -134,3 +134,8 @@ class StreamTable:
                     streams.add(stream_id)
         return streams
         
+    def remove_neighbour_from_stream_table(self, neighbour_ip):
+        with self.table_lock:
+            for stream_id in self.table:
+                self.table[stream_id][1].discard(neighbour_ip)
+                

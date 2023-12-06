@@ -85,6 +85,8 @@ class ProbeThread(threading.Thread):
     def handle_neighbour_death(self, neighbour):
         next_steps = self.state.get_next_steps(neighbour)
         self.state.update_neighbour_death(neighbour)
+        print("REMOVE " + str(neighbour))
+        self.state.remove_neighbour_from_stream_table(neighbour)
         # Send join to the neighbours of the neighbour if I do not have other option
         neighbour_to_rp = self.state.get_neighbour_to_rp()
         if neighbour_to_rp is None and not self.state.rendezvous:
