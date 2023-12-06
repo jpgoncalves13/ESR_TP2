@@ -52,7 +52,7 @@ class Client:
     def exit_client(self):
         """Teardown button handler."""
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        packet = Packet(PacketType.LEAVE, '0.0.0.0', self.ep.client_stream_id, '0.0.0.0')
+        packet = Packet(PacketType.LEAVE, self.ep.client_stream_id)
         self.ep.update_client_state(False)
         sock.sendto(packet.serialize(), (self.ep.get_neighbour_to_rp(), self.ep.port))
         self.master.destroy()  # Close the gui window
@@ -60,7 +60,7 @@ class Client:
     def pause_movie(self):
         """Pause button handler."""
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        packet = Packet(PacketType.LEAVE, '0.0.0.0', self.ep.client_stream_id, '0.0.0.0')
+        packet = Packet(PacketType.LEAVE, self.ep.client_stream_id)
         self.ep.update_client_state(False)
         sock.sendto(packet.serialize(), (self.ep.get_neighbour_to_rp(), self.ep.port))
 
@@ -70,7 +70,7 @@ class Client:
         # Create a new thread to listen for RTP packets
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(5)
-        packet = Packet(PacketType.JOIN, '0.0.0.0', self.ep.client_stream_id, '0.0.0.0').serialize()
+        packet = Packet(PacketType.JOIN, self.ep.client_stream_id).serialize()
         response = False
         address = (self.ep.get_neighbour_to_rp(), self.ep.port)
         while not response:
