@@ -11,7 +11,7 @@ class TableEntry:
         self.delay = delay
 
     def get_metric(self):
-        return 0.7 * self.delay / 1000 + 0.3 * self.loss
+        return 2 * self.delay / 10000 + self.loss
 
     def __str__(self) -> str:
         return ("Delay: " + str(self.delay) + "; Loss: "
