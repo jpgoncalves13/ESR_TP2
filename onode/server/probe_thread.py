@@ -157,7 +157,7 @@ class ProbeThread(threading.Thread):
         if not self.state.rendezvous and last_packet is not None and last_packet.type == PacketType.RMEASURE:
             self.handle_neighbour_response(neighbour, last_packet, delay_measured, loss_measured)
         else:
-            if self.state.rendezvous:
+            if self.state.rendezvous and last_packet is None:
                 self.state.remove_neighbour_from_stream_table(neighbour)
             else:
                 self.handle_neighbour_death(neighbour)
