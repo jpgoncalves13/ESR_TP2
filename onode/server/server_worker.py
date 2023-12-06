@@ -158,10 +158,11 @@ class ServerWorker:
 
         # Debug information
         if self.ep.debug:
-            print("## " +(str(self.ep.tag)) + " ## " + f" DEBUG: Processing response to packet: {packet.type} from {str(address)}")
+            print("## " + (str(self.ep.tag)) + " ## " + f" DEBUG: Processing response to packet: {packet.type} from {str(address)}")
 
         # Join Message (directly from a client or a node)
         if packet.type == PacketType.JOIN:
+            print("## " + (str(self.ep.tag)) + " ## " + f" DEBUG: Processing response to packet: {packet.type} from {str(address)}")
             ServerWorker.send_packet(Packet(PacketType.ACK, '0.0.0.0', 0, '0.0.0.0'), address)
             self.handle_join(packet, address[0])
 
@@ -172,6 +173,7 @@ class ServerWorker:
             self.handle_stream(packet, address[0])
 
         elif packet.type == PacketType.LEAVE:
+            print("## " + (str(self.ep.tag)) + " ## " + f" DEBUG: Processing response to packet: {packet.type} from {str(address)}")
             ServerWorker.send_packet(Packet(PacketType.ACK, '0.0.0.0', 0, '0.0.0.0'), address)
             self.handle_leave(packet, address[0])
 
