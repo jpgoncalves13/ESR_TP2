@@ -101,7 +101,7 @@ class StreamTable:
     Update the metrics associated with a given server (server, delay, loss)
     """
     def update_metrics_server(self, server, delay, loss):
-        with self.servers_entries:
+        with self.entries_lock:
             self.servers_entries[server] = TableEntry(delay, loss)
 
     """

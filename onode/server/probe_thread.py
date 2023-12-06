@@ -166,11 +166,11 @@ class ProbeThread(threading.Thread):
 
             if self.state.debug:
                 print(f"DEBUG: Sending the probe message to: {neighbours}")
-            print("MMMMMMM")
-            for neighbour in neighbours:
-                threading.Thread(target=self.handle_neighbour_measure, args=(neighbour,)).start()
-            print("OOOOOOOOOOooo" + str(self.state.rendezvous))
-            if self.state.rendezvous:
+
+            if not self.state.rendezvous:
+                for neighbour in neighbours:
+                    threading.Thread(target=self.handle_neighbour_measure, args=(neighbour,)).start()
+            else:
                 servers = self.state.get_servers()
                 print("SERVERS: " + str(servers))
                 if self.state.debug:
