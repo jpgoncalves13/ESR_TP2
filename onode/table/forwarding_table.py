@@ -17,7 +17,7 @@ class ForwardingTable:
         self.next_steps = {}  # Neighbour : Neighbours of neighbour
         self.rp_table = {}    # Neighbour : Entry
         self.rp_entry = None  # (Neighbour, Entry)
-        self.threshold = 10
+        self.threshold = 100
 
     def add_next_steps(self, neighbour, next_steps):
         with self.steps_lock:
