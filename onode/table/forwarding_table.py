@@ -30,27 +30,6 @@ class ForwardingTable:
             return []
 
     """
-    Adds a new entry to the rp table
-    Store the neighbour, the next_hop, the delay and the loss in that path
-    """
-    def add_entry_rp(self, neighbour, delay=0, loss=0):
-        # Create the new entry
-        entry = TableEntry(delay, loss)
-        is_first_entry = False
-
-        with self.table_lock:
-            # First entry to rp is the best entry            
-            if len(self.rp_table.keys()) == 0:
-                is_first_entry = True
-                with self.tree_lock:
-                    self.rp_entry = (neighbour, entry)
-
-            # Add the entry
-            self.rp_table[neighbour] = entry
-
-            return is_first_entry
-
-    """
     Get the neighbour of the best entry to the rp table
     """
     def get_neighbour_to_rp(self):
@@ -74,14 +53,6 @@ class ForwardingTable:
             if self.rp_entry is not None:
                 return self.rp_entry[0], self.rp_entry[1].delay, self.rp_entry[1].loss
             return None
-    
-    """
-    Get the entry to RP given the rp_ip and the neighbour
-    """
-    def get_entry_rp(self, neighbour):
-        if neighbour in self.rp_table:
-            return self.rp_table[neighbour]
-        return None
 
     def add_best_entry(self, entry):
         with self.tree_lock:

@@ -19,7 +19,7 @@ class ProbeThread(threading.Thread):
     def handle_neighbour_response(self, neighbour, packet, delay, loss):
         rp_entry, neighbours = packet.payload
 
-        if rp_entry is not None and not self.state.rendezvous:
+        if rp_entry is not None:
             current_best_route_to_rp = self.state.get_neighbour_to_rp()
             self.state.update_metrics_rp(neighbour, rp_entry[0] + delay, max(rp_entry[1], loss))
             new_best_route_to_rp = self.state.get_neighbour_to_rp()
@@ -39,11 +39,11 @@ class ProbeThread(threading.Thread):
                                                               (new_best_route_to_rp, self.state.port))
 
                 if self.state.get_client_state():
-                    packet = Packet(PacketType.JOIN, '0.0.0.0', self.state.client_stream_id, '0.0.0.0').serialize()
-                    ProbeThread.send_packet_with_confirmation(udp_socket, packet,
+                    packet_leave = Packet(PacketType.JOIN, '0.0.0.0', self.state.client_stream_id, '0.0.0.0').serialize()
+                    ProbeThread.send_packet_with_confirmation(udp_socket, packet_leave,
                                                               (new_best_route_to_rp, self.state.port))
-                    packet = Packet(PacketType.LEAVE, '0.0.0.0', self.state.client_stream_id, '0.0.0.0').serialize()
-                    ProbeThread.send_packet_with_confirmation(udp_socket, packet,
+                    packet_join = Packet(PacketType.LEAVE, '0.0.0.0', self.state.client_stream_id, '0.0.0.0').serialize()
+                    ProbeThread.send_packet_with_confirmation(udp_socket, packet_join,
                                                               (current_best_route_to_rp, self.state.port))
 
                 udp_socket.close()
@@ -72,8 +72,9 @@ class ProbeThread(threading.Thread):
         neighbour_to_rp = self.state.get_neighbour_to_rp()
         if neighbour_to_rp is None and not self.state.rendezvous:
             # Add to neighbours the next steps of the neighbour (which is dead)
-            self.state.delete_neighbour(neighbour)
-            self.state.add_neighbours(next_steps)
+
+            # TODO
+            # self.state.add_neighbours(next_steps)
 
             while neighbour_to_rp is None:
                 neighbour_to_rp = self.state.get_neighbour_to_rp()
@@ -93,10 +94,8 @@ class ProbeThread(threading.Thread):
 
             udp_socket.close()
 
-    def handle_servers(self, server, packet, delay, loss):
-        _, list_metrics = packet.payload
-        for _ in list_metrics:
-            self.state.update_metrics_server(server, delay, loss)
+    def handle_servers(self, server, delay, loss):
+        self.state.update_metrics_server(server, delay, loss)
 
     def measure(self, neighbour):
         udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
@@ -149,7 +148,8 @@ class ProbeThread(threading.Thread):
                 if last_packet is not None and last_packet.type == PacketType.RMEASURE:
                     self.handle_neighbour_response(neighbour, last_packet, delay_measured, loss_measured)
                 else:
-                    self.handle_neighbour_death(neighbour)
+                    pass
+                    # self.handle_neighbour_death(neighbour)
 
             if self.state.rendezvous:
                 servers = self.state.get_servers()
@@ -159,7 +159,7 @@ class ProbeThread(threading.Thread):
                 for server in servers:
                     loss_measured, delay_measured, last_packet = self.measure(server)
                     if last_packet is not None and last_packet.type == PacketType.RMEASURE:
-                        self.handle_servers(server, last_packet, delay_measured, loss_measured)
+                        self.handle_servers(server, delay_measured, loss_measured)
                     else:
                         self.state.remove_server_from_stream(server)
 

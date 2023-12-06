@@ -139,7 +139,7 @@ class ServerWorker:
     def handle_measure(self, address):
         """Handle the packets requesting the metrics"""
 
-        self.ep.add_neighbour(address[0])
+        # self.ep.add_neighbour(address[0])
 
         if self.ep.rendezvous:
             neighbours = []
@@ -193,7 +193,7 @@ class ServerWorker:
             self.handle_setup(address)
 
         if self.ep.debug:
-            print("STREAM_TABLE" + str(self.ep.get_stream_table()) + "\n")
-            print("RP_TABLE" + str(self.ep.get_table_rp()) + "\n")
+            print("STREAM_TABLE" + str(self.ep.get_stream_table()))
+            print("RP_TABLE" + str(self.ep.get_table_rp()))
             print("ROUTE TO RP: " + str(self.ep.get_neighbour_to_rp()))
 

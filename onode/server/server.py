@@ -19,9 +19,10 @@ class Server:
         if ep.debug:
             print("DEBUG: Listening on port " + str(self.port) + "...")
 
-        # Start the proof thread
-        probe_thread = ProbeThread(ep, 5, 2, 2, ep.port)
-        probe_thread.start()
+        if not ep.rendezvous:
+            # Start the proof thread
+            probe_thread = ProbeThread(ep, 5, 2, 2, ep.port)
+            probe_thread.start()
 
         while True:
             response, address = server_socket.recvfrom(self.buffer_size)

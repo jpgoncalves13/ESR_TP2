@@ -54,13 +54,10 @@ class Packet:
 
             if rp_entry is not None:
                 byte_array += int(1).to_bytes(1, byteorder='big')
-                # rp_ip
-                leaf_parts = rp_entry[0].split('.')
-                byte_array += b''.join([int(part).to_bytes(1, 'big') for part in leaf_parts])
                 # delay
-                byte_array += rp_entry[1].to_bytes(4, byteorder='big')
+                byte_array += rp_entry[0].to_bytes(4, byteorder='big')
                 # loss
-                byte_array += rp_entry[2].to_bytes(1, byteorder='big')
+                byte_array += rp_entry[1].to_bytes(1, byteorder='big')
             else:
                 byte_array += int(0).to_bytes(1, byteorder='big')
 
@@ -113,22 +110,19 @@ class Packet:
             rp_entry_exists = int.from_bytes(byte_array[offset: offset + 1], 'big')
             offset += 1
             if rp_entry_exists == 1:
-                # rp_ip (4 bytes)
-                rp_ip_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
-                rp_ip = '.'.join(map(str, rp_ip_parts))
-                offset += 4
                 # delay (4 bytes)
                 delay = int.from_bytes(byte_array[offset:offset + 4], byteorder='big')
                 offset += 4
-                # loss (4 bytes)
+                # loss (1 byte)
                 loss = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
                 offset += 1
-                rp_entry = (rp_ip, delay, loss)
+                rp_entry = (delay, loss)
             else:
                 rp_entry = None
 
             neighbours = []
-            num_neighbours = int.from_bytes(byte_array[offset: offset + 4], 'big')
+            num_neighbours = int.from_bytes(byte_array[offset: offset + 1], 'big')
+            offset += 1
             for _ in range(num_neighbours):
                 neighbour_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
                 neighbour = '.'.join(map(str, neighbour_parts))
@@ -142,3 +136,4 @@ class Packet:
     def __str__(self):
         return (str(self.type.value) + ";" + str(self.stream_id) + ";" + ";"
                 + str(self.last_hop) + ";" + str(self.leaf) + ";" + str(self.payload))
+
