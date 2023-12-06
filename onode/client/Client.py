@@ -10,6 +10,7 @@ from PIL import Image, ImageTk, ImageFile
 
 from client.RtpPacket import RtpPacket
 from server.stream_packet import Packet, PacketType
+from server.server_worker import ServerWorker
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -59,8 +60,10 @@ class Client:
         while neighbour_to_rp is None:
             neighbour_to_rp = self.ep.get_neighbour_to_rp()
             time.sleep(1)
-        sock.sendto(packet.serialize(), (neighbour_to_rp, self.ep.port))
+        address = (neighbour_to_rp, self.ep.port)
+        ServerWorker.send_packet_with_confirmation(sock, packet, address)
         self.master.destroy()  # Close the gui window
+        os._exit()
 
     def pause_movie(self):
         """Pause button handler."""
@@ -71,7 +74,8 @@ class Client:
         while neighbour_to_rp is None:
             neighbour_to_rp = self.ep.get_neighbour_to_rp()
             time.sleep(1)
-        sock.sendto(packet.serialize(), (neighbour_to_rp, self.ep.port))
+        address = (neighbour_to_rp, self.ep.port)
+        ServerWorker.send_packet_with_confirmation(sock, packet, address)
 
     def play_movie(self):
         """Play button handler."""
@@ -88,16 +92,7 @@ class Client:
                 time.sleep(1)
 
             address = (neighbour_to_rp, self.ep.port)
-            while not response:
-                sock.sendto(packet, address)
-                try:
-                    resp, _ = sock.recvfrom(4096)
-                    packet = Packet.deserialize(resp)
-                    if packet.type == PacketType.ACK:
-                        response = True
-                except socket.timeout:
-                    pass
-
+            ServerWorker.send_packet_with_confirmation(sock, packet, address)
             print(f'Sending the JOIN {address}')
             self.ep.update_client_state(True)
             threading.Thread(target=self.listen_rtp).start()
