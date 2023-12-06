@@ -28,20 +28,31 @@ class ProbeThread(threading.Thread):
             current_best_route_to_rp = self.state.get_neighbour_to_rp()
             self.state.update_metrics_rp(rp_ip, neighbour, rp_entry[1] + delay, max(rp_entry[2], loss))
             new_best_route_to_rp = self.state.get_neighbour_to_rp()
-            
+
             if current_best_route_to_rp != new_best_route_to_rp:
                 # JOIN -> new_best_route
                 # LEAVE -> current_best_route
+                udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                udp_socket.settimeout(5)
+
                 for stream_id in self.state.get_streams():
                     packet_join = Packet(PacketType.JOIN, '0.0.0.0', stream_id, '0.0.0.0').serialize()
                     packet_leave = Packet(PacketType.LEAVE, '0.0.0.0', stream_id, '0.0.0.0').serialize()
-                    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    udp_socket.settimeout(5)
                     ProbeThread.send_packet_with_confirmation(udp_socket, packet_leave,
-                                                        (current_best_route_to_rp, self.state.port))
+                                                              (current_best_route_to_rp, self.state.port))
                     ProbeThread.send_packet_with_confirmation(udp_socket, packet_join,
-                                                        (new_best_route_to_rp, self.state.port))
-            
+                                                              (new_best_route_to_rp, self.state.port))
+
+                if self.state.get_client_state():
+                    packet = Packet(PacketType.JOIN, '0.0.0.0', self.state.client_stream_id, '0.0.0.0').serialize()
+                    ProbeThread.send_packet_with_confirmation(udp_socket, packet,
+                                                              (new_best_route_to_rp, self.state.port))
+                    packet = Packet(PacketType.LEAVE, '0.0.0.0', self.state.client_stream_id, '0.0.0.0').serialize()
+                    ProbeThread.send_packet_with_confirmation(udp_socket, packet,
+                                                              (current_best_route_to_rp, self.state.port))
+
+                udp_socket.close()
+
             self.state.add_next_steps(neighbour, neighbours)
 
     @staticmethod
@@ -69,13 +80,19 @@ class ProbeThread(threading.Thread):
             self.state.delete_neighbour(neighbour)
             self.state.add_neighbours(next_steps)
 
-            time.sleep(12) # TODO IMPORTANTE
+            time.sleep(12)
             udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             udp_socket.settimeout(5)
             for stream_id in self.state.get_streams():
                 packet = Packet(PacketType.JOIN, '0.0.0.0', stream_id, '0.0.0.0').serialize()
                 ProbeThread.send_packet_with_confirmation(udp_socket, packet,
-                                                      (self.state.get_neighbour_to_rp(), self.state.port))
+                                                          (self.state.get_neighbour_to_rp(), self.state.port))
+
+            if self.state.get_client_state():
+                packet = Packet(PacketType.JOIN, '0.0.0.0', self.state.client_stream_id, '0.0.0.0').serialize()
+                ProbeThread.send_packet_with_confirmation(udp_socket, packet,
+                                                          (self.state.get_neighbour_to_rp(), self.state.port))
+
             udp_socket.close()
 
     def handle_servers(self, server, packet, delay, loss):
