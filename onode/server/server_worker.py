@@ -118,7 +118,7 @@ class ServerWorker:
             # Remove the neighbour from the set of neighbours of that stream
             is_last_neighbour_from_stream = self.ep.remove_neighbour_from_stream(stream_id, ip)
 
-            if is_last_neighbour_from_stream:
+            if is_last_neighbour_from_stream and not self.ep.get_client_state():
                 self.ep.remove_stream(stream_id)
                 # Update the information to the top of the tree
                 neighbour_to_rp = self.ep.get_neighbour_to_rp()
