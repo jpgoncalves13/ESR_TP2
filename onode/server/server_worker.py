@@ -143,15 +143,15 @@ class ServerWorker:
 
         if self.ep.rendezvous:
             neighbours = []
-            rp_entry = ('0.0.0.0', 0, 0)
+            rp_entry = (0, 0)
         else:
             rp_entry = self.ep.get_best_entry_rp()
             neighbours = self.ep.get_neighbours_to_rp()
             neighbours = [neighbour for neighbour in neighbours if neighbour != address[0]]
-            if rp_entry is not None and rp_entry[1] == address[0]:
+            if rp_entry is not None and rp_entry[0] == address[0]:
                 rp_entry = None
             elif rp_entry is not None:
-                rp_entry = (rp_entry[0], rp_entry[2], rp_entry[3])
+                rp_entry = (rp_entry[1], rp_entry[2])
 
         packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, '0.0.0.0',
                         (rp_entry, neighbours))

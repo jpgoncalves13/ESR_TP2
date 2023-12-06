@@ -20,13 +20,8 @@ class ProbeThread(threading.Thread):
         rp_entry, neighbours = packet.payload
 
         if rp_entry is not None and not self.state.rendezvous:
-            rp_ip = rp_entry[0]
-            if rp_ip == '0.0.0.0':
-                rp_ip = neighbour
-
-            # Change function because this is rp only
             current_best_route_to_rp = self.state.get_neighbour_to_rp()
-            self.state.update_metrics_rp(neighbour, rp_entry[1] + delay, max(rp_entry[2], loss))
+            self.state.update_metrics_rp(neighbour, rp_entry[0] + delay, max(rp_entry[1], loss))
             new_best_route_to_rp = self.state.get_neighbour_to_rp()
 
             if current_best_route_to_rp != new_best_route_to_rp:
