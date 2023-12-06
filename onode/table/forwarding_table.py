@@ -160,8 +160,8 @@ class ForwardingTable:
                 return
 
             best_score = sys.maxsize
-            best_entry_neighbour = None
             best_entry_ip = None
+            best_entry = None
             for rp_ip in self.rp_table:
                 for ng, entry in self.rp_table[rp_ip].items():
                     entry_score = entry.get_metric()
