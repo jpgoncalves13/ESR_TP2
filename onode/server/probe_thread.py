@@ -32,19 +32,22 @@ class ProbeThread(threading.Thread):
 
                 for stream_id in self.state.get_streams():
                     packet_join = Packet(PacketType.JOIN, stream_id).serialize()
-                    packet_leave = Packet(PacketType.LEAVE, stream_id).serialize()
-                    ProbeThread.send_packet_with_confirmation(udp_socket, packet_leave,
-                                                              (current_best_route_to_rp, self.state.port))
                     ProbeThread.send_packet_with_confirmation(udp_socket, packet_join,
-                                                              (new_best_route_to_rp, self.state.port))
+                                                              (current_best_route_to_rp, self.state.port))
+
+                    if current_best_route_to_rp is not None:
+                        packet_leave = Packet(PacketType.LEAVE, stream_id).serialize()
+                        ProbeThread.send_packet_with_confirmation(udp_socket, packet_leave,
+                                                                  (new_best_route_to_rp, self.state.port))
 
                 if self.state.get_client_state():
-                    packet_leave = Packet(PacketType.JOIN, self.state.client_stream_id).serialize()
-                    ProbeThread.send_packet_with_confirmation(udp_socket, packet_leave,
-                                                              (new_best_route_to_rp, self.state.port))
-                    packet_join = Packet(PacketType.LEAVE, self.state.client_stream_id).serialize()
+                    packet_join = Packet(PacketType.JOIN, self.state.client_stream_id).serialize()
                     ProbeThread.send_packet_with_confirmation(udp_socket, packet_join,
-                                                              (current_best_route_to_rp, self.state.port))
+                                                              (new_best_route_to_rp, self.state.port))
+                    if current_best_route_to_rp is not None:
+                        packet_leave = Packet(PacketType.LEAVE, self.state.client_stream_id).serialize()
+                        ProbeThread.send_packet_with_confirmation(udp_socket, packet_leave,
+                                                                  (current_best_route_to_rp, self.state.port))
 
                 udp_socket.close()
 
