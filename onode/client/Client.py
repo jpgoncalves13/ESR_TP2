@@ -1,5 +1,5 @@
 import io
-import os
+import sys
 import socket
 import threading
 import time
@@ -63,7 +63,7 @@ class Client:
         address = (neighbour_to_rp, self.ep.port)
         ServerWorker.send_packet_with_confirmation(sock, packet, address)
         self.master.destroy()  # Close the gui window
-        os._exit()
+        sys.exit(1)
 
     def pause_movie(self):
         """Pause button handler."""
