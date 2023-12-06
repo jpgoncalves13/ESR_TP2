@@ -33,7 +33,7 @@ def main():
         while data:
             frameNumber = stream.frameNbr()
             print(i)
-            time.sleep(0.05)
+            time.sleep(5)
             i += 1
             try:
                 rtp_packet = makeRtp(data, frameNumber)

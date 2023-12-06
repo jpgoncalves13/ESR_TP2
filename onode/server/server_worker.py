@@ -61,7 +61,7 @@ class ServerWorker:
         neighbours = self.ep.get_stream_neighbours(packet.stream_id)
 
         if self.ep.debug:
-            print(f"DEBUG: Stream packet sent to: {neighbours}")
+            print(f"DEBUG: Stream packet sent to: {neighbours} ## Original Server ##: {ip}")
 
         if self.ep.get_client_state() and packet.stream_id == self.ep.client_stream_id:
             self.ep.add_packet_to_buffer(packet.payload)

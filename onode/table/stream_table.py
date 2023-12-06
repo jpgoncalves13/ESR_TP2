@@ -60,8 +60,8 @@ class StreamTable:
     """
     def remove_server_from_stream(self, server_ip):
         with self.table_lock:
-            for stream_id in self.servers_entries:
-                servers, _ = self.servers_entries[stream_id]
+            for stream_id in self.table:
+                servers, _ = self.table[stream_id]
                 if server_ip in servers:
                     servers.discard(server_ip)
                     break

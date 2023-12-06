@@ -166,17 +166,19 @@ class ProbeThread(threading.Thread):
 
             if self.state.debug:
                 print(f"DEBUG: Sending the probe message to: {neighbours}")
-
+            print("MMMMMMM")
             for neighbour in neighbours:
                 threading.Thread(target=self.handle_neighbour_measure, args=(neighbour,)).start()
-
+            print("OOOOOOOOOOooo" + str(self.state.rendezvous))
             if self.state.rendezvous:
                 servers = self.state.get_servers()
+                print("SERVERS: " + str(servers))
                 if self.state.debug:
                     print(f"DEBUG: Sending the probe message to servers {servers}")
 
                 for server in servers:
                     loss_measured, delay_measured, last_packet = self.measure(server)
+                    print("LAST PACKET: " + str(last_packet))
                     if last_packet is not None and last_packet.type == PacketType.RMEASURE:
                         self.handle_servers(server, delay_measured, loss_measured)
                     else:

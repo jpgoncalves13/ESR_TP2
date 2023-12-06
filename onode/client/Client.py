@@ -93,7 +93,6 @@ class Client:
 
             address = (neighbour_to_rp, self.ep.port)
             ServerWorker.send_packet_with_confirmation(sock, packet, address)
-            print(f'Sending the JOIN {address}')
             self.ep.update_client_state(True)
             threading.Thread(target=self.listen_rtp).start()
 
