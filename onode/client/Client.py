@@ -54,7 +54,7 @@ class Client:
     def exit_client(self):
         """Teardown button handler."""
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        packet = Packet(PacketType.LEAVE, self.ep.client_stream_id)
+        packet = Packet(PacketType.LEAVE, self.ep.client_stream_id).serialize()
         self.ep.update_client_state(False)
         neighbour_to_rp = self.ep.get_neighbour_to_rp()
         while neighbour_to_rp is None:
@@ -68,7 +68,7 @@ class Client:
     def pause_movie(self):
         """Pause button handler."""
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        packet = Packet(PacketType.LEAVE, self.ep.client_stream_id)
+        packet = Packet(PacketType.LEAVE, self.ep.client_stream_id).serialize()
         self.ep.update_client_state(False)
         neighbour_to_rp = self.ep.get_neighbour_to_rp()
         while neighbour_to_rp is None:
