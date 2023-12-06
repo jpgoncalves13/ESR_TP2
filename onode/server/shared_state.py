@@ -17,7 +17,7 @@ class EP:
         self.table = ForwardingTable()
         self.stream_table = StreamTable()
 
-        # self.neighbours_lock = threading.Lock()
+        self.neighbours_lock = threading.Lock()
         self.neighbours = neighbours
         self.num_neighbours = len(neighbours) if neighbours is not None else 0
 
@@ -36,7 +36,8 @@ class EP:
         return data
 
     def get_neighbours_to_rp(self):
-        return self.table.get_neighbours_to_rp()
+        with self.neighbours_lock:
+            return self.table.get_neighbours_to_rp()
 
     def update_client_state(self, state):
         with self.client_lock:
@@ -50,15 +51,15 @@ class EP:
     Get all the neighbours
     """
     def get_neighbours(self):
-        # with self.neighbours_lock:
-        return list(self.neighbours)
+        with self.neighbours_lock:
+            return list(self.neighbours)
 
     """
     Get the number of neighbours
     """
     def get_num_neighbours(self):
-        # with self.neighbours_lock:
-        return self.num_neighbours
+        with self.neighbours_lock:
+            return self.num_neighbours
 
     """
     Add a neighbour 
@@ -68,17 +69,6 @@ class EP:
             if neighbour not in self.neighbours:
                 self.neighbours.append(neighbour)
                 self.num_neighbours += 1
-
-    
-    Add a list of neighbour 
-    
-    def add_neighbours(self, neighbours):
-        with self.neighbours_lock:
-            for neighbour in neighbours:
-                if neighbour not in self.neighbours:
-                    self.neighbours.append(neighbour)
-                    self.num_neighbours += 1
-
 
     Remove a neighbour 
     
@@ -126,6 +116,13 @@ class EP:
 
     def get_table_rp(self):
         return self.table.get_table_rp()
+
+    def add_neighbours(self, neighbours):
+        with self.neighbours_lock:
+            for neighbour in neighbours:
+                if neighbour not in self.neighbours:
+                    self.neighbours.append(neighbour)
+                    self.num_neighbours += 1
 
     # STREAM TABLE
     
