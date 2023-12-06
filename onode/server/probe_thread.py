@@ -74,13 +74,13 @@ class ProbeThread(threading.Thread):
         neighbour_to_rp = self.state.get_neighbour_to_rp()
         if neighbour_to_rp is None and not self.state.rendezvous:
             # Add to neighbours the next steps of the neighbour (which is dead)
-
             # TODO
-            # self.state.add_neighbours(next_steps)
+            self.state.add_neighbours(next_steps)
 
+            neighbour_to_rp = self.state.get_neighbour_to_rp()
             while neighbour_to_rp is None:
                 neighbour_to_rp = self.state.get_neighbour_to_rp()
-                time.sleep(5)
+                time.sleep(1)
 
             udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             udp_socket.settimeout(5)
@@ -138,6 +138,7 @@ class ProbeThread(threading.Thread):
 
     def run(self):
         self.running = True
+        current_sleep = 0.5 # Initial sleep time
 
         while self.running:
             neighbours = self.state.get_neighbours()
@@ -150,8 +151,9 @@ class ProbeThread(threading.Thread):
                 if last_packet is not None and last_packet.type == PacketType.RMEASURE:
                     self.handle_neighbour_response(neighbour, last_packet, delay_measured, loss_measured)
                 else:
-                    pass
-                    # self.handle_neighbour_death(neighbour)
+                    death_thread = threading.Thread(target=self.handle_neighbour_death, args=(neighbour,))
+                    death_thread.start()
+                    current_sleep += 0.5
 
             if self.state.rendezvous:
                 servers = self.state.get_servers()
@@ -165,7 +167,9 @@ class ProbeThread(threading.Thread):
                     else:
                         self.state.remove_server_from_stream(server)
 
-            time.sleep(self.interval)
+            time.sleep(current_sleep)
+            if current_sleep < self.interval:
+                current_sleep += 0.5
 
     def stop(self):
         self.running = False
