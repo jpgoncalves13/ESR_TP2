@@ -152,6 +152,8 @@ class ForwardingTable:
 
             # Get the best entry
             with self.tree_lock:
+                if self.rp_entry is None:
+                    return
                 best_entry_neighbour = self.rp_entry[1]
 
             if best_entry_neighbour != neighbour:
