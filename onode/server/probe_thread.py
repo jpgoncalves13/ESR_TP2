@@ -26,7 +26,7 @@ class ProbeThread(threading.Thread):
 
             # Change function because this is rp only
             current_best_route_to_rp = self.state.get_neighbour_to_rp()
-            self.state.update_metrics_rp(rp_ip, neighbour, rp_entry[1] + delay, max(rp_entry[2], loss))
+            self.state.update_metrics_rp(neighbour, rp_entry[1] + delay, max(rp_entry[2], loss))
             new_best_route_to_rp = self.state.get_neighbour_to_rp()
 
             if current_best_route_to_rp != new_best_route_to_rp:

@@ -111,8 +111,8 @@ class EP:
     Update the metrics of an path entry to the rp
     Based on the the rp_ip and the neighbour, update the next_hop, the delay and the loss
     """
-    def update_metrics_rp(self, leaf, neighbour, delay, loss):
-        self.table.update_metrics_rp(leaf, neighbour, delay, loss)
+    def update_metrics_rp(self, neighbour, delay, loss):
+        self.table.update_metrics_rp(neighbour, delay, loss)
 
     def add_next_steps(self, neighbour, next_steps):
         self.table.add_next_steps(neighbour, next_steps)

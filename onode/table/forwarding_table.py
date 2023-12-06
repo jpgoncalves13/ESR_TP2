@@ -15,8 +15,8 @@ class ForwardingTable:
         self.tree_lock = threading.Lock()
         self.steps_lock = threading.Lock()
         self.next_steps = {}  # Neighbour : Neighbours of neighbour
-        self.rp_table = {}    # RP IP : Neighbour : Entry
-        self.rp_entry = None  # (RP IP, Neighbour, Entry)
+        self.rp_table = {}    # Neighbour : Entry
+        self.rp_entry = None  # (Neighbour, Entry)
         self.threshold = 10
 
     def add_next_steps(self, neighbour, next_steps):
@@ -33,7 +33,7 @@ class ForwardingTable:
     Adds a new entry to the rp table
     Store the neighbour, the next_hop, the delay and the loss in that path
     """
-    def add_entry_rp(self, rp_ip, neighbour, delay=0, loss=0):
+    def add_entry_rp(self, neighbour, delay=0, loss=0):
         # Create the new entry
         entry = TableEntry(delay, loss)
         is_first_entry = False
@@ -43,13 +43,10 @@ class ForwardingTable:
             if len(self.rp_table.keys()) == 0:
                 is_first_entry = True
                 with self.tree_lock:
-                    self.rp_entry = (rp_ip, neighbour, entry)
+                    self.rp_entry = (neighbour, entry)
 
             # Add the entry
-            if rp_ip not in self.rp_table:
-                self.rp_table[rp_ip] = {}
-
-            self.rp_table[rp_ip][neighbour] = entry
+            self.rp_table[neighbour] = entry
 
             return is_first_entry
 
@@ -59,7 +56,7 @@ class ForwardingTable:
     def get_neighbour_to_rp(self):
         with self.tree_lock:
             if self.rp_entry is not None:
-                return self.rp_entry[1]
+                return self.rp_entry[0]
             return None
 
     """
@@ -75,106 +72,106 @@ class ForwardingTable:
     def get_best_entry_rp(self):
         with self.tree_lock:
             if self.rp_entry is not None:
-                return self.rp_entry[0], self.rp_entry[1], self.rp_entry[2].delay, self.rp_entry[2].loss
+                return self.rp_entry[0], self.rp_entry[1].delay, self.rp_entry[1].loss
             return None
     
     """
     Get the entry to RP given the rp_ip and the neighbour
     """
-    def get_entry_rp(self, rp_ip, neighbour):
-        if rp_ip in self.rp_table and neighbour in self.rp_table[rp_ip]:
-            return self.rp_table[rp_ip][neighbour]
+    def get_entry_rp(self, neighbour):
+        if neighbour in self.rp_table:
+            return self.rp_table[neighbour]
         return None
-    
+
+    def add_best_entry(self, entry):
+        with self.tree_lock:
+            self.rp_entry = entry
+
+    def get_best_entry(self):
+        with self.tree_lock:
+            return self.rp_entry
+
     """
     Update the metrics of an path entry to the rp
     Based on the the rp_ip and the neighbour, update the next_hop, the delay and the loss
     """
-    def update_metrics_rp(self, rp_ip, neighbour, delay, loss):
-        is_first_entry = self.add_entry_rp(rp_ip, neighbour, delay, loss)
-        if is_first_entry:
-            return
+    def update_metrics_rp(self, neighbour, delay, loss):
+        entry = TableEntry(delay, loss)
 
         with self.table_lock:
-            current_entry = self.get_entry_rp(rp_ip, neighbour)
+            # first entry in table -> is the best entry
+            if len(self.rp_table.keys()) == 0:
+                # Add the entry
+                self.rp_table[neighbour] = entry
+                self.add_best_entry((neighbour, entry))
+                return
+
+            # Add the entry
+            self.rp_table[neighbour] = entry
 
             # Get the best entry
-            with self.tree_lock:
-                best_entry_ip = self.rp_entry[0]
-                best_entry_neighbour = self.rp_entry[1]
-                best_entry = self.rp_entry[2]
+            best_entry_neighbour, best_entry = self.get_best_entry()
 
             # The entry to update is the best entry
-            if best_entry_ip == rp_ip and best_entry_neighbour == neighbour:
-                old_metric = best_entry.get_metric()
-                best_entry.delay = delay
-                best_entry.loss = loss
-                new_metric = best_entry.get_metric()
+            if best_entry_neighbour == neighbour:
 
-                if old_metric < new_metric + self.threshold:
+                if best_entry.get_metric() < entry.get_metric() + self.threshold:
+                    self.add_best_entry((best_entry_neighbour, best_entry))
                     return
 
                 # Obtain the best entry
                 best_score = sys.maxsize
-                for rp in self.rp_table.keys():
-                    for ng, entry in self.rp_table[rp].items():
-                        entry_score = entry.get_metric()
-                        if entry_score < best_score:
-                            best_entry = entry
-                            best_entry_neighbour = ng
-                            best_entry_ip = rp
+                for ng, entry in self.rp_table.items():
+                    entry_score = entry.get_metric()
+                    if entry_score < best_score:
+                        best_entry = entry
+                        best_entry_neighbour = ng
 
-                with self.tree_lock:
-                    self.rp_entry = (best_entry_ip, best_entry_neighbour, best_entry)
-
+                self.add_best_entry((best_entry_neighbour, best_entry))
                 return
 
-            if best_entry.get_metric() > current_entry.get_metric() + self.threshold:
-                best_entry_ip = rp_ip
+            if best_entry.get_metric() > entry.get_metric() + self.threshold:
                 best_entry_neighbour = neighbour
-                best_entry = current_entry
+                best_entry = entry
 
-            with self.tree_lock:
-                self.rp_entry = (best_entry_ip, best_entry_neighbour, best_entry)
+            self.add_best_entry((best_entry_neighbour, best_entry))
+
+    def remove_next_steps(self, neighbour):
+        with self.steps_lock:
+            if neighbour in self.next_steps:
+                del self.next_steps[neighbour]
 
     """
         Update the table when a neighbour dies 
     """
     def update_neighbour_death(self, neighbour):
         with self.table_lock:
-            for rp_ip in self.rp_table:
-                if neighbour in self.rp_table[rp_ip]:
-                    del self.rp_table[rp_ip][neighbour]
+            # Remove the entry to rp with this neighbour
+            if neighbour in self.rp_table:
+                del self.rp_table[neighbour]
 
-            with self.steps_lock:
-                if neighbour in self.next_steps:
-                    del self.next_steps[neighbour]
+            # Delete the neighbour in next steps
+            self.remove_next_steps(neighbour)
 
             # Get the best entry
-            with self.tree_lock:
-                if self.rp_entry is None:
-                    return
-                best_entry_neighbour = self.rp_entry[1]
+            best_entry = self.get_best_entry()
+            if best_entry is None:
+                return
 
-            if best_entry_neighbour != neighbour:
+            if best_entry[0] != neighbour:
                 return
 
             best_score = sys.maxsize
-            best_entry_ip = None
             best_entry = None
-            for rp_ip in self.rp_table:
-                for ng, entry in self.rp_table[rp_ip].items():
-                    entry_score = entry.get_metric()
-                    if entry_score < best_score:
-                        best_entry = entry
-                        best_entry_neighbour = ng
-                        best_entry_ip = rp_ip
+            best_entry_neighbour = None
+            for ng, entry in self.rp_table.items():
+                entry_score = entry.get_metric()
+                if entry_score < best_score:
+                    best_entry = entry
+                    best_entry_neighbour = ng
 
-            with self.tree_lock:
-                if best_entry is not None:
-                    self.rp_entry = (best_entry_ip, best_entry_neighbour, best_entry)
-                else:
-                    self.rp_entry = None
+            best_entry = (best_entry_neighbour, best_entry) if best_entry is not None else None
+            self.add_best_entry(best_entry)
 
     """
         Only for debug
