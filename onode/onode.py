@@ -66,7 +66,7 @@ def request_neighbors(bootstrapper_address, timeout=5, max_retries=3):
     try:
         while retries < max_retries:
             try:
-                packet_serialized = Packet(PacketType.SETUP, '0.0.0.0', 0, '0.0.0.0').serialize()
+                packet_serialized = Packet(PacketType.SETUP, 0).serialize()
                 udp_socket.sendto(packet_serialized, bootstrapper_address)
                 response, _ = udp_socket.recvfrom(4096)
                 neighbours = Packet.deserialize(bytearray(response)).payload

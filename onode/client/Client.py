@@ -2,6 +2,7 @@ import io
 import os
 import socket
 import threading
+import time
 import tkinter.messagebox as messagebox
 from tkinter import *
 
@@ -54,7 +55,11 @@ class Client:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         packet = Packet(PacketType.LEAVE, self.ep.client_stream_id)
         self.ep.update_client_state(False)
-        sock.sendto(packet.serialize(), (self.ep.get_neighbour_to_rp(), self.ep.port))
+        neighbour_to_rp = self.ep.get_neighbour_to_rp()
+        while neighbour_to_rp is None:
+            neighbour_to_rp = self.ep.get_neighbour_to_rp()
+            time.sleep(1)
+        sock.sendto(packet.serialize(), (neighbour_to_rp, self.ep.port))
         self.master.destroy()  # Close the gui window
 
     def pause_movie(self):
@@ -62,34 +67,44 @@ class Client:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         packet = Packet(PacketType.LEAVE, self.ep.client_stream_id)
         self.ep.update_client_state(False)
-        sock.sendto(packet.serialize(), (self.ep.get_neighbour_to_rp(), self.ep.port))
+        neighbour_to_rp = self.ep.get_neighbour_to_rp()
+        while neighbour_to_rp is None:
+            neighbour_to_rp = self.ep.get_neighbour_to_rp()
+            time.sleep(1)
+        sock.sendto(packet.serialize(), (neighbour_to_rp, self.ep.port))
 
     def play_movie(self):
         """Play button handler."""
 
         # Create a new thread to listen for RTP packets
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.settimeout(5)
-        packet = Packet(PacketType.JOIN, self.ep.client_stream_id).serialize()
-        response = False
-        address = (self.ep.get_neighbour_to_rp(), self.ep.port)
-        while not response:
-            sock.sendto(packet, address)
-            try:
-                resp, _ = sock.recvfrom(4096)
-                packet = Packet.deserialize(resp)
-                if packet.type == PacketType.ACK:
-                    response = True
-            except socket.timeout:
-                pass
+        if not self.ep.get_client_state():
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.settimeout(5)
+            packet = Packet(PacketType.JOIN, self.ep.client_stream_id).serialize()
+            response = False
+            neighbour_to_rp = self.ep.get_neighbour_to_rp()
+            while neighbour_to_rp is None:
+                neighbour_to_rp = self.ep.get_neighbour_to_rp()
+                time.sleep(1)
 
-        print(f'Sending the JOIN {address}')
-        self.ep.update_client_state(True)
-        threading.Thread(target=self.listen_rtp).start()
+            address = (neighbour_to_rp, self.ep.port)
+            while not response:
+                sock.sendto(packet, address)
+                try:
+                    resp, _ = sock.recvfrom(4096)
+                    packet = Packet.deserialize(resp)
+                    if packet.type == PacketType.ACK:
+                        response = True
+                except socket.timeout:
+                    pass
+
+            print(f'Sending the JOIN {address}')
+            self.ep.update_client_state(True)
+            threading.Thread(target=self.listen_rtp).start()
 
     def listen_rtp(self):
         """Listen for RTP packets."""
-        while True:
+        while self.ep.get_client_state():
             try:
                 data = self.ep.get_packet_from_buffer()
                 if data:

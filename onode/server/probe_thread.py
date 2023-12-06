@@ -138,7 +138,7 @@ class ProbeThread(threading.Thread):
 
     def run(self):
         self.running = True
-        current_sleep = 0.5 # Initial sleep time
+        current_sleep = 0.5  # Initial sleep time
 
         while self.running:
             neighbours = self.state.get_neighbours()
