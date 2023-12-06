@@ -68,7 +68,7 @@ class ForwardingTable:
     """
     def update_metrics_rp(self, neighbour, delay, loss):
         entry = TableEntry(delay, loss)
-
+        print("METRIC "+ str(neighbour) + " : " + str(entry.get_metric()))
         with self.table_lock:
             # first entry in table -> is the best entry
             if len(self.rp_table.keys()) == 0:
@@ -85,9 +85,8 @@ class ForwardingTable:
 
             # The entry to update is the best entry
             if best_entry_neighbour == neighbour:
-
-                if best_entry.get_metric() < entry.get_metric() + self.threshold:
-                    self.add_best_entry((best_entry_neighbour, best_entry))
+                if best_entry.get_metric() + self.threshold > entry.get_metric():
+                    self.add_best_entry((best_entry_neighbour, entry))
                     return
 
                 # Obtain the best entry
@@ -156,7 +155,7 @@ class ForwardingTable:
                     if entry_score < best_score:
                         best_score = entry_score
                         best_entry = entry
-            return best_entry
+            return (best_entry.delay, best_entry.loss) if best_entry is not None else None
 
     """
         Only for debug
