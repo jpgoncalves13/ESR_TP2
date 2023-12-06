@@ -44,7 +44,7 @@ Node Options:
         exit(1)
 
     if debug:
-        print(f"DEBUG: Neighbors -> {neighbours}")
+        print(f"DEBUG: Neighbours -> {neighbours}")
 
     ep = EP(debug, bootstrapper, is_rendezvous_point, port, neighbours, tag, stream_id)
 

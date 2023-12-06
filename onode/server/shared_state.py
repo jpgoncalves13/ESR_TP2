@@ -133,6 +133,9 @@ class EP:
     """      
     def remove_neighbour_from_stream(self, stream_id, neighbour_ip):
         return self.stream_table.remove_neighbour_from_stream(stream_id, neighbour_ip)
+    
+    def remove_neighbour_from_stream_table(self, neighbour_ip):
+        return self.stream_table.remove_neighbour_from_stream_table(neighbour_ip)
 
     def remove_stream(self, stream_id):
         return self.stream_table.remove_stream(stream_id)

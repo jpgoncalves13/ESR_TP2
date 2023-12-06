@@ -85,6 +85,8 @@ class ProbeThread(threading.Thread):
     def handle_neighbour_death(self, neighbour):
         next_steps = self.state.get_next_steps(neighbour)
         self.state.update_neighbour_death(neighbour)
+        print("REMOVE " + str(neighbour))
+        self.state.remove_neighbour_from_stream_table(neighbour)
         # Send join to the neighbours of the neighbour if I do not have other option
         neighbour_to_rp = self.state.get_neighbour_to_rp()
         if neighbour_to_rp is None and not self.state.rendezvous:
@@ -139,7 +141,7 @@ class ProbeThread(threading.Thread):
                 total_delay += (end_time - start_time) * 1000  # ms
 
             except socket.timeout:
-                pass
+                total_delay += self.timeout*1000
 
         udp_socket.close()
 
@@ -172,11 +174,13 @@ class ProbeThread(threading.Thread):
                     threading.Thread(target=self.handle_neighbour_measure, args=(neighbour,)).start()
             else:
                 servers = self.state.get_servers()
+                print("SERVERS: " + str(servers))
                 if self.state.debug:
                     print(f"DEBUG: Sending the probe message to servers {servers}")
 
                 for server in servers:
                     loss_measured, delay_measured, last_packet = self.measure(server)
+                    print("LAST PACKET: " + str(last_packet))
                     if last_packet is not None and last_packet.type == PacketType.RMEASURE:
                         self.handle_servers(server, delay_measured, loss_measured)
                     else:

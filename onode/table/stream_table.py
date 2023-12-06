@@ -60,8 +60,8 @@ class StreamTable:
     """
     def remove_server_from_stream(self, server_ip):
         with self.table_lock:
-            for stream_id in self.servers_entries:
-                servers, _ = self.servers_entries[stream_id]
+            for stream_id in self.table:
+                servers, _ = self.table[stream_id]
                 if server_ip in servers:
                     servers.discard(server_ip)
                     break
@@ -101,7 +101,7 @@ class StreamTable:
     Update the metrics associated with a given server (server, delay, loss)
     """
     def update_metrics_server(self, server, delay, loss):
-        with self.servers_entries:
+        with self.entries_lock:
             self.servers_entries[server] = TableEntry(delay, loss)
 
     """
@@ -134,3 +134,8 @@ class StreamTable:
                     streams.add(stream_id)
         return streams
         
+    def remove_neighbour_from_stream_table(self, neighbour_ip):
+        with self.table_lock:
+            for stream_id in self.table:
+                self.table[stream_id][1].discard(neighbour_ip)
+                
