@@ -122,7 +122,7 @@ class EP:
         return self.table.get_next_steps(neighbour)
 
     def update_neighbour_death(self, neighbour):
-        return self.table.update_neighbour_death(neighbour)
+        self.table.update_neighbour_death(neighbour)
 
     def get_table_rp(self):
         return self.table.get_table_rp()
