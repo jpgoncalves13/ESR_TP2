@@ -157,11 +157,11 @@ class ProbeThread(threading.Thread):
         if not self.state.rendezvous and last_packet is not None and last_packet.type == PacketType.RMEASURE:
             self.handle_neighbour_response(neighbour, last_packet, delay_measured, loss_measured)
         else:
-            if self.state.rendezvous and last_packet is None:
-                self.state.remove_neighbour_from_stream_table(neighbour)
-            else:
-                self.handle_neighbour_death(neighbour)
-                self.increment_sleep()
+            # if self.state.rendezvous and last_packet is None:
+            #    self.state.remove_neighbour_from_stream_table(neighbour)
+            # else:
+            self.handle_neighbour_death(neighbour)
+            self.increment_sleep()
 
     def run(self):
         self.running = True
@@ -172,8 +172,9 @@ class ProbeThread(threading.Thread):
             if self.state.debug:
                 print(f"DEBUG: Sending the probe message to: {neighbours}")
 
-            for neighbour in neighbours:
-                threading.Thread(target=self.handle_neighbour_measure, args=(neighbour,)).start()
+            if not self.state.rendezvous:
+                for neighbour in neighbours:
+                    threading.Thread(target=self.handle_neighbour_measure, args=(neighbour,)).start()
 
             if self.state.rendezvous:
                 servers = self.state.get_servers()
