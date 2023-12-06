@@ -125,7 +125,7 @@ class ProbeThread(threading.Thread):
                 total_delay += (end_time - start_time) * 1000  # ms
 
             except socket.timeout:
-                pass
+                total_delay += self.timeout*1000
 
         udp_socket.close()
 
