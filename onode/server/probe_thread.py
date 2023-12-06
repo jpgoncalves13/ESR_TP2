@@ -158,7 +158,7 @@ class ProbeThread(threading.Thread):
             self.handle_neighbour_response(neighbour, last_packet, delay_measured, loss_measured)
         else:
             if self.state.rendezvous:
-                self.state.remove_neighbour_from_stream(neighbour)
+                self.state.remove_neighbour_from_stream_table(neighbour)
             else:
                 self.handle_neighbour_death(neighbour)
                 self.increment_sleep()
