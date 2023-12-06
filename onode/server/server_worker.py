@@ -78,8 +78,10 @@ class ServerWorker:
     """
     def handle_join(self, packet, ip):
         stream_id = packet.stream_id
-        
+        print(f"STREAM ID: {stream_id}")
         if not self.ep.check_if_stream_exists(stream_id):
+
+            print(f"STREAM ID: {stream_id}")
             # Add the stream and the neighbour to the state
             self.ep.add_neighbour_to_stream(stream_id, ip)
             
