@@ -102,11 +102,9 @@ class ServerWorker:
     def handle_leave(self, packet, ip):
         stream_id = packet.stream_id
 
-        print("OLLLLLAAAAAAAAAAAAAAA1")
         if self.ep.check_if_stream_exists(stream_id):
             # Remove the neighbour from the set of neighbours of that stream
             is_last_neighbour_from_stream = self.ep.remove_neighbour_from_stream(stream_id, ip)
-            print("OLLLLLAAAAAAAAAAAAAAA")
 
             if is_last_neighbour_from_stream and not self.ep.rendezvous:
                 self.ep.remove_stream(stream_id)

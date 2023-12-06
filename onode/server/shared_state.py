@@ -143,13 +143,13 @@ class EP:
         return self.stream_table.remove_neighbour_from_stream(stream_id, neighbour_ip)
 
     def remove_stream(self, stream_id):
-        return self.stream_table.remove_stream(neighbour_ip)
+        return self.stream_table.remove_stream(stream_id)
 
     """
     Check if a stream is already in the stream list
     """
     def check_if_stream_exists(self, stream_id):
-        self.stream_table.check_if_stream_exists(stream_id)
+        return self.stream_table.check_if_stream_exists(stream_id)
 
     """
     Add a server to a stream
