@@ -14,11 +14,9 @@ class PacketType(Enum):
 
 class Packet:
 
-    def __init__(self, packet_type, leaf, stream_id, last_hop, payload=None):
+    def __init__(self, packet_type, stream_id, payload=None):
         self.type = packet_type  # 1
-        self.leaf = leaf  # 4
         self.stream_id = stream_id  # 1
-        self.last_hop = last_hop  # 4
         self.payload = payload  # Variable
 
     def serialize(self):
@@ -28,14 +26,8 @@ class Packet:
         byte_array = bytearray()
         # type
         byte_array += self.type.value.to_bytes(1, byteorder='big')
-        # leaf
-        leaf_ip_parts = self.leaf.split('.')
-        byte_array += b''.join([int(part).to_bytes(1, 'big') for part in leaf_ip_parts])
         # stream_id
         byte_array += self.stream_id.to_bytes(1, byteorder='big')
-        # last hop
-        last_hop_ip_parts = self.last_hop.split('.')
-        byte_array += b''.join([int(part).to_bytes(1, 'big') for part in last_hop_ip_parts])
 
         if self.type == PacketType.RSETUP:  # List of neighbours
             byte_array += len(self.payload).to_bytes(4, byteorder='big')
@@ -77,17 +69,10 @@ class Packet:
         # type (1 byte)
         message_type = PacketType(int.from_bytes(byte_array[offset:offset + 1], byteorder='big'))
         offset += 1
-        # leaf (4 bytes)
-        leaf_ip_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset: offset + 4]]
-        leaf = '.'.join(map(str, leaf_ip_parts))
-        offset += 4
         # stream_id (1 byte)
         stream_id = int.from_bytes(byte_array[offset:offset + 1], byteorder='big')
         offset += 1
         # last_hop
-        last_hop_ip_parts = [int.from_bytes(bytes([byte]), 'big') for byte in byte_array[offset:offset + 4]]
-        last_hop = '.'.join(map(str, last_hop_ip_parts))
-        offset += 4
 
         payload = None
         if message_type == PacketType.STREAM:           
@@ -131,8 +116,7 @@ class Packet:
 
             payload = (rp_entry, neighbours)
 
-        return Packet(message_type, leaf, stream_id, last_hop, payload)
+        return Packet(message_type, stream_id, payload)
 
     def __str__(self):
-        return (str(self.type.value) + ";" + str(self.stream_id) + ";" + ";"
-                + str(self.last_hop) + ";" + str(self.leaf) + ";" + str(self.payload))
+        return str(self.type.value) + ";" + str(self.stream_id) + ";" + ";" + str(self.payload)

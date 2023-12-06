@@ -44,8 +44,7 @@ class ServerWorker:
     def handle_setup(self, address):
         """Bootstrapper response"""
         request_neighbours = self.ep.get_node_info(address[0])
-        packet = Packet(PacketType.RSETUP, '0.0.0.0', 0, '0.0.0.0',
-                        request_neighbours if request_neighbours is not None else [])
+        packet = Packet(PacketType.RSETUP, 0, request_neighbours if request_neighbours is not None else [])
         ServerWorker.send_packet(packet, address)
 
     """
@@ -153,8 +152,7 @@ class ServerWorker:
             elif rp_entry is not None:
                 rp_entry = (rp_entry[1], rp_entry[2])
 
-        packet = Packet(PacketType.RMEASURE, '0.0.0.0', 0, '0.0.0.0',
-                        (rp_entry, neighbours))
+        packet = Packet(PacketType.RMEASURE, 0, (rp_entry, neighbours))
         ServerWorker.send_packet(packet, address)
 
     """
@@ -175,7 +173,7 @@ class ServerWorker:
 
         # Join Message (directly from a client or a node)
         if packet.type == PacketType.JOIN:
-            ServerWorker.send_packet(Packet(PacketType.ACK, '0.0.0.0', 0, '0.0.0.0'), address)
+            ServerWorker.send_packet(Packet(PacketType.ACK, 0), address)
             self.handle_join(packet, address[0])
 
         elif packet.type == PacketType.MEASURE:
@@ -185,7 +183,7 @@ class ServerWorker:
             self.handle_stream(packet, address[0])
 
         elif packet.type == PacketType.LEAVE:
-            ServerWorker.send_packet(Packet(PacketType.ACK, '0.0.0.0', 0, '0.0.0.0'), address)
+            ServerWorker.send_packet(Packet(PacketType.ACK, 0), address)
             self.handle_leave(packet, address[0])
 
         # Bootstrapper
