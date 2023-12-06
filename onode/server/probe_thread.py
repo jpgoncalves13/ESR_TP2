@@ -31,6 +31,7 @@ class ProbeThread(threading.Thread):
         rp_entry, neighbours = packet.payload
 
         if rp_entry is not None:
+            self.state.delete_neighbours(neighbour)
             current_best_route_to_rp = self.state.get_neighbour_to_rp()
             self.state.update_metrics_rp(neighbour, rp_entry[0] + delay, max(rp_entry[1], loss))
             new_best_route_to_rp = self.state.get_neighbour_to_rp()
@@ -88,7 +89,6 @@ class ProbeThread(threading.Thread):
         neighbour_to_rp = self.state.get_neighbour_to_rp()
         if neighbour_to_rp is None and not self.state.rendezvous:
             # Add to neighbours the next steps of the neighbour (which is dead)
-            # TODO
             self.state.add_neighbours(next_steps)
 
             neighbour_to_rp = self.state.get_neighbour_to_rp()
