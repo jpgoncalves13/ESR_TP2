@@ -70,10 +70,11 @@ class ProbeThread(threading.Thread):
             self.state.add_neighbours(next_steps)
 
             time.sleep(12) # TODO IMPORTANTE
-            packet = Packet(PacketType.JOIN, '0.0.0.0', self.state.client_stream_id, '0.0.0.0').serialize()
             udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             udp_socket.settimeout(5)
-            ProbeThread.send_packet_with_confirmation(udp_socket, packet,
+            for stream_id in self.state.get_streams():
+                packet = Packet(PacketType.JOIN, '0.0.0.0', stream_id, '0.0.0.0').serialize()
+                ProbeThread.send_packet_with_confirmation(udp_socket, packet,
                                                       (self.state.get_neighbour_to_rp(), self.state.port))
             udp_socket.close()
 
