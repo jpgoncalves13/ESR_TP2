@@ -15,6 +15,17 @@ class ProbeThread(threading.Thread):
         self.port = port
         self.block = block
         self.timeout = timeout
+        self.lock = threading.Lock()
+        self.current_sleep = 0.5
+
+    def increment_sleep(self):
+        with self.lock:
+            if self.current_sleep < self.interval:
+                self.current_sleep += 0.5
+
+    def get_sleep(self):
+        with self.lock:
+            return self.current_sleep
 
     def handle_neighbour_response(self, neighbour, packet, delay, loss):
         rp_entry, neighbours = packet.payload
@@ -139,9 +150,16 @@ class ProbeThread(threading.Thread):
 
         return loss_measured, delay_measured, last_packet
 
+    def handle_neighbour_measure(self, neighbour):
+        loss_measured, delay_measured, last_packet = self.measure(neighbour)
+        if last_packet is not None and last_packet.type == PacketType.RMEASURE:
+            self.handle_neighbour_response(neighbour, last_packet, delay_measured, loss_measured)
+        else:
+            self.handle_neighbour_death(neighbour)
+            self.increment_sleep()
+
     def run(self):
         self.running = True
-        current_sleep = 0.5  # Initial sleep time
 
         while self.running:
             neighbours = self.state.get_neighbours()
@@ -150,13 +168,7 @@ class ProbeThread(threading.Thread):
                 print(f"DEBUG: Sending the probe message to: {neighbours}")
 
             for neighbour in neighbours:
-                loss_measured, delay_measured, last_packet = self.measure(neighbour)
-                if last_packet is not None and last_packet.type == PacketType.RMEASURE:
-                    self.handle_neighbour_response(neighbour, last_packet, delay_measured, loss_measured)
-                else:
-                    death_thread = threading.Thread(target=self.handle_neighbour_death, args=(neighbour,))
-                    death_thread.start()
-                    current_sleep += 0.5
+                threading.Thread(target=self.handle_neighbour_measure, args=(neighbour,)).start()
 
             if self.state.rendezvous:
                 servers = self.state.get_servers()
@@ -170,9 +182,8 @@ class ProbeThread(threading.Thread):
                     else:
                         self.state.remove_server_from_stream(server)
 
-            time.sleep(current_sleep)
-            if current_sleep < self.interval:
-                current_sleep += 0.5
+            time.sleep(self.get_sleep())
+            self.increment_sleep()
 
     def stop(self):
         self.running = False
