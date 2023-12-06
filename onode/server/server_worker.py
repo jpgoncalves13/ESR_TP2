@@ -149,7 +149,7 @@ class ServerWorker:
             neighbours = self.ep.get_neighbours_to_rp()
             neighbours = [neighbour for neighbour in neighbours if neighbour != address[0]]
             if rp_entry is not None and rp_entry[0] == address[0]:
-                rp_entry = None
+                rp_entry = self.ep.get_best_entry_neighbour_rp(address[0])
             elif rp_entry is not None:
                 rp_entry = (rp_entry[1], rp_entry[2])
 

@@ -95,6 +95,7 @@ class ForwardingTable:
                 for ng, entry in self.rp_table.items():
                     entry_score = entry.get_metric()
                     if entry_score < best_score:
+                        best_score = entry_score
                         best_entry = entry
                         best_entry_neighbour = ng
 
@@ -138,11 +139,24 @@ class ForwardingTable:
             for ng, entry in self.rp_table.items():
                 entry_score = entry.get_metric()
                 if entry_score < best_score:
+                    best_score = entry_score
                     best_entry = entry
                     best_entry_neighbour = ng
 
             best_entry = (best_entry_neighbour, best_entry) if best_entry is not None else None
             self.add_best_entry(best_entry)
+
+    def get_best_entry_neighbour_rp(self, neighbour):
+        with self.table_lock:
+            best_score = sys.maxsize
+            best_entry = None
+            for ng, entry in self.rp_table.items():
+                if ng != neighbour:
+                    entry_score = entry.get_metric()
+                    if entry_score < best_score:
+                        best_score = entry_score
+                        best_entry = entry
+            return best_entry
 
     """
         Only for debug

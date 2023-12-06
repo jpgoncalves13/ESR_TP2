@@ -49,6 +49,8 @@ class ProbeThread(threading.Thread):
                 udp_socket.close()
 
             self.state.add_next_steps(neighbour, neighbours)
+        else:
+            self.state.update_neighbour_death(neighbour)
 
     @staticmethod
     def send_packet_with_confirmation(udp_socket, packet_serialized, address):
