@@ -45,12 +45,12 @@ class ProbeThread(threading.Thread):
                 for stream_id in self.state.get_streams():
                     packet_join = Packet(PacketType.JOIN, stream_id).serialize()
                     ProbeThread.send_packet_with_confirmation(udp_socket, packet_join,
-                                                              (current_best_route_to_rp, self.state.port))
+                                                              (new_best_route_to_rp, self.state.port))
 
                     if current_best_route_to_rp is not None:
                         packet_leave = Packet(PacketType.LEAVE, stream_id).serialize()
                         ProbeThread.send_packet_with_confirmation(udp_socket, packet_leave,
-                                                                  (new_best_route_to_rp, self.state.port))
+                                                                  (current_best_route_to_rp, self.state.port))
 
                 if self.state.get_client_state():
                     packet_join = Packet(PacketType.JOIN, self.state.client_stream_id).serialize()
@@ -83,13 +83,13 @@ class ProbeThread(threading.Thread):
                 retries += 1
 
     def handle_neighbour_death(self, neighbour):
+        current_best_entry = self.state.get_neighbour_to_rp()
         next_steps = self.state.get_next_steps(neighbour)
         self.state.update_neighbour_death(neighbour)
-        print("REMOVE " + str(neighbour))
         self.state.remove_neighbour_from_stream_table(neighbour)
         # Send join to the neighbours of the neighbour if I do not have other option
         neighbour_to_rp = self.state.get_neighbour_to_rp()
-        if neighbour_to_rp is None and not self.state.rendezvous:
+        if neighbour_to_rp != current_best_entry and not self.state.rendezvous:
             # Add to neighbours the next steps of the neighbour (which is dead)
             self.state.add_neighbours(next_steps)
 
@@ -178,13 +178,11 @@ class ProbeThread(threading.Thread):
 
             if self.state.rendezvous:
                 servers = self.state.get_servers()
-                print("SERVERS: " + str(servers))
                 if self.state.debug:
                     print(f"DEBUG: Sending the probe message to servers {servers}")
 
                 for server in servers:
                     loss_measured, delay_measured, last_packet = self.measure(server)
-                    print("LAST PACKET: " + str(last_packet))
                     if last_packet is not None and last_packet.type == PacketType.RMEASURE:
                         self.handle_servers(server, delay_measured, loss_measured)
                     else:

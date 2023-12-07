@@ -1,6 +1,7 @@
 from threading import Thread
 from server.stream_packet import Packet, PacketType
 from server.shared_state import EP
+from client.RtpPacket import RtpPacket
 import socket
 
 
@@ -168,8 +169,14 @@ class ServerWorker:
         packet = Packet.deserialize(response)
 
         # Debug information
-        if self.ep.debug:
+        if self.ep.debug and packet.type != PacketType.STREAM:
             print("## " + (str(self.ep.tag)) + " ## " + f" DEBUG: Processing response to packet: {packet.type} from {str(address)}")
+        elif self.ep.debug:
+            rtp = RtpPacket()
+            rtp.decode(packet.payload)
+            sq = rtp.seqNum()
+            print("## " + (str(self.ep.tag)) + " ## " + f" Seq Num: {sq} from {str(address)}")
+            
 
         # Join Message (directly from a client or a node)
         if packet.type == PacketType.JOIN:
@@ -191,7 +198,7 @@ class ServerWorker:
             self.handle_setup(address)
 
         if self.ep.debug:
-            print("STREAM_TABLE" + str(self.ep.get_stream_table()))
-            print("RP_TABLE" + str(self.ep.get_table_rp()))
-            print("ROUTE TO RP: " + str(self.ep.get_neighbour_to_rp()))
+            print("STREAM_TABLE : " + str(self.ep.get_stream_table()))
+            print("RP_TABLE     : " + str(self.ep.get_table_rp()))
+            print("ROUTE TO RP  : " + str(self.ep.get_neighbour_to_rp()))
 
