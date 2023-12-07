@@ -261,8 +261,6 @@ class Client:
                 if int(lines[0].split(' ')[1]) == 200:
                     if self.requestSent == self.SETUP:
 
-                        print("Entrou aqui")
-
                         # Update RTSP state.
                         self.state = self.READY
 

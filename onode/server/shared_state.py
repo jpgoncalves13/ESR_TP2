@@ -3,24 +3,42 @@ from table.forwarding_table import ForwardingTable
 from table.stream_table import StreamTable
 import copy
 import threading
+import queue
 
 
 class EP:
 
-    def __init__(self, debug: bool, bootstrapper: Bootstrapper, rendezvous: bool, port, neighbours: [str], tag, client):
+    def __init__(self, debug, bootstrapper: Bootstrapper, rendezvous, port, neighbours, tag, stream_id):
         self.debug = debug
         self.bootstrapper = bootstrapper
         self.rendezvous = rendezvous
-        self.table = ForwardingTable()
-        self.stream_table = StreamTable()
-        self.neighbours = neighbours
-        self.num_neighbours = len(neighbours) if neighbours is not None else 0
-        self.neighbours_lock = threading.Lock()
         self.port = port
         self.tag = tag
-        self.client = client
+        self.table = ForwardingTable()
+        self.stream_table = StreamTable()
+
+        self.initial_neighbours = neighbours
+        self.neighbours_lock = threading.Lock()
+        self.neighbours = neighbours
+        self.num_neighbours = len(neighbours) if neighbours is not None else 0
+
+        self.client_stream_id = stream_id  # When the client is together with the node
         self.client_lock = threading.Lock()
         self.client_on = False
+        self.buffer = queue.Queue(maxsize=100) if self.client_stream_id > 0 else None
+
+    def add_packet_to_buffer(self, rtp_packet):
+        if self.client_stream_id > 0:
+            self.buffer.put(rtp_packet)
+
+    def get_packet_from_buffer(self):
+        data = self.buffer.get()
+        self.buffer.task_done()
+        return data
+
+    def get_neighbours_to_rp(self):
+        with self.neighbours_lock:
+            return self.table.get_neighbours_to_rp()
 
     def update_client_state(self, state):
         with self.client_lock:
@@ -30,105 +48,143 @@ class EP:
         with self.client_lock:
             return self.client_on
 
-    # NEIGHBOURS
-
-    def get_listening_neighbours(self):
-        with self.neighbours_lock:
-            listening_neighbours = []
-            for neighbour, state in self.neighbours.items():
-                if state:
-                    listening_neighbours.append(neighbour)
-
-            return listening_neighbours
-
+    """
+    Get all the neighbours
+    """
     def get_neighbours(self):
-        return list(self.neighbours.keys())
+        with self.neighbours_lock:
+            return list(self.neighbours)
 
+    """
+    Get the number of neighbours
+    """
     def get_num_neighbours(self):
-        return self.num_neighbours
-
-    def set_state_of_neighbour(self, neighbour, state):
         with self.neighbours_lock:
-            self.neighbours[neighbour] = state
+            return self.num_neighbours
 
-    def get_state_of_neighbour(self, neighbour):
+    """
+    Remove neighbours of neighbours
+    """
+    def delete_neighbours(self, neighbour):
         with self.neighbours_lock:
-            return self.neighbours[neighbour]
+            nex_steps = self.get_next_steps(neighbour)
+            for step in nex_steps:
+                if step in self.neighbours and step not in self.initial_neighbours:
+                    self.neighbours.remove(neighbour)
+                    self.num_neighbours -= 1
 
     # BOOTSTRAPPER
-
+    """
+    Get the info of a node, based on its ip (bootstrapper)
+    """
     def get_node_info(self, ip):
         return self.bootstrapper.get_node_info(ip)
 
-    # TABLE
-
-    def add_entry(self, leaf, neighbour, next_hop):  # For join
-        return self.table.add_entry(leaf, neighbour, next_hop)
-    
-    def remove_client_from_forwarding_table(self, leaf):
-        self.table.remove_client(leaf)
-
-    def get_best_entries(self):
-        return self.table.get_best_entries()
-
+    """
+    Get the best entry to the rp table
+    """
     def get_best_entry_rp(self):
         return self.table.get_best_entry_rp()
 
+    """
+    Get the neighbour of the best entry to the rp table
+    """
     def get_neighbour_to_rp(self):
         return self.table.get_neighbour_to_rp()
 
-    def update_metrics_rp(self, leaf, neighbour, next_hop, delay, loss):
-        self.table.update_metrics_rp(leaf, neighbour, next_hop, delay, loss)
+    """
+    Update the metrics of an path entry to the rp
+    Based on the the rp_ip and the neighbour, update the next_hop, the delay and the loss
+    """
+    def update_metrics_rp(self, neighbour, delay, loss):
+        self.table.update_metrics_rp(neighbour, delay, loss)
 
-    def update_metrics(self, leaf, neighbour, next_hop, delay, loss):
-        self.table.update_metrics(leaf, neighbour, next_hop, delay, loss)
+    def add_next_steps(self, neighbour, next_steps):
+        self.table.add_next_steps(neighbour, next_steps)
 
-    def get_table(self):
-        return self.table.get_table()
+    def get_next_steps(self, neighbour):
+        return self.table.get_next_steps(neighbour)
 
-    def get_tree(self):
-        return self.table.get_tree()
+    def update_neighbour_death(self, neighbour):
+        self.table.update_neighbour_death(neighbour)
 
     def get_table_rp(self):
         return self.table.get_table_rp()
 
-    def get_neighbour_to_client(self, client):
-        return self.table.get_neighbour_to_client(client)
-
-    def get_best_entry(self, client):
-        return self.table.get_best_entry(client)
+    def add_neighbours(self, neighbours):
+        with self.neighbours_lock:
+            for neighbour in neighbours:
+                if neighbour not in self.neighbours:
+                    self.neighbours.append(neighbour)
+                    self.num_neighbours += 1
 
     # STREAM TABLE
-
-    def add_client_to_stream(self, stream_id, node_id):
-        self.stream_table.add_client_to_stream(stream_id, node_id)
+    
+    """
+    Adds a neighbour to a stream
+    If the stream does not exist, add a new entry in the map with a new neighbour
+    """
+    def add_neighbour_to_stream(self, stream_id, node_id):
+        self.stream_table.add_neighbour_to_stream(stream_id, node_id)
         
-    def remove_client_from_stream(self, node_id):
-        self.stream_table.remove_client_from_stream(node_id)
+    """
+    Removes a neighbour from a stream
+    Returns if it was the last neighbour from that stream 
+    """      
+    def remove_neighbour_from_stream(self, stream_id, neighbour_ip):
+        return self.stream_table.remove_neighbour_from_stream(stream_id, neighbour_ip)
+    
+    def remove_neighbour_from_stream_table(self, neighbour_ip):
+        return self.stream_table.remove_neighbour_from_stream_table(neighbour_ip)
 
+    def remove_stream(self, stream_id):
+        return self.stream_table.remove_stream(stream_id)
+
+    """
+    Check if a stream is already in the stream list
+    """
+    def check_if_stream_exists(self, stream_id):
+        return self.stream_table.check_if_stream_exists(stream_id)
+
+    def check_if_server_exists(self, stream_id):
+        return self.stream_table.check_if_server_exists(stream_id)
+
+    """
+    Add a server to a stream
+    If the stream does not exist, add a new entry in the map with a new neighbour
+    """
     def add_server_to_stream(self, stream_id, server_ip):
         self.stream_table.add_server_to_stream(stream_id, server_ip)
 
+    """
+    Get all the servers currently streaming
+    """
     def get_servers(self):
         return self.stream_table.get_servers()
 
     def its_best_server(self, stream_id, server_ip):
         return self.stream_table.its_best_server(stream_id, server_ip)
 
-    def get_stream_clients(self, stream_id):
-        return self.stream_table.get_stream_clients(stream_id)
+    def remove_server_from_stream(self, server):
+        self.stream_table.remove_server_from_stream(server)
 
-    def get_stream_table_info(self):
-        return self.stream_table.get_clients()
+    """
+    Get the neighbours for a given stream
+    """
+    def get_stream_neighbours(self, stream_id):
+        return self.stream_table.get_stream_neighbours(stream_id)
 
+    """
+    Update the metrics associated with a given server (server, delay, loss)
+    """
     def update_metrics_server(self, server, delay, loss):
         self.stream_table.update_metrics_server(server, delay, loss)
+
+    def get_best_entry_neighbour_rp(self, neighbour):
+        return self.table.get_best_entry_neighbour_rp(neighbour)
 
     def get_stream_table(self):
         return self.stream_table.get_stream_table()
     
-    def update_neighbour_death(self, neighbour):
-        return self.table.update_neighbour_death(neighbour)
-
-    def remove_clients_neighbour_from_forwarding_table(self, leafs, neighbour):
-        self.table.remove_clients_neighbour_from_forwarding_table(leafs, neighbour)
+    def get_streams(self):
+        return self.stream_table.get_streams()

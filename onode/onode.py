@@ -28,7 +28,7 @@ Node Options:
     # Standard port
     port = 5000
     # Parse the arguments
-    bootstrapper, bootstrapper_address, is_rendezvous_point, debug, tag, client = read_args()
+    bootstrapper, bootstrapper_address, is_rendezvous_point, debug, tag, stream_id = read_args()
 
     # Request the neighbors if is a node and not the bootstrapper
     if bootstrapper is None:
@@ -36,26 +36,21 @@ Node Options:
             print(f"DEBUG: Requesting the Neighbors")
         neighbours = request_neighbors(bootstrapper_address)
     else:
-        neighbours = {}
-        neighbours_list = bootstrapper.get_neighbors(bootstrapper_address[0])
-        for neighbour in neighbours_list:
-            neighbours[neighbour] = False
+        neighbours = bootstrapper.get_neighbors(bootstrapper_address[0])
+        
 
-    if len(neighbours.keys()) == 0:
+    if len(neighbours) == 0:
         print("This is not a overlay node")
         exit(1)
 
     if debug:
-        print(f"DEBUG: Neighbors -> {neighbours.keys()}")
+        print(f"DEBUG: Neighbours -> {neighbours}")
 
-    ep = EP(debug, bootstrapper, is_rendezvous_point, port, neighbours, tag, client)
+    ep = EP(debug, bootstrapper, is_rendezvous_point, port, neighbours, tag, stream_id)
 
-    if ep.get_num_neighbours() == 1 and client > 0:
-        client_launcher = ClientLauncher(ep.get_neighbours()[0], client, ep)
+    if ep.client_stream_id > 0:
+        client_launcher = ClientLauncher(ep)
         client_launcher.start()
-    elif ep.get_num_neighbours() > 1 and client > 0:
-        print("This is not a leaf node to put a client on it")
-        print("Starting only the overlay node")
 
     # Start the server
     server = Server(port)
@@ -66,17 +61,15 @@ def request_neighbors(bootstrapper_address, timeout=5, max_retries=3):
     retries = 0
     udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
     udp_socket.settimeout(timeout)
-    neighbours = {}
+    neighbours = []
 
     try:
         while retries < max_retries:
             try:
-                packet_serialized = Packet(PacketType.SETUP, '0.0.0.0', 0, '0.0.0.0').serialize()
+                packet_serialized = Packet(PacketType.SETUP, 0).serialize()
                 udp_socket.sendto(packet_serialized, bootstrapper_address)
                 response, _ = udp_socket.recvfrom(4096)
-                response_packet = Packet.deserialize(bytearray(response))
-                for neighbour in response_packet.payload:
-                    neighbours[neighbour] = False
+                neighbours = Packet.deserialize(bytearray(response)).payload
                 break
             except socket.timeout:
                 retries += 1
